@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>个人中心 (访客视图) - Memory的小破站 (布局修正版)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#39393b",
+                        "surface-container-highest": "#353437",
+                        "secondary-container": "#3834b6",
+                        "primary-fixed": "#d8e2ff",
+                        "tertiary-fixed-dim": "#ffb595",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-container": "#4c1a00",
+                        "primary": "#adc6ff",
+                        "surface": "#131315",
+                        "secondary-fixed-dim": "#c2c1ff",
+                        "secondary": "#c2c1ff",
+                        "on-secondary-container": "#b2b1ff",
+                        "on-surface-variant": "#c1c6d7",
+                        "inverse-on-surface": "#313032",
+                        "tertiary-container": "#ef6719",
+                        "surface-variant": "#353437",
+                        "surface-container-high": "#2a2a2c",
+                        "on-secondary": "#1c0b9f",
+                        "background": "#131315",
+                        "tertiary-fixed": "#ffdbcc",
+                        "on-tertiary-fixed-variant": "#7c2e00",
+                        "on-primary-container": "#00285c",
+                        "error-container": "#93000a",
+                        "on-tertiary": "#571e00",
+                        "on-error": "#690005",
+                        "surface-dim": "#131315",
+                        "surface-container": "#201f21",
+                        "on-surface": "#e5e1e4",
+                        "on-error-container": "#ffdad6",
+                        "tertiary": "#ffb595",
+                        "surface-container-lowest": "#0e0e10",
+                        "outline": "#8b90a0",
+                        "outline-variant": "#414755",
+                        "surface-container-low": "#1c1b1d",
+                        "inverse-surface": "#e5e1e4",
+                        "on-secondary-fixed": "#0c006a",
+                        "surface-tint": "#adc6ff",
+                        "inverse-primary": "#005bc1",
+                        "primary-container": "#4b8eff",
+                        "on-secondary-fixed-variant": "#3631b4",
+                        "on-primary-fixed-variant": "#004493",
+                        "on-primary-fixed": "#001a41",
+                        "error": "#ffb4ab",
+                        "secondary-fixed": "#e2dfff",
+                        "on-background": "#e5e1e4",
+                        "on-tertiary-fixed": "#351000",
+                        "on-primary": "#002e69"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "48px",
+                        "unit": "4px",
+                        "container-max": "800px",
+                        "xs": "8px",
+                        "md": "16px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter", "PingFang SC", "sans-serif"],
+                        "headline-md": ["Inter", "PingFang SC", "sans-serif"],
+                        "display-lg": ["Inter", "PingFang SC", "sans-serif"],
+                        "body-main": ["Inter", "PingFang SC", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["13px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-main": ["17px", {"lineHeight": "1.8", "letterSpacing": "0.01em", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.surface-container-highest');
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: theme('colors.outline-variant');
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container font-body-main text-body-main antialiased">
+<!-- Global Top Header -->
+<header class="sticky top-0 w-full z-50 border-b border-outline-variant/20 bg-surface/80 backdrop-blur-[20px] transition-all duration-300 ease-out shrink-0">
+<div class="max-w-[1200px] mx-auto w-full px-8 h-16 flex justify-between items-center">
+<!-- Logo -->
+<a class="flex items-center gap-2 group" href="#">
+<span class="material-symbols-outlined text-primary group-hover:text-primary-fixed transition-colors" style="font-variation-settings: 'FILL' 1;">
+                    memory
+                </span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight">Memory的小破站</span>
+</a>
+<!-- Right Actions -->
+<div class="flex items-center gap-6">
+<!-- Search -->
+<div class="relative hidden md:block group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-lg" style="font-size: 18px;">
+                        search
+                    </span>
+<input class="w-64 bg-surface-container/50 border border-outline-variant/50 rounded-full py-1.5 pl-10 pr-4 font-label-sm text-label-sm text-on-surface placeholder:text-outline outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all bg-transparent" placeholder="搜索内容、标签或 AI 洞察..." type="text"/>
+</div>
+<div class="w-px h-4 bg-outline-variant/50 hidden md:block"></div>
+<!-- Notifications & Avatar -->
+<div class="flex items-center gap-4">
+<button class="relative text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface"></span>
+</button>
+<button class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30 hover:border-primary/50 transition-colors">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDS60p3wO1AohhDw6Jj8E2dj-jVon9pcWQZhbvDKGYTpvoNQxJly_ckSlck6blxxIezNM4dSU79MK3EuuL3TrDKEF5K2uKKE8tdmh7_Nt1OjfT2RJzpJB_qtr4QoPPPUOhgjd26Xlq0Mhy6AWCsqlhWyxC-sUToKmTjA1sN6m4NmSpB_PHw2CuG6IFF7xNR9hZ49iz-qazXRLd2VtEclOt-UBJLPsFIGsC2SJtZSPJM-VK6XZezQhI4v0fY5dYSginVhG-POu1l9FXe"/>
+</button>
+<button class="md:hidden text-outline hover:text-on-surface transition-colors ml-2">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<!-- Middle Section -->
+<div class="flex-1 flex w-full">
+<!-- SideNavBar Component (Adapted for Visitor View) -->
+<nav class="bg-zinc-950/90 backdrop-blur-2xl font-inter text-sm font-medium w-64 border-r border-white/10 sticky top-16 h-[calc(100vh-64px)] z-40 flex-col pt-6 pb-6 transition-transform duration-200 ease-out hidden md:flex shrink-0 self-start">
+<div class="px-6 mb-6">
+<p class="text-zinc-500 font-label-sm text-label-sm uppercase tracking-wider">访客看板</p>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 overflow-y-auto px-2 space-y-1">
+<!-- Active State: History -->
+<a class="bg-blue-500/10 text-blue-400 border-r-2 border-blue-500 px-4 py-3 flex items-center gap-3 rounded-l-lg text-base py-4" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 22px;">history</span>
+<span>浏览历史</span>
+</a>
+<!-- Inactive States -->
+<a class="text-zinc-500 hover:text-zinc-200 px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors rounded-lg text-base py-4" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 22px;">favorite</span>
+<span>我的点赞</span>
+</a>
+<a class="text-zinc-500 hover:text-zinc-200 px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors rounded-lg text-base py-4" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 22px;">bookmark</span>
+<span>我的收藏</span>
+</a>
+<a class="text-zinc-500 hover:text-zinc-200 px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors rounded-lg text-base py-4" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 22px;">chat</span>
+<span>我的评论</span>
+</a>
+<a class="text-zinc-500 hover:text-zinc-200 px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors rounded-lg text-base py-4" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 22px;">notifications</span>
+<span>消息通知</span>
+<span class="ml-auto bg-primary text-on-primary font-label-sm px-2 py-0.5 rounded-full text-xs">3</span>
+</a>
+</div>
+<!-- Footer Links -->
+<div class="mt-auto px-2 pt-4 border-t border-white/5 space-y-1">
+<a class="text-zinc-500 hover:text-zinc-200 px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors rounded-lg text-base py-4" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 22px;">settings</span>
+<span>账号设置</span>
+</a>
+<a class="text-zinc-500 hover:text-zinc-200 px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors rounded-lg text-base py-4" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 22px;">login</span>
+<span>退出登录</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 relative flex flex-col min-w-0">
+<!-- Top decorative gradient -->
+<div class="absolute top-0 left-0 right-0 h-[300px] bg-gradient-to-b from-blue-900/10 to-transparent pointer-events-none z-0"></div>
+<div class="max-w-[800px] mx-auto px-6 py-xl relative z-10 flex-1 w-full">
+<!-- Page Header -->
+<header class="mb-xl flex items-end justify-between">
+<div>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-xs">浏览记录</h1>
+<p class="text-on-surface-variant font-body-main text-body-main">你在 Memory 数字空间的近期足迹。</p>
+</div>
+<div class="hidden sm:flex items-center gap-3 bg-surface-container-high px-4 py-2 rounded-full border border-white/5">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">小智 AI 分析中</span>
+</div>
+</header>
+<!-- AI Insight Card (Top Level Intervention) -->
+<div class="mb-xl relative group rounded-2xl overflow-hidden backdrop-blur-xl bg-surface-container/50 border border-primary-fixed/20 p-[1px]">
+<!-- Animated gradient border effect -->
+<div class="absolute inset-0 bg-gradient-to-r from-primary-container/30 via-secondary-container/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div class="relative bg-surface-container-low rounded-2xl p-md flex flex-col sm:flex-row gap-md items-start sm:items-center">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center border border-white/5 shrink-0">
+<span class="material-symbols-outlined text-primary">auto_awesome</span>
+</div>
+<div class="flex-1">
+<h3 class="font-label-sm text-label-sm text-primary mb-1 uppercase tracking-wider">小智洞察</h3>
+<p class="font-body-main text-body-main text-on-surface text-sm">你这周主要浏览了关于 React 和 Tailwind CSS 的技术文章。需要我为你总结一下这些关键概念吗？</p>
+</div>
+<button class="bg-primary-container text-on-primary-container font-label-sm text-label-sm px-4 py-2 rounded-lg hover:bg-primary-fixed transition-colors shadow-[0_0_15px_rgba(75,142,255,0.2)] shrink-0 w-full sm:w-auto mt-4 sm:mt-0">
+                        生成总结
+                    </button>
+</div>
+</div>
+<!-- Search Bar for History -->
+<div class="mb-8 relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">
+    search
+</span>
+<input class="w-full bg-surface-container/50 border border-outline-variant/50 rounded-xl py-3 pl-12 pr-4 font-body-main text-on-surface placeholder:text-outline outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all bg-transparent" placeholder="在浏览记录中搜索..." type="text"/>
+</div>
+<!-- Timeline List -->
+<div class="relative border-l border-surface-container-highest ml-6 space-y-xl">
+<!-- Day Group: Today -->
+<div class="relative">
+<!-- Date Marker -->
+<div class="absolute -left-[33px] top-0 flex items-center gap-4">
+<div class="w-[18px] h-[18px] rounded-full bg-surface border-4 border-primary z-10 shadow-[0_0_10px_rgba(173,198,255,0.3)]"></div>
+<span class="font-headline-md text-headline-md text-on-surface whitespace-nowrap">今天</span>
+</div>
+<!-- Cards Container -->
+<div class="pl-8 pt-10 space-y-md">
+<!-- History Item 1 -->
+<article class="group relative bg-surface-container-low/30 backdrop-blur-sm rounded-xl border border-outline-variant/20 hover:bg-surface-container/50 hover:border-primary/30 transition-all duration-500 overflow-hidden cursor-pointer p-5">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div class="flex flex-col gap-4">
+<div class="flex items-start justify-between gap-4">
+<h3 class="font-headline-md text-xl text-on-surface group-hover:text-primary transition-colors leading-snug">
+    掌握 Tailwind CSS v3 中的玻璃拟态
+</h3>
+<time class="font-label-sm text-xs text-outline opacity-60 whitespace-nowrap pt-1">14:30</time>
+</div>
+<p class="font-body-main text-sm text-on-surface-variant line-clamp-2 leading-relaxed opacity-80">
+    深入探讨如何使用现代 CSS 和 Tailwind 工具类创建高性能、美观的玻璃效果，专注于深色模式美学。
+</p>
+<div class="flex items-center justify-between gap-4 mt-6">
+<div class="flex items-center gap-3">
+<a class="px-3 py-1.5 rounded-lg border border-outline-variant/30 font-label-sm text-label-sm text-on-surface-variant hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-colors" href="#"># Web 开发</a>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-1.5 text-on-surface-variant/60 font-label-sm text-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">visibility</span>
+<span>1.2k</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant/60 font-label-sm text-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">favorite</span>
+<span>86</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant/60 font-label-sm text-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">chat_bubble</span>
+<span>24</span>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- History Item 2 -->
+<article class="group relative bg-surface-container-low/30 backdrop-blur-sm rounded-xl border border-outline-variant/20 hover:bg-surface-container/50 hover:border-primary/30 transition-all duration-500 overflow-hidden cursor-pointer p-5">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div class="flex flex-col gap-4">
+<div class="flex items-start justify-between gap-4">
+<h3 class="font-headline-md text-xl text-on-surface group-hover:text-primary transition-colors leading-snug">
+    我 2024 年的极简开发者工作区
+</h3>
+<time class="font-label-sm text-xs text-outline opacity-60 whitespace-nowrap pt-1">09:15</time>
+</div>
+<p class="font-body-main text-sm text-on-surface-variant line-clamp-2 leading-relaxed opacity-80">
+    探索优化编码心流和减少心理摩擦的工具、硬件及物理环境。
+</p>
+<div class="flex items-center justify-between gap-4 mt-6">
+<div class="flex items-center gap-3">
+<a class="px-3 py-1.5 rounded-lg border border-outline-variant/30 font-label-sm text-label-sm text-on-surface-variant hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-colors" href="#"># 效率提升</a>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-1.5 text-on-surface-variant/60 font-label-sm text-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">visibility</span>
+<span>1.2k</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant/60 font-label-sm text-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">favorite</span>
+<span>86</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant/60 font-label-sm text-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">chat_bubble</span>
+<span>24</span>
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+<!-- Day Group: Yesterday -->
+<div class="relative">
+<div class="absolute -left-[29px] top-0 flex items-center gap-4">
+<div class="w-[10px] h-[10px] rounded-full bg-surface-container-highest border-2 border-outline-variant z-10"></div>
+<span class="font-headline-md text-[18px] text-on-surface-variant whitespace-nowrap font-medium">昨天</span>
+</div>
+<div class="pl-8 pt-8 space-y-md">
+<!-- History Item 3 -->
+<article class="group relative bg-surface-container-low/30 backdrop-blur-sm rounded-xl border border-outline-variant/20 hover:bg-surface-container/50 hover:border-primary/30 transition-all duration-500 overflow-hidden cursor-pointer p-5">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div class="flex flex-col gap-4">
+<div class="flex items-start justify-between gap-4">
+<h3 class="font-headline-md text-xl text-on-surface group-hover:text-primary transition-colors leading-snug">
+    AI 代理的错觉
+</h3>
+<time class="font-label-sm text-xs text-outline opacity-60 whitespace-nowrap pt-1">21:40</time>
+</div>
+<p class="font-body-main text-sm text-on-surface-variant line-clamp-2 leading-relaxed opacity-80">
+    关于我们如何将 LLM 拟人化的哲学思考，以及构建设定合理用户预期的“原生 AI”界面的设计启示。
+</p>
+<div class="flex items-center justify-between gap-4 mt-6">
+<div class="flex items-center gap-3">
+<a class="px-3 py-1.5 rounded-lg border border-outline-variant/30 font-label-sm text-label-sm text-on-surface-variant hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-colors" href="#"># Web 开发</a>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-1.5 text-on-surface-variant/60 font-label-sm text-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">visibility</span>
+<span>1.2k</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant/60 font-label-sm text-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">favorite</span>
+<span>86</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant/60 font-label-sm text-xs">
+<span class="material-symbols-outlined" style="font-size: 16px;">chat_bubble</span>
+<span>24</span>
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</div>
+<!-- End of list marker -->
+<div class="relative h-24">
+<div class="absolute -left-[29px] top-10 flex items-center gap-4">
+<div class="w-[10px] h-[10px] rounded-full bg-surface border-2 border-surface-container-highest z-10"></div>
+<span class="font-label-sm text-label-sm text-outline-variant">近期记录到底啦</span>
+</div>
+</div>
+</div>
+<!-- Load More / AI Fetch (Ghost Button) -->
+<div class="mt-8 flex justify-center pb-xl">
+<button class="bg-transparent text-on-surface-variant border border-outline-variant font-label-sm text-label-sm px-6 py-3 rounded-full hover:bg-surface-container-high hover:text-on-surface transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">history</span>
+                    加载更早的记录
+                </button>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer (From Shared Components) -->
+<footer class="w-full border-t border-outline-variant/20 bg-surface/80 backdrop-blur-[20px] py-8 shrink-0 relative z-50">
+<div class="max-w-[800px] mx-auto flex flex-col items-center gap-2">
+<p class="font-['Inter'] text-xs uppercase tracking-widest text-zinc-600 opacity-80 hover:opacity-100 transition-opacity">
+                Copyright © 2026 Memory的小破站
+            </p>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>统一身份认证 - Memory的小破站</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#005bc1",
+                        "outline-variant": "#414755",
+                        "on-primary": "#002e69",
+                        "surface-variant": "#353437",
+                        "on-tertiary": "#571e00",
+                        "surface-dim": "#131315",
+                        "on-background": "#e5e1e4",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary-fixed-dim": "#c2c1ff",
+                        "primary-container": "#4b8eff",
+                        "surface-container": "#201f21",
+                        "error": "#ffb4ab",
+                        "secondary": "#c2c1ff",
+                        "surface-tint": "#adc6ff",
+                        "on-tertiary-container": "#4c1a00",
+                        "on-tertiary-fixed": "#351000",
+                        "on-error": "#690005",
+                        "inverse-surface": "#e5e1e4",
+                        "surface-container-highest": "#353437",
+                        "on-surface-variant": "#c1c6d7",
+                        "surface-container-high": "#2a2a2c",
+                        "surface": "#131315",
+                        "on-primary-container": "#00285c",
+                        "primary": "#adc6ff",
+                        "inverse-on-surface": "#313032",
+                        "on-secondary": "#1c0b9f",
+                        "tertiary-fixed": "#ffdbcc",
+                        "surface-container-low": "#1c1b1d",
+                        "tertiary-container": "#ef6719",
+                        "tertiary": "#ffb595",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#004493",
+                        "secondary-fixed": "#e2dfff",
+                        "background": "#131315",
+                        "surface-bright": "#39393b",
+                        "error-container": "#93000a",
+                        "secondary-container": "#3834b6",
+                        "surface-container-lowest": "#0e0e10",
+                        "on-surface": "#e5e1e4",
+                        "on-secondary-fixed-variant": "#3631b4",
+                        "primary-fixed-dim": "#adc6ff",
+                        "tertiary-fixed-dim": "#ffb595",
+                        "on-primary-fixed": "#001a41",
+                        "on-secondary-container": "#b2b1ff",
+                        "outline": "#8b90a0",
+                        "on-secondary-fixed": "#0c006a",
+                        "on-tertiary-fixed-variant": "#7c2e00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "48px",
+                        "xs": "8px",
+                        "lg": "24px",
+                        "unit": "4px",
+                        "container-max": "800px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter, PingFang SC"],
+                        "headline-md": ["Inter, PingFang SC"],
+                        "display-lg": ["Inter, PingFang SC"],
+                        "body-main": ["Inter, PingFang SC"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["13px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "display-lg": ["36px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-main": ["15px", {"lineHeight": "1.8", "letterSpacing": "0.01em", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        /* Simple tab switching logic for presentation only */
+        input[id="tab-login"]:checked ~ .scroll-area .tab-content-login { display: block; }
+        input[id="tab-login"]:checked ~ .scroll-area .tab-content-register { display: none; }
+        input[id="tab-register"]:checked ~ .scroll-area .tab-content-login { display: none; }
+        input[id="tab-register"]:checked ~ .scroll-area .tab-content-register { display: block; }
+        
+        input[id="tab-login"]:checked ~ .tab-nav label[for="tab-login"] {
+            background-color: theme('colors.surface-container-highest');
+            color: theme('colors.on-surface');
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        input[id="tab-register"]:checked ~ .tab-nav label[for="tab-register"] {
+            background-color: theme('colors.surface-container-highest');
+            color: theme('colors.on-surface');
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: theme('colors.outline-variant');
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: theme('colors.outline');
+        }
+    </style>
+</head>
+<body class="fixed inset-0 flex items-center justify-center bg-[#131315] overflow-hidden font-body-main text-body-main">
+<!-- Main Authentication Container -->
+<main class="w-full max-w-[560px] z-10 flex flex-col m-0 p-0 px-4 sm:px-0">
+<!-- Glassmorphism Card -->
+<div class="bg-surface-container/40 backdrop-blur-[20px] border border-white/10 rounded-xl p-xl shadow-[0_0_30px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col max-h-[90vh]">
+<!-- Subtle Top Highlight -->
+<div class="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+<!-- Close Button -->
+<button class="absolute top-md right-md text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-full p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 z-20" type="button">
+<span class="material-symbols-outlined text-[24px]" data-icon="close">close</span>
+</button>
+<!-- Brand Header -->
+<div class="text-center mb-xl shrink-0">
+<div class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 mb-lg">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<h1 class="font-display-lg text-[40px] text-on-surface mb-xs tracking-tighter whitespace-nowrap overflow-hidden text-ellipsis">Memory的小破站</h1>
+</div>
+<!-- Tab Inputs (Hidden) -->
+<input checked="" class="hidden placeholder:text-outline/70" id="tab-login" name="auth-tabs" type="radio"/>
+<input class="hidden placeholder:text-outline/70" id="tab-register" name="auth-tabs" type="radio"/>
+<!-- Tab Navigation -->
+<div class="tab-nav flex bg-surface-container-high rounded-lg p-[4px] mb-lg relative shrink-0">
+<label class="flex-1 py-xs text-center font-label-sm text-base rounded-md text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" for="tab-login">登录</label>
+<label class="flex-1 py-xs text-center font-label-sm text-base rounded-md text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" for="tab-register">注册</label>
+</div>
+<!-- Scrollable Content Area -->
+<div class="scroll-area overflow-y-auto flex-1 pr-4 -mr-4 custom-scrollbar max-h-[60vh]">
+<!-- Login Form -->
+<div class="tab-content-login pb-4">
+<form action="#" class="space-y-lg" method="POST">
+<!-- Account / Email Field -->
+<div>
+<label class="block font-label-sm text-on-surface-variant mb-xs text-base" for="login-account">账号/邮箱</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors" data-icon="person">person</span>
+<input class="w-full bg-surface-container-lowest border border-white/10 rounded-lg py-[12px] pl-[44px] pr-md text-on-surface text-base font-body-main focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-outline/70" id="login-account" name="account" placeholder="输入您的账号或邮箱" required="" type="text"/>
+</div>
+</div>
+<!-- Password Field -->
+<div>
+<div class="flex justify-between items-center mb-xs">
+<label class="block font-label-sm text-on-surface-variant text-base" for="login-password">密码</label>
+<a class="font-label-sm text-primary hover:text-primary-fixed transition-colors text-base" href="#">忘记密码？</a>
+</div>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors" data-icon="lock">lock</span>
+<input class="w-full bg-surface-container-lowest border border-white/10 rounded-lg py-[12px] pl-[44px] pr-md text-on-surface text-base font-body-main focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-outline/70" id="login-password" name="password" placeholder="输入您的密码" required="" type="password"/>
+<button class="absolute right-md top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility_off">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Submit Action -->
+<div class="pt-md">
+<button class="w-full bg-primary text-on-primary font-label-sm text-base rounded-lg py-[14px] flex justify-center items-center gap-xs hover:bg-primary-fixed transition-colors shadow-[0_0_15px_rgba(173,198,255,0.2)]" type="submit">
+<span>登录</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</form>
+</div>
+<!-- Register Form -->
+<div class="tab-content-register hidden pb-4">
+<form action="#" class="space-y-md" method="POST">
+<!-- Nickname Field -->
+<div>
+<label class="block font-label-sm text-on-surface-variant mb-xs text-base" for="reg-nickname">昵称</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors" data-icon="badge">badge</span>
+<input class="w-full bg-surface-container-lowest border border-white/10 rounded-lg py-[12px] pl-[44px] pr-md text-on-surface text-base font-body-main focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-outline/70" id="reg-nickname" name="nickname" placeholder="设置您的昵称" required="" type="text"/>
+</div>
+</div>
+<!-- Email Field -->
+<div>
+<label class="block font-label-sm text-on-surface-variant mb-xs text-base" for="reg-email">电子邮箱</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors" data-icon="mail">mail</span>
+<input class="w-full bg-surface-container-lowest border border-white/10 rounded-lg py-[12px] pl-[44px] pr-md text-on-surface text-base font-body-main focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-outline/70" id="reg-email" name="email" placeholder="输入您的电子邮箱" required="" type="email"/>
+</div>
+</div>
+<!-- Verification Code Field -->
+<div>
+<label class="block font-label-sm text-on-surface-variant mb-xs text-base" for="reg-verification">验证码</label>
+<div class="flex gap-md">
+<div class="relative group flex-1">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors" data-icon="security">security</span>
+<input class="w-full bg-surface-container-lowest border border-white/10 rounded-lg py-[12px] pl-[44px] pr-md text-on-surface text-base font-body-main focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-outline/70" id="reg-verification" name="verification" placeholder="输入验证码" required="" type="text"/>
+</div>
+<button class="bg-surface-container-highest border border-white/10 text-on-surface font-label-sm text-base rounded-lg px-md hover:bg-surface-bright transition-colors whitespace-nowrap focus:outline-none focus:ring-1 focus:ring-primary/50" type="button">获取验证码</button>
+</div>
+</div>
+<!-- Password Field -->
+<div>
+<label class="block font-label-sm text-on-surface-variant mb-xs text-base" for="reg-password">设置密码</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors" data-icon="lock">lock</span>
+<input class="w-full bg-surface-container-lowest border border-white/10 rounded-lg py-[12px] pl-[44px] pr-md text-on-surface text-base font-body-main focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-outline/70" id="reg-password" name="password" placeholder="设置您的密码" required="" type="password"/>
+<button class="absolute right-md top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility_off">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Confirm Password Field -->
+<div>
+<label class="block font-label-sm text-on-surface-variant mb-xs text-base" for="reg-confirm-password">确认密码</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors" data-icon="lock_reset">lock_reset</span>
+<input class="w-full bg-surface-container-lowest border border-white/10 rounded-lg py-[12px] pl-[44px] pr-md text-on-surface text-base font-body-main focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-outline/70" id="reg-confirm-password" name="confirm_password" placeholder="再次输入密码" required="" type="password"/>
+<button class="absolute right-md top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility_off">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Submit Action -->
+<div class="pt-md">
+<button class="w-full bg-primary text-on-primary font-label-sm text-base rounded-lg py-[14px] flex justify-center items-center gap-xs hover:bg-primary-fixed transition-colors shadow-[0_0_15px_rgba(173,198,255,0.2)]" type="submit">
+<span>注册</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</form>
+</div>
+<!-- Footer Integration -->
+<div class="mt-md text-center border-t border-white/5 pt-lg pb-2">
+<p class="font-label-sm text-on-surface-variant text-base">登录即代表您同意我们的 <a class="text-primary hover:text-primary-fixed hover:underline transition-colors" href="#">服务条款</a> 和 <a class="text-primary hover:text-primary-fixed hover:underline transition-colors" href="#">隐私政策</a></p>
+</div>
+</div>
+</div>
+</main>
+</body></html>

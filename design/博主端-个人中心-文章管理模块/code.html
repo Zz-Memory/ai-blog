@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>文章管理 - Memory的小破站</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error": "#690005",
+                    "inverse-on-surface": "#313032",
+                    "surface-dim": "#131315",
+                    "surface-tint": "#adc6ff",
+                    "background": "#131315",
+                    "surface-bright": "#39393b",
+                    "on-tertiary": "#571e00",
+                    "tertiary-container": "#ef6719",
+                    "on-tertiary-fixed-variant": "#7c2e00",
+                    "primary-container": "#4b8eff",
+                    "on-secondary-fixed": "#0c006a",
+                    "error": "#ffb4ab",
+                    "on-surface-variant": "#c1c6d7",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-high": "#2a2a2c",
+                    "secondary-fixed": "#e2dfff",
+                    "on-secondary": "#1c0b9f",
+                    "on-primary-fixed-variant": "#004493",
+                    "on-background": "#e5e1e4",
+                    "inverse-surface": "#e5e1e4",
+                    "surface-container": "#201f21",
+                    "surface-container-lowest": "#0e0e10",
+                    "on-tertiary-container": "#4c1a00",
+                    "on-secondary-container": "#b2b1ff",
+                    "on-secondary-fixed-variant": "#3631b4",
+                    "on-primary-fixed": "#001a41",
+                    "error-container": "#93000a",
+                    "on-primary": "#002e69",
+                    "secondary-container": "#3834b6",
+                    "primary-fixed": "#d8e2ff",
+                    "outline": "#8b90a0",
+                    "on-surface": "#e5e1e4",
+                    "inverse-primary": "#005bc1",
+                    "tertiary": "#ffb595",
+                    "tertiary-fixed": "#ffdbcc",
+                    "surface": "#131315",
+                    "tertiary-fixed-dim": "#ffb595",
+                    "secondary-fixed-dim": "#c2c1ff",
+                    "on-primary-container": "#00285c",
+                    "outline-variant": "#414755",
+                    "surface-container-highest": "#353437",
+                    "secondary": "#c2c1ff",
+                    "primary": "#adc6ff",
+                    "on-tertiary-fixed": "#351000",
+                    "surface-container-low": "#1c1b1d",
+                    "primary-fixed-dim": "#adc6ff",
+                    "surface-variant": "#353437"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xs": "8px",
+                    "container-max": "800px",
+                    "md": "16px",
+                    "lg": "24px",
+                    "xl": "48px",
+                    "unit": "4px"
+            },
+            "fontFamily": {
+                    "headline-md": [
+                            "Inter", "PingFang SC", "sans-serif"
+                    ],
+                    "display-lg": [
+                            "Inter", "PingFang SC", "sans-serif"
+                    ],
+                    "label-sm": [
+                            "Inter", "PingFang SC", "sans-serif"
+                    ],
+                    "body-main": [
+                            "Inter", "PingFang SC", "sans-serif"
+                    ]
+            },
+            "fontSize": {
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "1.4",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-sm": [
+                            "13px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-main": [
+                            "17px",
+                            {
+                                    "lineHeight": "1.8",
+                                    "letterSpacing": "0.01em",
+                                    "fontWeight": "400"
+                            }
+                    ]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #131315; /* surface */
+            color: #e5e1e4; /* on-surface */
+        }
+        .glass-panel {
+            background: rgba(32, 31, 33, 0.4); /* surface-container with opacity */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glow-button:hover {
+            box-shadow: 0 0 15px rgba(75, 142, 255, 0.4);
+        }
+        .ai-gradient-border {
+            position: relative;
+        }
+        .ai-gradient-border::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(45deg, rgba(75, 142, 255, 0.5), rgba(178, 177, 255, 0.2), rgba(75, 142, 255, 0.5));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+    
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            z-index: 100;
+            min-width: 120px;
+        }
+        .dropdown-container:focus-within .dropdown-menu {
+            display: block;
+        }
+
+        /* Tab switching styles */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="font-body-main text-body-main min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full flex items-center justify-between px-8 h-16 bg-zinc-950/80 backdrop-blur-xl border-b border-white/5 shadow-xl shadow-blue-500/5 z-50">
+<div class="flex items-center gap-md">
+<span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400 tracking-tight font-inter antialiased">Memory的小破站</span>
+</div>
+<div class="flex items-center justify-end gap-lg flex-1">
+<!-- Search Bar on Right -->
+<div class="relative w-64 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">search</span>
+<input class="w-full bg-surface-container/50 border border-white/10 rounded-full py-1.5 pl-9 pr-4 text-sm focus:outline-none focus:border-primary-container focus:bg-surface-container transition-all text-on-surface placeholder:text-zinc-500" placeholder="搜索..." type="text"/>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-xs">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/5 transition-all duration-300 active:scale-95 hover:opacity-90">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/5 transition-all duration-300 active:scale-95 hover:opacity-90">
+<span class="material-symbols-outlined text-[20px]">account_circle</span>
+</button>
+</div>
+<button class="px-4 py-1.5 rounded-full bg-primary-container/10 border border-primary-container/30 text-primary-container text-sm font-medium flex items-center gap-2 hover:bg-primary-container/20 transition-all">
+<span class="material-symbols-outlined text-[16px]">smart_toy</span>
+            AI 助手
+        </button>
+</div>
+</header>
+<div class="flex flex-1 pt-16">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-16 w-64 h-[calc(100vh-64px)] flex flex-col py-6 bg-zinc-950/40 backdrop-blur-2xl border-r border-white/5 divide-y divide-white/5 z-40">
+<div class="px-6 pb-6 flex items-center gap-4">
+<img alt="Memory Avatar" class="w-10 h-10 rounded-full object-cover border border-white/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9cPWfeVJ4LhAAf0xLLIc3qReqvIhUmid8bnckfdvdJilGOLf-LgYR_O8TSQLQnmXSwJoV2FSVV4drPlFeGQ4uH8GOH-Ae34LDusS4WjSaT2fo17MYr3uW6oTnY4O1bBV-jOP2OH3oa1N3qjoxFTV5K-y-oWSV3b0rnVOVTkvi75wI7FjKbaqt0jAxwdlASwgRBUh-QDPjMyTZn64DKbgAF2sg7gVbAo8zJU904urGA5Fzd6z2jMkC_eZhDmKHlIVI3fEaj1zlz-Fr"/>
+<div>
+<div class="text-sm font-bold text-white uppercase tracking-wider">Memory</div>
+<div class="text-xs text-zinc-500 font-medium">AI 博客管理员</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto pt-4 flex flex-col gap-1 px-3">
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-lg font-medium Inter text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[24px]">dashboard</span>
+                总览
+            </a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-lg font-medium Inter text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[24px]">edit_square</span>
+                写文章
+            </a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-lg font-medium Inter bg-blue-500/10 text-blue-400 border-r-2 border-blue-500 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[24px]">article</span>
+                文章管理
+            </a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-lg font-medium Inter text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[24px]">add_moderator</span>
+                评论审核
+            </a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-lg font-medium Inter text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[24px]">send</span>
+                发送消息
+            </a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-lg font-medium Inter text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[24px]">psychology</span>
+                AI 问答
+            </a>
+<div class="h-4 border-b border-white/5 mx-3 mb-4"></div>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-lg font-medium Inter text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+                通知
+            </a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-lg font-medium Inter text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[24px]">history</span>
+                浏览历史
+            </a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-lg font-medium Inter text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[24px]">favorite</span>
+                我的喜欢
+            </a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-lg font-medium Inter text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[24px]">bookmarks</span>
+                收藏夹
+            </a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-lg font-medium Inter text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[24px]">chat_bubble</span>
+                我的评论
+            </a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 p-xl pb-32">
+<div class="max-w-[1200px] mx-auto space-y-lg">
+<!-- Page Header Area -->
+<div class="flex items-end justify-between border-b border-white/5 pb-md">
+<div>
+<h1 class="font-headline-md text-headline-md text-on-surface">文章管理</h1>
+<p class="text-on-surface-variant font-label-sm text-label-sm mt-2 flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+                        小智为您的创作保驾护航
+                    </p>
+</div>
+<div class="flex items-center gap-md">
+<!-- Content Search -->
+<div class="relative w-72">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-[18px]">search</span>
+<input class="w-full bg-surface-container-high/50 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-primary-container focus:bg-surface-container transition-all text-on-surface placeholder:text-zinc-500" placeholder="搜索标题、分类或标签..." type="text"/>
+</div>
+</div>
+</div>
+<!-- AI Insight Section -->
+<div class="ai-gradient-border rounded-xl overflow-hidden glass-panel mb-lg">
+<div class="p-4 space-y-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-xl">auto_awesome</span>
+<h3 class="text-lg font-bold text-white tracking-tight">小智的文章洞察</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-h-[132px] overflow-hidden">
+<!-- Left Column: Data Analysis -->
+<div class="flex flex-col h-[132px]">
+<h4 class="text-zinc-500 text-[13px] font-bold mb-2 uppercase tracking-wider">数据分析</h4>
+<div class="flex-1 overflow-y-auto pr-2 custom-scrollbar text-sm leading-relaxed text-zinc-300 space-y-4">
+<p>在过去的三十天内，您的博客表现呈现出稳步上升的趋势。特别是涉及“AI 原生”和“极简主义设计”的文章，其平均阅读深度比平时高出了 25%。这意味着读者不仅仅是点击进入，而是进行了深度阅读并表现出强烈的互动欲望。流量来源分析显示，来自专业设计社区和技术分享平台的引流比例显著增加，这表明您的内容正在精准触达目标受众。</p>
+<p>搜索关键词云图显示，“效率工具”、“前端美学”以及“自动化工作流”是访客搜索频率最高的主题。这为您未来的选题提供了明确的方向。此外，移动端访客的比例已提升至 60%，在排版时请务必注意移动端的阅读舒适度。数据还指出，用户在您的深度长文上的平均停留时间达到了 4.5 分钟，远高于行业平均水平。</p>
+<p>社交媒体分享数据显示，您的文章在 X (Twitter) 和即刻上的传播效率最高，尤其是带有高质量配图和代码示例的内容。建议继续深耕这些平台，通过建立更紧密的社交链接来提升个人品牌的长效影响力。目前您的粉丝增长曲线呈现出健康的指数级增长态势，这预示着未来几个月内将迎来流量爆发期。</p>
+<p>最后，数据还指出周末上午 10:00 左右是您忠实读者回访的高峰期。您可以考虑在这一时间点推送最重要的更新或深度长文，以获得更好的瞬时曝光率和社交媒体转发效果。建议尝试定期举办在线答疑或评论互动周，进一步固化粉丝群体的参与感与忠诚度。</p>
+</div>
+</div>
+<!-- Right Column: Reader Preferences -->
+<div class="flex flex-col h-[132px] border-l border-white/5 pl-8">
+<h4 class="text-zinc-500 text-[13px] font-bold mb-2 uppercase tracking-wider">读者偏好建议</h4>
+<div class="flex-1 overflow-y-auto pr-2 custom-scrollbar text-sm leading-relaxed text-zinc-300 space-y-4">
+<p>根据近期的评论区反馈和点击热力图显示，读者对于包含“可交互图表”或“代码实时预览”的文章具有极高的偏好。建议您在下一篇技术架构分析中，尝试加入更多的可视化元素，帮助读者更直观地理解抽象的逻辑概念。这种沉浸式的交互体验能够显著降低技术内容的认知门槛，提升文章的完读率。</p>
+<p>目前的核心读者群体对于“职业成长”和“个人知识体系构建”也表现出了浓厚兴趣。您可以在保持技术深度的同时，偶尔穿插一些关于个人学习方法论或工具链使用心得的随笔，这种“硬核技术+感性经验”的组合往往能引发更广泛的情感共鸣。读者反馈中，“真实感”和“系统性”是出现频率最高的正面评价词汇。</p>
+<p>建议缩短长篇博文的首段长度，通过一个引人入胜的提问或核心结论快速吸引读者注意力。数据显示，在前 30 秒内无法抓住读者的文章，其跳出率普遍高于 45%。通过优化开篇引导和增加清晰的内容索引，有望将平均停留时间再延长 15% 以上。同时，针对移动端的小屏幕优化，保持段落简短和层级清晰至关重要。</p>
+<p>在互动策略方面，可以尝试在文末设置一些开放性讨论话题，或者引导读者分享他们在相关领域的实践经验。这种社交化的互动不仅能提升文章在平台内的权重，还能为您积累宝贵的真实用户反馈，为后续选题迭代提供数据支撑。建立一个“读者建议选题箱”也是一个不错的尝试，能让粉丝感受到他们正在参与您的创作过程。</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Data Table Area with Tabs -->
+<div class="glass-panel rounded-xl overflow-hidden mt-xl">
+<!-- Tab Header -->
+<div class="px-6 border-b border-white/5 flex items-center bg-surface-container-low/30">
+<div class="flex gap-8">
+<button class="py-4 text-sm font-medium text-primary border-b-2 border-primary tab-btn" data-target="published">已发布 (124)</button>
+<button class="py-4 text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors tab-btn" data-target="drafts">草稿箱 (08)</button>
+</div>
+</div>
+<!-- Published View -->
+<div class="tab-content active" id="published">
+<!-- Table Container -->
+<div class="overflow-x-auto" style="min-height: 292px;">
+<table class="w-full text-left border-collapse table-fixed">
+<thead>
+<tr class="text-zinc-500 font-label-sm text-label-sm border-b border-white/5">
+<th class="px-6 py-4 font-medium w-[45%]">文章标题</th>
+<th class="px-6 py-4 font-medium w-[25%]">标签</th>
+<th class="px-6 py-4 font-medium w-[20%]">修改时间</th>
+<th class="px-6 py-4 font-medium w-[10%] text-right">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5 text-sm">
+<!-- Row 1 -->
+<tr class="hover:bg-white/[0.02] transition-colors group h-[73px]">
+<td class="px-6 py-4">
+<div class="font-medium text-white mb-0.5 truncate">AI 原生极简主义：界面即智能容器</div>
+<div class="text-xs text-zinc-500 truncate">探讨在人工智能时代，如何通过大量留白和精准排版重塑阅读体验...</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex gap-1 flex-wrap">
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">UI/UX</span>
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">AI</span>
+</div>
+</td>
+<td class="px-6 py-4 text-zinc-500 text-xs">2024-05-20 14:30</td>
+<td class="px-6 py-4 text-right">
+<div class="inline-block relative dropdown-container">
+<button class="p-2 text-zinc-400 hover:text-white transition-colors focus:outline-none" tabindex="0">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+<div class="dropdown-menu mt-2 py-1 glass-panel rounded-lg shadow-2xl border border-white/10 z-[9999]">
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">撤回</button>
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">编辑</button>
+<button class="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">删除</button>
+</div>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-white/[0.02] transition-colors group h-[73px]">
+<td class="px-6 py-4">
+<div class="font-medium text-white mb-0.5 truncate">2024 个人年度数字足迹图鉴</div>
+<div class="text-xs text-zinc-500 truncate">整理过去一年使用过的 SaaS 工具、阅读过的好书及开源贡献...</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex gap-1 flex-wrap">
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">年度回顾</span>
+</div>
+</td>
+<td class="px-6 py-4 text-zinc-500 text-xs">2024-05-10 09:15</td>
+<td class="px-6 py-4 text-right">
+<div class="inline-block relative dropdown-container">
+<button class="p-2 text-zinc-400 hover:text-white transition-colors focus:outline-none" tabindex="0">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+<div class="dropdown-menu mt-2 py-1 glass-panel rounded-lg shadow-2xl border border-white/10 z-[9999]">
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">撤回</button>
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">编辑</button>
+<button class="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">删除</button>
+</div>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-white/[0.02] transition-colors group h-[73px]">
+<td class="px-6 py-4">
+<div class="font-medium text-white mb-0.5 truncate">前端工程化的下一个十年</div>
+<div class="text-xs text-zinc-500 truncate">从构建工具到云端 IDE，探讨开发者生产力的极限边界...</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex gap-1 flex-wrap">
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">前端</span>
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">工程化</span>
+</div>
+</td>
+<td class="px-6 py-4 text-zinc-500 text-xs">2024-04-28 16:45</td>
+<td class="px-6 py-4 text-right">
+<div class="inline-block relative dropdown-container">
+<button class="p-2 text-zinc-400 hover:text-white transition-colors focus:outline-none" tabindex="0">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+<div class="dropdown-menu mt-2 py-1 glass-panel rounded-lg shadow-2xl border border-white/10 z-[9999]">
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">撤回</button>
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">编辑</button>
+<button class="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">删除</button>
+</div>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-white/[0.02] transition-colors group h-[73px]">
+<td class="px-6 py-4">
+<div class="font-medium text-white mb-0.5 truncate">构建响应式设计系统的新范式</div>
+<div class="text-xs text-zinc-500 truncate">基于 Container Queries 和逻辑属性的现代布局方案实践...</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex gap-1 flex-wrap">
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">CSS</span>
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">设计系统</span>
+</div>
+</td>
+<td class="px-6 py-4 text-zinc-500 text-xs">2024-04-15 11:20</td>
+<td class="px-6 py-4 text-right">
+<div class="inline-block relative dropdown-container">
+<button class="p-2 text-zinc-400 hover:text-white transition-colors focus:outline-none" tabindex="0">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+<div class="dropdown-menu mt-2 py-1 glass-panel rounded-lg shadow-2xl border border-white/10 z-[9999]">
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">撤回</button>
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">编辑</button>
+<button class="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">删除</button>
+</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 border-t border-white/5 flex items-center justify-between text-xs text-zinc-500 bg-surface-container-low/30">
+<div>显示 1 - 4，共 124 篇已发布文章 (每页 4 篇)</div>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary-container/10 text-primary-container font-medium border border-primary-container/20">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5">3</button>
+<span class="px-1">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5">25</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Drafts View -->
+<div class="tab-content" id="drafts">
+<!-- Table Container -->
+<div class="overflow-x-auto" style="min-height: 292px;">
+<table class="w-full text-left border-collapse table-fixed">
+<thead>
+<tr class="text-zinc-500 font-label-sm text-label-sm border-b border-white/5">
+<th class="px-6 py-4 font-medium w-[45%]">文章标题</th>
+<th class="px-6 py-4 font-medium w-[25%]">标签</th>
+<th class="px-6 py-4 font-medium w-[20%]">修改时间</th>
+<th class="px-6 py-4 font-medium w-[10%] text-right">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5 text-sm">
+<!-- Row 1: Draft -->
+<tr class="hover:bg-white/[0.02] transition-colors group h-[73px]">
+<td class="px-6 py-4">
+<div class="font-medium text-white mb-0.5 truncate">（草稿）LLM 推理优化指南：KV Cache 深度解析</div>
+<div class="text-xs text-zinc-500 truncate">探讨如何在有限的显存资源下，通过 KV Cache 量化和 PagedAttention 提升吞吐量...</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex gap-1 flex-wrap">
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">AI</span>
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">技术底层</span>
+</div>
+</td>
+<td class="px-6 py-4 text-zinc-500 text-xs">2024-05-22 11:30</td>
+<td class="px-6 py-4 text-right">
+<div class="inline-block relative dropdown-container">
+<button class="p-2 text-zinc-400 hover:text-white transition-colors focus:outline-none" tabindex="0">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+<div class="dropdown-menu mt-2 py-1 glass-panel rounded-lg shadow-2xl border border-white/10 z-[9999]">
+<button class="w-full text-left px-4 py-2 text-sm text-primary hover:bg-primary/10 transition-colors">发布</button>
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">编辑</button>
+<button class="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">删除</button>
+</div>
+</div>
+</td>
+</tr>
+<!-- Row 2: Draft -->
+<tr class="hover:bg-white/[0.02] transition-colors group h-[73px]">
+<td class="px-6 py-4">
+<div class="font-medium text-white mb-0.5 truncate">（草稿）Framer Motion 进阶：复杂序列动画编排</div>
+<div class="text-xs text-zinc-500 truncate">利用 useAnimate 和 Variants 实现极具表现力的页面入场动效...</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex gap-1 flex-wrap">
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">前端</span>
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">动效</span>
+</div>
+</td>
+<td class="px-6 py-4 text-zinc-500 text-xs">2024-05-21 09:00</td>
+<td class="px-6 py-4 text-right">
+<div class="inline-block relative dropdown-container">
+<button class="p-2 text-zinc-400 hover:text-white transition-colors focus:outline-none" tabindex="0">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+<div class="dropdown-menu mt-2 py-1 glass-panel rounded-lg shadow-2xl border border-white/10 z-[9999]">
+<button class="w-full text-left px-4 py-2 text-sm text-primary hover:bg-primary/10 transition-colors">发布</button>
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">编辑</button>
+<button class="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">删除</button>
+</div>
+</div>
+</td>
+</tr>
+<!-- Row 3: Draft -->
+<tr class="hover:bg-white/[0.02] transition-colors group h-[73px]">
+<td class="px-6 py-4">
+<div class="font-medium text-white mb-0.5 truncate">（草稿）个人工作站自动化：从 Raycast 到 Hammerspoon</div>
+<div class="text-xs text-zinc-500 truncate">如何通过 Lua 脚本接管 macOS 的每一个窗口，打造极致效率环境...</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex gap-1 flex-wrap">
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">自动化</span>
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">效率工具</span>
+</div>
+</td>
+<td class="px-6 py-4 text-zinc-500 text-xs">2024-05-19 15:45</td>
+<td class="px-6 py-4 text-right">
+<div class="inline-block relative dropdown-container">
+<button class="p-2 text-zinc-400 hover:text-white transition-colors focus:outline-none" tabindex="0">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+<div class="dropdown-menu mt-2 py-1 glass-panel rounded-lg shadow-2xl border border-white/10 z-[9999]">
+<button class="w-full text-left px-4 py-2 text-sm text-primary hover:bg-primary/10 transition-colors">发布</button>
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">编辑</button>
+<button class="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">删除</button>
+</div>
+</div>
+</td>
+</tr>
+<!-- Row 4: Draft -->
+<tr class="hover:bg-white/[0.02] transition-colors group h-[73px]">
+<td class="px-6 py-4">
+<div class="font-medium text-white mb-0.5 truncate">（草稿）WebGPU 开启前端渲染的新篇章</div>
+<div class="text-xs text-zinc-500 truncate">脱离 WebGL 的限制，直接在浏览器中进行大规模通用计算和图形渲染...</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex gap-1 flex-wrap">
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">图形学</span>
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-bright text-zinc-400">WebGPU</span>
+</div>
+</td>
+<td class="px-6 py-4 text-zinc-500 text-xs">2024-05-18 10:00</td>
+<td class="px-6 py-4 text-right">
+<div class="inline-block relative dropdown-container">
+<button class="p-2 text-zinc-400 hover:text-white transition-colors focus:outline-none" tabindex="0">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+<div class="dropdown-menu mt-2 py-1 glass-panel rounded-lg shadow-2xl border border-white/10 z-[9999]">
+<button class="w-full text-left px-4 py-2 text-sm text-primary hover:bg-primary/10 transition-colors">发布</button>
+<button class="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-white/10 transition-colors">编辑</button>
+<button class="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">删除</button>
+</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 border-t border-white/5 flex items-center justify-between text-xs text-zinc-500 bg-surface-container-low/30">
+<div>显示 1 - 4，共 8 篇草稿文章 (每页 4 篇)</div>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary-container/10 text-primary-container font-medium border border-primary-container/20">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer -->
+<footer class="w-full py-8 px-12 flex justify-between items-center ml-64 bg-zinc-950 border-t border-white/10 z-30 fixed bottom-0 left-0 right-0">
+<div class="text-xs font-light tracking-widest font-inter text-zinc-500">
+        Copyright © 2026 Memory的小破站
+    </div>
+<div class="flex gap-6">
+<a class="text-xs font-light tracking-widest font-inter text-zinc-600 hover:text-blue-400 opacity-80 hover:opacity-100 transition-opacity" href="#">文档</a>
+<a class="text-xs font-light tracking-widest font-inter text-zinc-600 hover:text-blue-400 opacity-80 hover:opacity-100 transition-opacity" href="#">系统状态</a>
+<a class="text-xs font-light tracking-widest font-inter text-zinc-600 hover:text-blue-400 opacity-80 hover:opacity-100 transition-opacity" href="#">隐私政策</a>
+</div>
+</footer>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active styling from all tabs
+                tabs.forEach(t => {
+                    t.classList.remove('text-primary', 'border-b-2', 'border-primary');
+                    t.classList.add('text-zinc-500', 'hover:text-zinc-300');
+                });
+
+                // Add active styling to clicked tab
+                tab.classList.add('text-primary', 'border-b-2', 'border-primary');
+                tab.classList.remove('text-zinc-500', 'hover:text-zinc-300');
+
+                // Hide all contents
+                contents.forEach(c => c.classList.remove('active'));
+
+                // Show target content
+                const targetId = tab.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+    });
+</script>
+</body></html>

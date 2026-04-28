@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>超越 RAG：探索下一代上下文感知 AI 系统的构建范式 - Memory的小破站</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#e2dfff",
+                        "surface-container-highest": "#353437",
+                        "on-surface": "#e5e1e4",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-low": "#1c1b1d",
+                        "on-surface-variant": "#c1c6d7",
+                        "tertiary": "#ffb595",
+                        "on-primary-fixed-variant": "#004493",
+                        "surface-bright": "#39393b",
+                        "surface-container": "#201f21",
+                        "on-tertiary-container": "#4c1a00",
+                        "outline": "#8b90a0",
+                        "on-secondary-fixed": "#0c006a",
+                        "error": "#ffb4ab",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-container-high": "#2a2a2c",
+                        "outline-variant": "#414755",
+                        "error-container": "#93000a",
+                        "primary": "#adc6ff",
+                        "background": "#131315",
+                        "on-primary": "#002e69",
+                        "on-tertiary-fixed": "#351000",
+                        "surface-container-lowest": "#0e0e10",
+                        "on-secondary": "#1c0b9f",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary": "#571e00",
+                        "surface-tint": "#adc6ff",
+                        "inverse-surface": "#e5e1e4",
+                        "secondary-container": "#3834b6",
+                        "surface-dim": "#131315",
+                        "surface-variant": "#353437",
+                        "on-background": "#e5e1e4",
+                        "primary-container": "#4b8eff",
+                        "on-secondary-container": "#b2b1ff",
+                        "inverse-primary": "#005bc1",
+                        "on-primary-container": "#00285c",
+                        "tertiary-fixed": "#ffdbcc",
+                        "secondary": "#c2c1ff",
+                        "tertiary-container": "#ef6719",
+                        "surface": "#131315",
+                        "tertiary-fixed-dim": "#ffb595",
+                        "on-tertiary-fixed-variant": "#7c2e00",
+                        "on-secondary-fixed-variant": "#3631b4",
+                        "on-primary-fixed": "#001a41",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#313032",
+                        "secondary-fixed-dim": "#c2c1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "8px",
+                        "md": "16px",
+                        "unit": "4px",
+                        "xl": "48px",
+                        "lg": "24px",
+                        "container-max": "800px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter, PingFang SC"],
+                        "headline-md": ["Inter, PingFang SC"],
+                        "body-main": ["Inter, PingFang SC"],
+                        "display-lg": ["Inter, PingFang SC"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["13px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-main": ["17px", { "lineHeight": "1.8", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-main antialiased min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 border-b border-outline-variant/20 bg-surface/80 backdrop-blur-[20px] h-16 shrink-0">
+<div class="max-w-[1200px] mx-auto w-full px-8 h-full flex justify-between items-center">
+<!-- Logo -->
+<a class="flex items-center gap-2 group" href="#">
+<span class="material-symbols-outlined text-primary group-hover:text-primary-fixed transition-colors" style="font-variation-settings: 'FILL' 1;">
+                    memory
+                </span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight">Memory的小破站</span>
+</a>
+<!-- Right Actions -->
+<div class="flex items-center gap-6">
+<!-- Search -->
+<div class="relative hidden md:block group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-lg" style="font-size: 18px;">
+                        search
+                    </span>
+<input class="w-64 bg-surface-container/50 border border-outline-variant/50 rounded-full py-1.5 pl-10 pr-4 font-label-sm text-label-sm text-on-surface placeholder:text-outline outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all bg-transparent" placeholder="搜索内容、标签或 AI 洞察..." type="text"/>
+</div>
+<div class="w-px h-4 bg-outline-variant/50 hidden md:block"></div>
+<!-- Logged-in State -->
+<div class="flex items-center gap-3">
+<button class="hover:bg-white/5 rounded-lg transition-all duration-300 p-2 active:scale-95 transition-transform text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-surface-variant overflow-hidden border border-outline-variant ml-2">
+<img alt="用户头像" class="w-full h-full object-cover" data-alt="close-up portrait of young woman with subtle natural lighting against neutral dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiq2D3rFWiDdu-TeThvSs7umd0eYlSvpv3zLTAtsiNqVPdzyi74Iea97s6fjRgy_41LnG0uOCx7oPin3MLVnKrx8HkvIi8zd6Fr8qEg09A7cka7uQ-EMQkvW7GjsOi5_85LMdlodaM8tcT3L2pyJ8h_fdq467CcCzhZoadoUfXbr6nLs1RISIYQkN87UT-PxSCQaFSMqu0Jl5C1sMXf1kbYts0VSgYIO4aqKRcdmolU-lYaIu7_TAfcLOJZraNVv1iNIgplAs7g5oK"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-[100px] pb-[120px]">
+<div class="max-w-[1600px] mx-auto w-full grid grid-cols-1 md:grid-cols-[1fr_minmax(auto,800px)_1fr] relative">
+<!-- Floating Sidebar (Left) -->
+<div class="hidden md:flex justify-end items-start h-full">
+<aside class="sticky top-[50vh] -translate-y-1/2 mr-8 xl:mr-12 w-12 flex flex-col gap-4 z-10">
+<div class="bg-surface-container-low/50 backdrop-blur-md border border-outline-variant/30 rounded-xl py-4 px-2 flex flex-col items-center gap-4">
+<!-- Like -->
+<button class="rounded-full hover:bg-surface-variant flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors relative group w-12 h-12">
+<span class="material-symbols-outlined text-[24px]">favorite</span>
+<span class="absolute bg-surface-container-highest text-on-surface text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-outline-variant/30 group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors top-0 right-0">12</span>
+</button>
+<!-- Comment -->
+<button class="rounded-full hover:bg-surface-variant flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors relative group w-12 h-12">
+<span class="material-symbols-outlined text-[24px]">chat_bubble</span>
+<span class="absolute bg-surface-container-highest text-on-surface text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-outline-variant/30 group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors top-0 right-0">2</span>
+</button>
+<!-- Bookmark -->
+<button class="rounded-full hover:bg-surface-variant flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors w-12 h-12">
+<span class="material-symbols-outlined text-[24px]">bookmark</span>
+</button>
+<!-- Share -->
+<button class="rounded-full hover:bg-surface-variant flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors w-12 h-12">
+<span class="material-symbols-outlined text-[24px]">share</span>
+</button>
+</div>
+</aside>
+</div>
+<article class="w-full min-w-0 px-4 md:px-0">
+<!-- Article Header -->
+<header class="mb-xl">
+<div class="flex items-center gap-md text-on-surface-variant font-label-sm text-label-sm mb-lg">
+<span>发布于 2024-05-24</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span>阅读约 8 分钟</span>
+</div>
+<h1 class="font-display-lg text-display-lg text-on-background mb-lg">超越 RAG：探索下一代上下文感知 AI 系统的构建范式</h1>
+<div class="flex items-center gap-md mt-lg pt-lg border-t border-surface-variant">
+<div class="h-10 w-10 rounded-full bg-surface-variant overflow-hidden border border-outline-variant">
+<img alt="作者头像" class="w-full h-full object-cover" data-alt="portrait of a man with serious expression in dark muted lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA89JiTwXw7v5pRdtnXO7D42PclRpUWndebW_6rNGnLuQXJ2TooSzTrRYdNHbfhwdoFqVkTk-j9JiPtX36ANGVBrK7q6pfHwn_AusEMNFHv5QKWpZdk0W44rqPnZnlLRjLDDGa6MBkb8PY1vOf-65EOUa8SC83_h-q00nZ2lhsxzAWcWUdtEx4XLDhh8RE9yUcVbddhMlfa5qQoA5-f0THkeBnm1LWSRi8t150HGVIeyRBFCNrE9MopYmxLmEtf8LAefObyUJfJzZOR"/>
+</div>
+<div>
+<div class="font-label-sm text-label-sm text-on-surface">Memory</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant opacity-80">独立开发者 / AI 研究员</div>
+</div>
+</div>
+</header>
+<!-- Markdown Content Simulation -->
+<div class="prose prose-invert prose-lg max-w-none prose-p:text-on-surface prose-p:leading-[1.8] prose-p:mb-lg prose-headings:text-on-background prose-headings:font-semibold prose-a:text-primary-container hover:prose-a:text-primary transition-colors prose-strong:text-on-surface prose-strong:font-semibold">
+<p>在过去的十二个月里，检索增强生成（RAG）几乎成为了企业级 AI 应用的默认架构。通过将外部知识库与大语言模型（LLM）结合，我们成功缓解了幻觉问题，并赋予了模型处理私有数据的能力。然而，随着应用场景的复杂化，传统 RAG 架构的局限性也日益凸显。</p>
+<h2 class="font-headline-md text-headline-md mt-xl mb-md">当前 RAG 架构的困境</h2>
+<p>传统的 RAG 往往依赖简单的向量相似度搜索（Dense Retrieval）。这种基于语义嵌入（Embeddings）的方法在处理事实性查询时表现良好，但在以下场景中显得力不从心：</p>
+<ul class="list-disc pl-lg mb-lg text-on-surface space-y-xs">
+<li><strong>多跳推理 (Multi-hop Reasoning)</strong>：当回答一个问题需要跨越多个文档收集线索时。</li>
+<li><strong>全局语境缺失</strong>：向量切片（Chunking）破坏了文档的原始上下文结构。</li>
+<li><strong>实体关系弱化</strong>：传统的文本块很难捕捉文档中实体间复杂的图谱关系。</li>
+</ul>
+<h2 class="font-headline-md text-headline-md mt-xl mb-md">基于图的上下文感知系统 (GraphRAG)</h2>
+<p>为了突破上述瓶颈，微软提出了 GraphRAG。这并非简单的将知识图谱（Knowledge Graph）与大模型结合，而是一种全新的文本处理范式。系统会在构建索引阶段，利用 LLM 主动从原始语料中提取实体、关系以及实体间的社区（Communities）。</p>
+<!-- Code Block -->
+<div class="my-lg rounded-xl overflow-hidden bg-[#0d0d0f] border border-surface-variant font-mono text-sm">
+<div class="flex items-center justify-between px-md py-xs bg-surface-container-high border-b border-surface-variant">
+<span class="text-on-surface-variant text-xs">python</span>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-unit">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+<div class="p-md text-on-surface-variant overflow-x-auto">
+<pre><code>from graphrag.query import GraphQueryEngine
+from graphrag.index import build_graph_index
+
+# 1. 构建图谱索引 (在后台发生)
+graph_index = build_graph_index(
+    documents=corpus,
+    llm_extractor=GPT4oExtractor()
+)
+
+# 2. 初始化查询引擎
+engine = GraphQueryEngine(index=graph_index)
+
+# 3. 执行全局上下文感知查询
+response = engine.query(
+    "总结本项目中涉及的所有安全协议，并说明它们之间的依赖关系。"
+)
+print(response.synthesized_answer)</code></pre>
+</div>
+</div>
+<p>这种架构的优势在于，当面对宏观的、全局性的问题（例如“总结这段历史时期的主要矛盾”），系统不再是盲目地抽取几块文本，而是基于预先构建的社区图谱生成高维度的摘要。</p>
+<blockquote class="border-l-4 border-primary-container pl-lg py-unit my-lg italic text-on-surface-variant bg-surface-container-low/30 rounded-r-lg">
+                    “The future of AI is not just about retrieving information, but understanding the interconnectedness of that information within a broader context.”
+                </blockquote>
+</div>
+<!-- Tags -->
+<div class="mt-xl pt-lg border-t border-surface-variant flex flex-wrap gap-md">
+<span class="px-md py-unit rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm border border-outline-variant/50 hover:bg-surface-container-high hover:text-primary-container cursor-pointer transition-colors">#人工智能</span>
+<span class="px-md py-unit rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm border border-outline-variant/50 hover:bg-surface-container-high hover:text-primary-container cursor-pointer transition-colors">#大语言模型</span>
+<span class="px-md py-unit rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm border border-outline-variant/50 hover:bg-surface-container-high hover:text-primary-container cursor-pointer transition-colors">#前端开发</span>
+</div>
+<!-- Comments Section -->
+<section class="mt-xl">
+<h3 class="font-headline-md text-headline-md text-on-background mb-lg">评论 (2)</h3>
+<!-- Comment Input -->
+<div class="flex gap-md mb-xl">
+<div class="h-10 w-10 rounded-full bg-surface-variant overflow-hidden shrink-0 border border-outline-variant">
+<img alt="当前用户头像" class="w-full h-full object-cover" data-alt="close-up portrait of young woman with subtle natural lighting against neutral dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACglvVf-ltHkzTOluzvCs6ETYb4ilkDiJZttIBMuPTsHC8sYBG0B-VYxhr2K7Xamt572QnURGhkaHuR7i4CZEjVm51OmfYGcQMyzeE4fyT_QZGLqBVu_LyjCnWwOfZ5z1STtXcVDce33BpYZQWFOpTJt4tC2JxD_mhHqUZkOTerX3CAJmGkBfx0hKfF6z4vKtQywm_fEtVjaznn0L6xHrLF8R8aS6VLOimJUcxxqogGiWWcukpqJJszEGjJRrsm0O_p79NwtSoLDlJ"/>
+</div>
+<div class="flex-grow">
+<textarea class="w-full bg-surface-container-low text-on-surface border border-outline-variant rounded-lg p-md focus:ring-1 focus:ring-primary-container focus:border-primary-container transition-all resize-none placeholder-on-surface-variant/50" placeholder="分享你的想法..." rows="3"></textarea>
+<div class="flex justify-end mt-sm">
+<button class="bg-primary-container text-on-primary-container px-md py-xs rounded-lg font-label-sm text-label-sm hover:shadow-[0_0_15px_rgba(75,142,255,0.3)] transition-all">发布评论</button>
+</div>
+</div>
+</div>
+<!-- Comment List -->
+<div class="space-y-lg">
+<div class="flex gap-md">
+<div class="h-10 w-10 rounded-full bg-surface-variant overflow-hidden shrink-0 border border-outline-variant">
+<img alt="评论者头像" class="w-full h-full object-cover" data-alt="portrait of smiling man in casual shirt against clean background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA__nlmwdMUxyV5pKdRa_FWFNMi-9MRxNhevNfZVStLLy6wBB_nAyDsVtD2lmyuaMZSgVUYUjkKnQ7AvJy5fJuTRg8dz52bRjgJKkCzAAczA8BFomc6CkRUTs7XNpesGQGi65-uDxG-4iq56sRcCf04YTYXZAbhipCIEuZQwJJlQyk6bSxll9k43QDnWU7urIgxGK72aMzlEXaRVZ6KoLGkPWgu3dsREfPt-MmrdhBHQu00BbwJv3AfgcFjF0cbtR-njLyJm_z2EOPx"/>
+</div>
+<div>
+<div class="flex items-center gap-xs mb-unit">
+<span class="font-label-sm text-label-sm text-on-surface">Alex Chen</span>
+<span class="font-label-sm text-xs text-on-surface-variant/60">2小时前</span>
+</div>
+<p class="text-on-surface-variant text-sm leading-relaxed">非常深入的分析。GraphRAG 确实在解决全局摘要问题上表现出色，但构建索引时的 token 消耗是个不小的挑战，不知道作者有没有在成本控制方面的建议？</p>
+<div class="flex items-center gap-md mt-xs">
+<button class="text-on-surface-variant/60 hover:text-primary-container transition-colors flex items-center gap-unit text-xs">
+<span class="material-symbols-outlined text-[16px]">thumb_up</span> 12
+                                </button>
+<button class="text-on-surface-variant/60 hover:text-on-surface transition-colors flex items-center gap-unit text-xs">
+<span class="material-symbols-outlined text-[16px]">reply</span> 回复
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</article>
+<!-- Floating Table of Contents (Right) -->
+<div class="hidden md:flex justify-start items-start h-full">
+<aside class="hidden lg:block sticky top-[50vh] -translate-y-1/2 xl:ml-6 w-full max-w-[260px] z-10 px-6">
+<div class="bg-surface-container-low/50 backdrop-blur-md border border-outline-variant/30 rounded-xl p-6 max-h-[85vh] overflow-y-auto w-full">
+<h4 class="text-on-surface font-headline-md text-xl mb-6 font-bold text-center">目录</h4>
+<nav class="border-l border-surface-variant">
+<ul class="space-y-2 font-body-main text-on-surface-variant text-base">
+<li><a class="hover:text-primary transition-colors block truncate pl-3 border-l -ml-[1px] border-transparent hover:border-primary py-1.5" href="#">超越 RAG：探索下一代...</a></li>
+<li><a class="hover:text-primary transition-colors block truncate pl-6 text-sm border-l -ml-[1px] border-transparent hover:border-primary py-1.5" href="#">当前 RAG 架构的困境</a></li>
+<li><a class="hover:text-primary transition-colors block truncate pl-6 text-sm border-l -ml-[1px] border-transparent hover:border-primary py-1.5" href="#">基于图的上下文感知系统...</a></li>
+</ul>
+</nav>
+</div>
+</aside>
+</div>
+</div>
+</main>
+<!-- Footer (Shared Component JSON) -->
+<footer class="fixed bottom-0 w-full z-50 border-t border-outline-variant/20 bg-surface/80 backdrop-blur-[20px] py-4 shrink-0">
+<div class="max-w-[800px] mx-auto flex flex-col items-center gap-2">
+<p class="font-['Inter'] text-xs uppercase tracking-widest text-zinc-600 opacity-80 hover:opacity-100 transition-opacity">
+                Copyright © 2026 Memory的小破站
+            </p>
+</div>
+</footer>
+<!-- AI Chat Large Modal Panel -->
+<div class="fixed bottom-[150px] right-xl w-[650px] max-w-[90vw] h-[600px] max-h-[70vh] bg-surface-container-high/95 backdrop-blur-3xl border border-surface-variant/50 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] flex-col overflow-hidden hidden z-[60] origin-bottom-right transition-all duration-300" id="ai-chat-panel">
+<!-- Header -->
+<div class="p-lg border-b border-surface-variant flex items-center justify-between bg-surface-container-highest/80 backdrop-blur-md">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
+<span class="material-symbols-outlined text-primary text-2xl">smart_toy</span>
+</div>
+<div>
+<h3 class="font-headline-md text-lg text-on-surface font-semibold m-0">小智 AI 助手</h3>
+<p class="text-xs text-on-surface-variant mt-0.5">全栈开发与AI研究导师</p>
+</div>
+</div>
+<div class="flex items-center gap-md"><button class="text-on-surface-variant hover:text-error transition-colors p-2 rounded-full hover:bg-error/10" title="清空对话">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors p-2 rounded-full hover:bg-white/5">
+<span class="material-symbols-outlined text-xl">refresh</span>
+</button>
+</div>
+</div>
+<!-- Chat History -->
+<div class="flex-grow py-lg px-md overflow-y-auto space-y-lg flex flex-col bg-surface-dim/30">
+<div class="text-center">
+<span class="text-xs text-on-surface-variant/50 font-label-sm bg-surface-container px-3 py-1 rounded-full">昨天 14:30</span>
+</div>
+<div class="flex justify-end items-start gap-3 w-full">
+<div class="bg-surface-container text-on-surface text-sm p-4 rounded-2xl rounded-tr-sm max-w-[75%] shadow-sm border border-outline-variant/30">
+        帮我总结一下这篇文章的核心观点。
+    </div>
+<div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden shrink-0 border border-outline-variant">
+<img alt="用户头像" class="w-full h-full object-cover" data-alt="user portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiq2D3rFWiDdu-TeThvSs7umd0eYlSvpv3zLTAtsiNqVPdzyi74Iea97s6fjRgy_41LnG0uOCx7oPin3MLVnKrx8HkvIi8zd6Fr8qEg09A7cka7uQ-EMQkvW7GjsOi5_85LMdlodaM8tcT3L2pyJ8h_fdq467CcCzhZoadoUfXbr6nLs1RISIYQkN87UT-PxSCQaFSMqu0Jl5C1sMXf1kbYts0VSgYIO4aqKRcdmolU-lYaIu7_TAfcLOJZraNVv1iNIgplAs7g5oK"/>
+</div>
+</div>
+<div class="flex justify-start items-start gap-3 w-full">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0 border border-primary/30">
+<span class="material-symbols-outlined text-primary text-xl">smart_toy</span>
+</div>
+<div class="bg-surface-container-low border border-surface-variant text-on-surface text-sm p-4 rounded-2xl rounded-tl-sm max-w-[85%] relative shadow-sm leading-relaxed space-y-4">
+<p>本文主要探讨了传统RAG架构的局限性，并介绍了微软提出的GraphRAG作为下一代上下文感知系统的构建范式。</p>
+<p><strong>核心观点包括：</strong></p>
+<ul class="list-disc pl-5 space-y-2">
+<li>传统 RAG 在面对多跳推理、全局语境理解和复杂实体关系时存在明显不足。</li>
+<li>GraphRAG 通过在索引阶段利用 LLM 构建图谱（实体、关系、社区），实现了从简单的文本检索向深度知识图谱检索的转变。</li>
+<li>这种新范式特别适合回答宏观的、需要综合全局信息的复杂问题。</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Input -->
+<div class="p-lg border-t border-surface-variant bg-surface-container-low/80 backdrop-blur-md">
+<div class="relative flex items-center bg-surface-container border border-outline-variant/60 rounded-xl overflow-hidden focus-within:border-primary/80 transition-all shadow-inner group">
+<input class="w-full bg-transparent border-none text-base text-on-surface focus:ring-0 px-xl py-5 placeholder-on-surface-variant/50" placeholder="向小智提问关于本文的任何问题..." type="text"/>
+<button class="p-3 text-on-surface-variant group-focus-within:text-primary hover:bg-primary/10 rounded-xl mr-sm transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]">send</span>
+</button>
+</div>
+<div class="text-center mt-3">
+<span class="text-[11px] text-on-surface-variant/40">AI 生成的内容可能不准确，请注意甄别。</span>
+</div>
+</div>
+</div>
+<!-- AI Assistant Floating Action Button (Custom Component) -->
+<div class="fixed bottom-[80px] right-xl z-50 flex flex-col items-end gap-md">
+<!-- FAB -->
+<button class="w-14 h-14 rounded-full bg-surface-container-high border border-primary-container/50 flex items-center justify-center shadow-[0_0_20px_rgba(75,142,255,0.15)] hover:shadow-[0_0_30px_rgba(75,142,255,0.3)] transition-all group relative" onclick="toggleChat()">
+<div class="absolute inset-0 rounded-full bg-primary-container/20 animate-ping opacity-20"></div>
+<span class="material-symbols-outlined text-primary-container group-hover:scale-110 transition-transform">auto_awesome</span>
+</button>
+</div>
+<script>
+    // Utility to handle hidden/flex toggle correctly for the chat panel
+    const chatPanel = document.getElementById('ai-chat-panel');
+    const toggleChat = () => {
+        if(chatPanel.classList.contains('hidden')) {
+            chatPanel.classList.remove('hidden');
+            chatPanel.classList.add('flex');
+        } else {
+            chatPanel.classList.add('hidden');
+            chatPanel.classList.remove('flex');
+        }
+    };
+</script>
+</body></html>
