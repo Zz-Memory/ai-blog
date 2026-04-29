@@ -7,3 +7,328 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
+
+enum UserRole {
+  BLOGGER
+  VISITOR
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+  DELETED
+}
+
+enum VerificationPurpose {
+  REGISTER
+  RESET_PASSWORD
+  BIND_EMAIL
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  DELETED
+}
+
+enum MediaAssetType {
+  AVATAR
+  POST_IMAGE
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DELETED
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  REPLY
+  SYSTEM
+  REVIEW
+  NEW_USER
+}
+
+enum AiChatMode {
+  POST_CONTEXT
+  GENERAL
+}
+
+enum AiChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model User {
+  id             String     @id @default(cuid())
+  email          String     @unique
+  username       String     @unique
+  passwordHash   String
+  role           UserRole   @default(VISITOR)
+  avatarUrl      String?
+  intro          String?
+  status         UserStatus @default(ACTIVE)
+  emailVerifiedAt DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  deletedAt      DateTime?
+
+  sessions           Session[]
+  verificationCodes   VerificationCode[]
+  posts              Post[]
+  mediaAssets        MediaAsset[] @relation("MediaAssetUploader")
+  comments           Comment[]
+  likes              Like[]
+  collectionFolders  CollectionFolder[]
+  bookmarks          Bookmark[]
+  browseHistories    BrowseHistory[]
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsSent  Notification[] @relation("NotificationSender")
+  aiChatSessions     AiChatSession[]
+}
+
+model VerificationCode {
+  id         String                @id @default(cuid())
+  email      String
+  code       String
+  purpose    VerificationPurpose
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime              @default(now())
+
+  @@index([email, purpose])
+}
+
+model Session {
+  id               String   @id @default(cuid())
+  userId           String
+  sessionTokenHash String   @unique
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Post {
+  id              String     @id @default(cuid())
+  authorId        String
+  title           String
+  slug            String     @unique
+  summary         String?
+  contentMarkdown String
+  contentHtml     String?
+  status          PostStatus @default(DRAFT)
+  publishedAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
+
+  author         User               @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  comments       Comment[]
+  likes          Like[]
+  bookmarks      Bookmark[]
+  browseHistories BrowseHistory[]
+  tags           PostTag[]
+  mediaRefs      PostMediaRef[]
+  aiChatSessions AiChatSession[]
+
+  @@index([authorId])
+  @@index([status, publishedAt])
+}
+
+model MediaAsset {
+  id          String          @id @default(cuid())
+  uploaderId  String?
+  bucket      String
+  type        MediaAssetType
+  url         String
+  storagePath String
+  mimeType    String?
+  fileSize    Int?
+  width       Int?
+  height      Int?
+  isUsed      Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+
+  uploader  User?           @relation("MediaAssetUploader", fields: [uploaderId], references: [id], onDelete: SetNull)
+  postRefs  PostMediaRef[]
+
+  @@unique([bucket, storagePath])
+  @@index([uploaderId, createdAt])
+}
+
+model PostMediaRef {
+  id          String   @id @default(cuid())
+  postId      String
+  mediaAssetId String
+  createdAt   DateTime @default(now())
+  deletedAt   DateTime?
+
+  post       Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  mediaAsset MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, mediaAssetId])
+  @@index([mediaAssetId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  posts PostTag[]
+}
+
+model PostTag {
+  postId    String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+}
+
+model Comment {
+  id        String        @id @default(cuid())
+  postId    String
+  userId    String
+  parentId  String?
+  content   String
+  status    CommentStatus @default(PENDING)
+  likeCount Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
+
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+}
+
+model CollectionFolder {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookmarks Bookmark[]
+
+  @@index([userId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  folderId  String?
+  createdAt DateTime @default(now())
+
+  user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post   Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  folder CollectionFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, postId])
+  @@index([folderId])
+}
+
+model BrowseHistory {
+  id         String   @id @default(cuid())
+  userId     String
+  postId     String
+  visitedAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([userId, visitedAt])
+  @@index([postId])
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  recipientId String
+  senderId   String?
+  type       NotificationType
+  title      String
+  content    String
+  linkUrl    String?
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+  readAt     DateTime?
+  deletedAt  DateTime?
+
+  recipient User  @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  sender    User? @relation("NotificationSender", fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId, createdAt])
+  @@index([senderId])
+}
+
+model AiChatSession {
+  id        String     @id @default(cuid())
+  userId    String
+  postId    String
+  mode      AiChatMode @default(POST_CONTEXT)
+  title     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  messages AiChatMessage[]
+
+  @@index([userId, createdAt])
+  @@index([postId])
+}
+
+model AiChatMessage {
+  id         String      @id @default(cuid())
+  sessionId  String
+  role       AiChatRole
+  content    String
+  tokenCount Int?
+  createdAt  DateTime    @default(now())
+
+  session AiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
