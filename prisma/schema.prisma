@@ -3,11 +3,10 @@ generator client {
 }
 
 // 数据源配置：使用 PostgreSQL 作为主数据库，
-// `DATABASE_URL` 用于 Prisma Client 的常规连接，`DIRECT_URL` 供迁移/直连场景使用。
+// `DATABASE_URL` 用于 Prisma Client 的常规连接
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 // 用户角色：区分内容创作者与普通访客。
