@@ -38,7 +38,6 @@
   - 站点顶部导航栏
   - 文章标题与元信息
   - 文章正文 Markdown 渲染区
-  - 正文图片展示
   - 文章标签区
   - 点赞 / 评论 / 收藏 / 分享浮动操作栏
   - 评论发布区
@@ -155,7 +154,7 @@
 - **页面定位**：访客端个人中心子页
 - **主要功能模块**：
   - 个人资料编辑
-  - 头像设置
+  - 使用默认头像展示用户身份
   - 昵称 / 邮箱 / 密码修改
   - 绑定邮箱与安全信息管理
   - 账号注销入口
@@ -286,8 +285,7 @@
   - 目录 / 导入 / 编辑模式 / 预览模式切换
   - Markdown 文本编辑区
   - Markdown 预览区
-  - 图片插入与展示
-  - 图片引用删除后自动清理
+  - 不再支持博客图片上传与插入
   - 独立底部状态栏
 - **建议组件命名**：
   - `EditorHeader`
@@ -400,9 +398,6 @@ app/
 │  ├─ tags/
 │  │  └─ [slug]/
 │  │     └─ page.tsx
-│  ├─ categories/
-│  │  └─ [slug]/
-│  │     └─ page.tsx
 │  └─ search/
 │     └─ page.tsx
 │
@@ -467,11 +462,11 @@ app/
 │     │  │  └─ page.tsx
 │     │  └─ chat/
 │     │     └─ page.tsx
-│     ├─ categories/
-│     │  └─ page.tsx
 │     ├─ tags/
 │     │  └─ page.tsx
-│     └─ settings/
+│     ├─ settings/
+│     │  └─ page.tsx
+│     └─ categories/
 │        └─ page.tsx
 │
 ├─ api/
@@ -534,7 +529,6 @@ components/
 │  ├─ dropdown.tsx
 │  ├─ tabs.tsx
 │  ├─ badge.tsx
-│  ├─ avatar.tsx
 │  ├─ tooltip.tsx
 │  ├─ pagination.tsx
 │  ├─ skeleton.tsx
@@ -630,10 +624,6 @@ components/
 │  ├─ notification-badge.tsx
 │  └─ notification-toast.tsx
 ├─ media/
-│  ├─ avatar-picker.tsx
-│  ├─ image-uploader.tsx
-│  ├─ image-picker.tsx
-│  ├─ media-library.tsx
 │  └─ file-dropzone.tsx
 └─ shared/
    ├─ search-bar.tsx
@@ -651,7 +641,6 @@ components/
 lib/
 ├─ auth/
 │  ├─ session.ts
-│  ├─ jwt.ts
 │  ├─ permissions.ts
 │  ├─ password.ts
 │  └─ rate-limit.ts
@@ -701,12 +690,229 @@ types/
 ├─ comment.ts
 ├─ notification.ts
 ├─ user.ts
-├─ media.ts
 ├─ ai.ts
 └─ common.ts
 ```
 
-## 四、与课题要求的功能映射
+## 四、数据库架构与 `docs/DB.md` 对齐说明
+
+`docs/DB.md` 定义的是本项目的核心数据模型。结合当前 Prisma schema，可将数据库层抽象为以下几个子系统：
+
+### 1. 用户与认证子系统
+对应实体：
+- `User`
+- `VerificationCode`
+- `Session`
+
+核心职责：
+- 维护登录账号、角色与状态
+- 支持邮箱验证码注册、找回密码、绑定邮箱、注销等流程
+- 保存登录会话，支持退出登录与过期控制
+
+### 2. 内容管理子系统
+对应实体：
+- `Post`
+- `Tag`
+- `PostTag`
+
+核心职责：
+- 管理文章的草稿、发布、撤回、删除等生命周期
+- 通过标签实现文章检索与归档
+- 使用显式中间表维护文章与标签的多对多关系
+
+### 3. 互动系统子系统
+对应实体：
+- `Comment`
+- `Like`
+- `CollectionFolder`
+- `Bookmark`
+- `BrowseHistory`
+- `Notification`
+
+核心职责：
+- 支持评论与回复、审核与软删除
+- 支持点赞与收藏，并通过唯一约束防止重复行为
+- 支持收藏夹归档与浏览记录追踪
+- 支持站内通知中心，涵盖点赞、评论、回复、系统与新用户提醒
+
+### 4. AI 模块子系统
+对应实体：
+- `AiChatSession`
+- `AiChatMessage`
+
+核心职责：
+- 记录文章详情页中的 AI 问答会话
+- 支持文章上下文问答与通用问答
+- 保存完整消息序列，便于历史回放与流式对话
+
+## 五、核心关系说明
+
+### 1. 用户与文章
+- 一个用户可以创建多篇文章
+- `User 1 - N Post`
+- `Post.authorId -> User.id`
+
+### 2. 用户与评论
+- 一个用户可以发表多条评论
+- `User 1 - N Comment`
+- `Comment.userId -> User.id`
+
+### 3. 文章与评论
+- 一篇文章有多条评论
+- `Post 1 - N Comment`
+- `Comment.postId -> Post.id`
+
+### 4. 文章与标签
+- 一篇文章可拥有多个标签
+- 一个标签可关联多篇文章
+- `Post N - N Tag`
+- 通过 `PostTag` 显式中间表实现
+
+### 5. 用户与收藏夹
+- 一个用户可以有多个收藏夹
+- `User 1 - N CollectionFolder`
+
+### 6. 收藏夹与收藏记录
+- 一个收藏夹可以包含多条收藏记录
+- `CollectionFolder 1 - N Bookmark`
+
+### 7. 用户与浏览历史
+- 一个用户可以有多条浏览历史
+- `User 1 - N BrowseHistory`
+
+### 8. 用户与 AI 问答
+- 一个用户可以有多个 AI 会话
+- 一个会话可以包含多条消息
+- `User 1 - N AiChatSession`
+- `AiChatSession 1 - N AiChatMessage`
+
+### 9. 用户与通知
+- 一个用户可以接收多条通知
+- 通知既可以来自系统，也可以来自其他用户
+- `User 1 - N Notification`
+
+## 六、索引与约束建议
+
+为保证查询性能与数据一致性，`docs/DB.md` 中建议的索引与当前 schema 的设计可以对应如下：
+
+### 用户相关
+- `User.email` 唯一索引
+- `User.username` 唯一索引
+- `User.status` 普通索引
+- `Session.userId` 索引
+- `Session.expiresAt` 索引
+- `VerificationCode.email + purpose` 组合索引
+- `VerificationCode.expiresAt` 索引
+
+### 内容相关
+- `Post.slug` 唯一索引
+- `Post.authorId` 索引
+- `Post.status + publishedAt` 组合索引
+- `Tag.name` 唯一索引
+- `Tag.slug` 唯一索引
+- `PostTag.postId + tagId` 复合主键
+- `PostTag.tagId` 索引
+
+### 互动相关
+- `Comment.postId` 索引
+- `Comment.userId` 索引
+- `Comment.parentId` 索引
+- `Comment.status` 索引
+- `Like.userId + postId` 唯一索引
+- `Like.postId` 索引
+- `CollectionFolder.userId` 索引
+- `CollectionFolder.userId + isDefault` 组合索引
+- `Bookmark.userId + postId` 唯一索引
+- `Bookmark.folderId` 索引
+- `Bookmark.postId` 索引
+- `BrowseHistory.userId + visitedAt` 索引
+- `BrowseHistory.postId` 索引
+- `Notification.recipientId + createdAt` 索引
+- `Notification.senderId` 索引
+- `Notification.type` 索引
+
+### AI 相关
+- `AiChatSession.userId + createdAt` 索引
+- `AiChatSession.postId` 索引
+- `AiChatSession.mode` 索引
+- `AiChatMessage.sessionId + createdAt` 索引
+
+## 七、推荐的枚举类型
+
+建议在 Prisma 中统一定义以下枚举：
+
+```text
+UserRole
+- BLOGGER
+- VISITOR
+
+UserStatus
+- ACTIVE
+- DISABLED
+- DELETED
+
+PostStatus
+- DRAFT
+- PUBLISHED
+- DELETED
+
+CommentStatus
+- PENDING
+- APPROVED
+- REJECTED
+- DELETED
+
+NotificationType
+- LIKE
+- COMMENT
+- REPLY
+- SYSTEM
+- REVIEW
+- NEW_USER
+
+AiChatMode
+- POST_CONTEXT
+- GENERAL
+
+AiChatRole
+- USER
+- ASSISTANT
+- SYSTEM
+
+VerificationPurpose
+- REGISTER
+- RESET_PASSWORD
+- BIND_EMAIL
+- DELETE_ACCOUNT
+```
+
+## 八、推荐的 Prisma schema 文件组织
+
+如果项目后续开始落地，建议使用如下结构：
+
+```text
+prisma/
+├─ schema.prisma
+├─ migrations/
+└─ seed.ts
+```
+
+如需更细化，也可以拆分为：
+
+```text
+prisma/
+├─ schema.prisma
+├─ models/
+│  ├─ user.prisma
+│  ├─ post.prisma
+│  ├─ comment.prisma
+│  ├─ notification.prisma
+│  └─ ai.prisma
+├─ migrations/
+└─ seed.ts
+```
+
+## 九、与设计稿和功能页面的对应关系
 
 ### 访客端功能对应
 - 浏览记录
@@ -716,6 +922,8 @@ types/
 - 消息通知
 - 账号设置
 - 退出登录
+- 文章阅读与评论
+- AI 问答（文章详情页内）
 
 ### 博主端功能对应
 - 浏览记录
@@ -732,16 +940,16 @@ types/
 - 评论审核
 - 用户管理
 - AI 博客编辑器
+- 标签管理
 
 ### 课题要求中尚需补足但设计稿未完全展开的内容
-- 博客分类 / 标签管理
+- 博客标签管理的完整交互
 - 草稿保存 / 发布 / 撤回 / 删除的完整交互
 - AI 标题生成 / 内容续写 / 内容润色的独立弹窗或抽屉组件
 - 访客端 AI 问答登录校验与历史记录管理
 - 评论发布与评论通知的完整交互流
 - 用户注册 / 找回密码 / 注销账号等认证细节
 - 图片上传与资源管理（头像与文章图片）
-- 自动保存后的图片引用清理与资源回收
 - 自动保存后的图片引用清理与孤儿资源回收
 
 这些内容可以在后续开发阶段补充到页面组件中，作为与设计稿一致的功能增强部分。

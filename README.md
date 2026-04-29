@@ -23,7 +23,7 @@
 - `@tailwindcss/postcss`
 
 ### 数据与后端
-- `Prisma 7.8.0`
+- `Prisma 6`
 - `PostgreSQL`
 - `Supabase`（用于数据库、Storage、可扩展的认证与文件管理）
 
@@ -110,10 +110,9 @@ design/
 
 ## 数据与资源说明
 
-- 文章正文图片建议存储在 Supabase Storage 的 `post-media` bucket
-- 用户头像建议存储在 Supabase Storage 的 `user-avatars` bucket
-- 默认头像可放在 `public/` 目录中作为兜底资源
-- 数据库只保存资源 URL 与引用关系，不直接保存文件本体
+- 用户头像统一使用 `public/` 目录中的默认资源兜底显示，不再支持头像修改
+- 文章内容暂不单独设计图片资源存储方案，优先按纯文本与 Markdown 方式实现
+- 数据库仅保存业务所需的内容字段与关联关系
 
 ---
 
