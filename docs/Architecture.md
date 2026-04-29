@@ -38,6 +38,7 @@
   - 站点顶部导航栏
   - 文章标题与元信息
   - 文章正文 Markdown 渲染区
+  - 正文图片展示
   - 文章标签区
   - 点赞 / 评论 / 收藏 / 分享浮动操作栏
   - 评论发布区
@@ -89,7 +90,6 @@
   - 顶部导航栏
   - 左侧个人中心菜单
   - 浏览记录页头部信息
-  - AI 洞察卡
   - 浏览记录搜索框
   - 按日期分组的历史记录列表
   - 加载更早记录按钮
@@ -98,7 +98,6 @@
   - `AccountHeader`
   - `VisitorSidebar`
   - `HistoryPageHeader`
-  - `AiInsightCard`
   - `HistorySearchBar`
   - `HistoryTimeline`
   - `HistoryGroup`
@@ -212,7 +211,6 @@
 - **主要功能模块**：
   - 顶部导航栏
   - 左侧博主菜单
-  - AI 周报洞察卡
   - 核心数据卡片（访问量、参与率、待审核评论等）
   - 近期评论列表
   - 评论快捷处理按钮
@@ -234,7 +232,6 @@
   - 顶部导航栏
   - 左侧博主菜单
   - 文章搜索
-  - AI 文章洞察区
   - 已发布 / 草稿箱标签页
   - 文章表格列表
   - 每篇文章的发布 / 撤回 / 编辑 / 删除操作
@@ -244,7 +241,6 @@
   - `AdminHeader`
   - `BloggerSidebar`
   - `ArticleManageHeader`
-  - `ArticleInsightPanel`
   - `ArticleStatusTabs`
   - `ArticleTable`
   - `ArticleTableRow`
@@ -261,7 +257,6 @@
   - 左侧博主菜单
   - 审核标签页（全部 / 待审核 / 已通过）
   - 评论审核列表
-  - AI 风险建议标记
   - 通过审核 / 违规删除操作
   - 分页组件
   - 页脚
@@ -275,33 +270,7 @@
   - `Pagination`
   - `SiteFooter`
 
-### 15. 博主端个人中心 - 访客工具组
-- **设计稿来源**：
-  - `design/博主端-个人中心-数据概览模块/`
-  - `design/博主端-个人中心-文章管理模块/`
-  - `design/博主端-个人中心-评论审核模块/`
-  - `design/博主端-个人中心-发送消息模块/`
-- **页面名称**：访客工具分组
-- **页面定位**：博主端个人中心侧边栏分组
-- **主要功能模块**：
-  - 浏览记录
-  - 我的点赞
-  - 我的收藏
-  - 我的评论
-  - 消息通知
-  - 账号设置
-  - 退出登录
-- **建议组件命名**：
-  - `VisitorToolGroup`
-  - `VisitorHistoryNavItem`
-  - `VisitorLikeNavItem`
-  - `VisitorCollectionNavItem`
-  - `VisitorCommentNavItem`
-  - `VisitorNotificationNavItem`
-  - `VisitorSettingsNavItem`
-  - `LogoutNavItem`
-
-### 14. 博主端 AI 博客编辑器页
+### 13. 博主端 AI 博客编辑器页
 - **设计稿来源**：`design/博主端-AI博客编辑器模块/`
 - **页面名称**：AI 博客编辑器页 / 新建文章页
 - **页面定位**：博主端独立创作页，仅博主可访问，由“新建文章”跳转进入
@@ -317,6 +286,8 @@
   - 目录 / 导入 / 编辑模式 / 预览模式切换
   - Markdown 文本编辑区
   - Markdown 预览区
+  - 图片插入与展示
+  - 图片引用删除后自动清理
   - 独立底部状态栏
 - **建议组件命名**：
   - `EditorHeader`
@@ -332,7 +303,7 @@
   - `MarkdownPreviewPane`
   - `EditorFooterStatusBar`
 
-### 15. 博主端个人中心 - 访客工具组
+### 14. 博主端个人中心 - 访客工具组
 - **设计稿来源**：
   - `design/博主端-个人中心-数据概览模块/`
   - `design/博主端-个人中心-文章管理模块/`
@@ -358,7 +329,7 @@
   - `VisitorSettingsNavItem`
   - `LogoutNavItem`
 
-### 16. 博主端个人中心 - 创作者中心组
+### 15. 博主端个人中心 - 创作者中心组
 - **设计稿来源**：
   - `design/博主端-个人中心-数据概览模块/`
   - `design/博主端-个人中心-文章管理模块/`
@@ -387,7 +358,7 @@
 
 ## 二、设计稿页面总数
 
-结合目录命名与已读取的 HTML / 截图内容，可归纳为以下 **16 个页面或页面级模块**：
+结合目录命名与已读取的 HTML / 截图内容，可归纳为以下 **15 个页面或页面级模块**：
 
 1. 博客首页
 2. 文章详情页
@@ -401,12 +372,11 @@
 10. 数据概览页
 11. 文章管理页
 12. 评论审核页
-13. 发送消息页
-14. AI 博客编辑器页 / 新建文章页
-15. 访客工具分组
-16. 创作者中心分组
+13. AI 博客编辑器页 / 新建文章页
+14. 访客工具分组
+15. 创作者中心组
 
-> 说明：其中第 15、16 项属于**博主端个人中心侧边栏内的功能分组**，严格来说不是独立页面，但为了完整整理设计稿结构，单独列出。
+> 说明：其中第 14、15 项属于**博主端个人中心侧边栏内的功能分组**，严格来说不是独立页面，但为了完整整理设计稿结构，单独列出。
 
 ## 三、推荐的 Next.js 16 项目结构
 
@@ -519,8 +489,6 @@ app/
 │  │  │  ├─ publish/route.ts
 │  │  │  ├─ withdraw/route.ts
 │  │  │  └─ draft/route.ts
-│  │  ├─ upload-md/route.ts
-│  │  ├─ import-md/route.ts
 │  │  ├─ like/route.ts
 │  │  ├─ bookmark/route.ts
 │  │  └─ browse/route.ts
@@ -603,7 +571,6 @@ components/
 │  ├─ markdown-editor-pane.tsx
 │  ├─ markdown-preview-pane.tsx
 │  ├─ editor-mode-switch.tsx
-│  ├─ editor-import-md.tsx
 │  ├─ editor-draft-button.tsx
 │  ├─ editor-publish-button.tsx
 │  ├─ editor-save-status.tsx
@@ -615,11 +582,8 @@ components/
 │  ├─ ai-chat-input.tsx
 │  ├─ ai-chat-history.tsx
 │  ├─ ai-title-generator.tsx
-│  ├─ ai-expand-panel.tsx
-│  ├─ ai-polish-panel.tsx
-│  ├─ ai-insight-card.tsx
-│  ├─ ai-answer-card.tsx
-│  └─ ai-loading.tsx
+│  ├─ ai-loading.tsx
+│  └─ ai-answer-card.tsx
 ├─ auth/
 │  ├─ login-form.tsx
 │  ├─ register-form.tsx
@@ -668,7 +632,8 @@ components/
 ├─ media/
 │  ├─ avatar-picker.tsx
 │  ├─ image-uploader.tsx
-│  ├─ md-file-uploader.tsx
+│  ├─ image-picker.tsx
+│  ├─ media-library.tsx
 │  └─ file-dropzone.tsx
 └─ shared/
    ├─ search-bar.tsx
@@ -705,6 +670,11 @@ lib/
 │  ├─ parser.ts
 │  ├─ slug.ts
 │  └─ excerpts.ts
+├─ media/
+│  ├─ upload.ts
+│  ├─ cleanup.ts
+│  ├─ parser.ts
+│  └─ ref-tracker.ts
 ├─ notifications/
 │  └─ notifier.ts
 ├─ validation/
@@ -731,6 +701,7 @@ types/
 ├─ comment.ts
 ├─ notification.ts
 ├─ user.ts
+├─ media.ts
 ├─ ai.ts
 └─ common.ts
 ```
@@ -763,13 +734,14 @@ types/
 - AI 博客编辑器
 
 ### 课题要求中尚需补足但设计稿未完全展开的内容
-- Markdown 文件上传
 - 博客分类 / 标签管理
 - 草稿保存 / 发布 / 撤回 / 删除的完整交互
 - AI 标题生成 / 内容续写 / 内容润色的独立弹窗或抽屉组件
 - 访客端 AI 问答登录校验与历史记录管理
 - 评论发布与评论通知的完整交互流
 - 用户注册 / 找回密码 / 注销账号等认证细节
+- 图片上传与资源管理（头像与文章图片）
+- 自动保存后的图片引用清理与资源回收
+- 自动保存后的图片引用清理与孤儿资源回收
 
 这些内容可以在后续开发阶段补充到页面组件中，作为与设计稿一致的功能增强部分。
-

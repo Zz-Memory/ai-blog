@@ -20,6 +20,7 @@
 
 - **用户与认证**：用户、邮箱验证码、会话令牌、重置密码令牌
 - **内容管理**：文章、标签、文章标签关联
+- **资源管理**：图片资源（头像、文章图片）
 - **互动系统**：评论、点赞、收藏、浏览历史、消息通知
 - **AI 模块**：AI 问答会话、AI 问答消息
 
@@ -57,7 +58,8 @@
 - `username` 可唯一或局部唯一
 - `passwordHash` 只保存加盐哈希后的结果
 - `role` 仅区分博主与访客
-- 默认头像可以由 `avatarUrl` 保存，未设置时前端按角色兜底显示
+- `avatarUrl` 存储用户头像地址；默认头像资源放在 `public/`，由前端按角色兜底显示
+- 用户头像文件较多时应走上传服务或对象存储，数据库仅保存引用地址
 
 ---
 
@@ -126,14 +128,75 @@
 #### 设计要点
 - `slug` 用于 SEO 友好的详情页路由
 - `summary` 用于列表页摘要展示、搜索结果预览和详情页开头简介
-- `contentMarkdown` 保存原始 Markdown
+- `contentMarkdown` 保存原始 Markdown，正文图片通过 Markdown 内的图片地址引用，不单独拆表
 - `contentHtml` 可保存渲染后的缓存结果
 - `status` 用于表达文章生命周期：草稿、已发布、已删除
 - `DELETED` 建议作为软删除标记使用，前台不再展示，但保留历史数据以便审计、恢复或维持评论/收藏/通知等关联关系
 
 ---
 
-### 5. 文章标签表 `Tag`
+### 5. 图片资源表 `MediaAsset`
+
+用于统一管理系统中的图片资源，包括用户头像和文章正文图片。图片文件实际存储在 Supabase Storage 中，数据库仅保存引用信息。
+
+#### 业务说明
+- Supabase 中建议创建两个 Bucket：`user-avatars` 用于存储头像，`post-media` 用于存储文章图片。
+- `User.avatarUrl` 保存当前用户头像的访问地址，默认头像仍可由前端按角色从 `public/` 兜底。
+- 文章正文中的图片通过 Markdown 内容中的图片地址引用，上传后可同步登记到 `MediaAsset`，便于后续管理和清理。
+- 当用户删除编辑器中的已上传图片但文章最终未保存时，可通过 `MediaAsset` 识别为未使用资源并清理。
+
+#### 主要字段
+- `id`
+- `uploaderId`
+- `bucket`
+- `type`：`AVATAR | POST_IMAGE`
+- `url`
+- `storagePath`
+- `mimeType`
+- `fileSize`
+- `width`
+- `height`
+- `isUsed`
+- `createdAt`
+- `updatedAt`
+- `deletedAt`
+
+#### 设计要点
+- `bucket` 用于区分存储位置，对应 Supabase 的不同 Bucket
+- `type` 用于区分业务用途
+- `url` 用于前端展示
+- `storagePath` 用于删除、迁移、同步
+- `isUsed` 用于标记图片是否已经被业务对象正式引用
+- 头像和文章图片都属于同一资源体系，但使用场景不同
+
+---
+
+### 6. 文章图片引用表 `PostMediaRef`
+
+用于记录文章与图片资源的引用关系，配合 `MediaAsset` 实现自动保存后的图片清理与孤儿资源回收。
+
+#### 业务说明
+- 每当文章自动保存或正式保存时，系统会解析 `contentMarkdown` 中的图片地址。
+- 当前正文仍然引用的图片，会在 `PostMediaRef` 中保留或重建引用关系。
+- 相比上一次保存后已被删除的图片，会从 `PostMediaRef` 中移除；若对应 `MediaAsset` 不再被任何文章引用，则可以删除 Storage 文件并回收资源记录。
+- 该表主要服务于 `post-media` bucket 中的文章图片，不用于用户头像。
+
+#### 主要字段
+- `id`
+- `postId`
+- `mediaAssetId`
+- `createdAt`
+- `deletedAt`
+
+#### 设计要点
+- `postId + mediaAssetId` 建议建立唯一约束
+- 作为文章正文图片的引用清单
+- 自动保存后用于对比“当前引用”与“上次引用”的差异
+- 当文章删除或正文图片被移除时，可据此判断是否清理对应图片资源
+
+---
+
+### 7. 文章标签表 `Tag`
 
 用于文章标签自定义管理。
 
@@ -152,7 +215,7 @@
 
 ---
 
-### 6. 文章标签关联表 `PostTag`
+### 8. 文章标签关联表 `PostTag`
 
 用于文章与标签的多对多关系。
 
@@ -167,7 +230,7 @@
 
 ---
 
-### 7. 评论表 `Comment`
+### 9. 评论表 `Comment`
 
 用于文章评论与回复。
 
@@ -195,7 +258,7 @@
 
 ---
 
-### 8. 点赞表 `Like`
+### 10. 点赞表 `Like`
 
 用于保存用户对文章的点赞关系。
 
@@ -211,7 +274,7 @@
 
 ---
 
-### 9. 收藏夹表 `CollectionFolder`
+### 11. 收藏夹表 `CollectionFolder`
 
 用于访客端“我的收藏”模块的收藏夹管理。
 
@@ -230,7 +293,7 @@
 
 ---
 
-### 10. 收藏记录表 `Bookmark`
+### 12. 收藏记录表 `Bookmark`
 
 用于收藏文章。
 
@@ -247,7 +310,7 @@
 
 ---
 
-### 11. 浏览历史表 `BrowseHistory`
+### 13. 浏览历史表 `BrowseHistory`
 
 用于记录用户浏览过的文章。
 
@@ -264,7 +327,7 @@
 
 ---
 
-### 12. 通知表 `Notification`
+### 14. 通知表 `Notification`
 
 用于站内互动提醒和系统通知。
 
@@ -293,7 +356,7 @@
 
 ---
 
-### 13. AI 问答会话表 `AiChatSession`
+### 15. AI 问答会话表 `AiChatSession`
 
 用于保存单次 AI 问答会话。
 
@@ -321,7 +384,7 @@
 
 ---
 
-### 14. AI 问答消息表 `AiChatMessage`
+### 16. AI 问答消息表 `AiChatMessage`
 
 用于保存对话中每一条消息。
 
@@ -344,6 +407,10 @@
 ### 1. 用户与文章
 - 一个用户可以创建多篇文章
 - `User 1 - N Post`
+- 一个用户可以上传多张头像或文章图片资源
+- `User 1 - N MediaAsset`
+- 一个用户可以作为多张图片资源的上传者
+- `User 1 - N MediaAsset`（通过 `uploaderId`）
 
 ### 2. 用户与评论
 - 一个用户可以发表多条评论
@@ -370,13 +437,13 @@
 - 一个用户可以有多条浏览历史
 - `User 1 - N BrowseHistory`
 
-### 8. 用户与 AI 问答
+### 9. 用户与 AI 问答
 - 一个用户可以有多个 AI 会话
 - 一个会话可以包含多条消息
 - `User 1 - N AiChatSession`
 - `AiChatSession 1 - N AiChatMessage`
 
-### 9. 用户与通知
+### 10. 用户与通知
 - 一个用户可以接收多条通知
 - 通知既可以来自系统，也可以来自其他用户
 - `User 1 - N Notification`
@@ -399,6 +466,8 @@
 - `Post.status + publishedAt` 组合索引
 - `PostTag.postId + tagId` 唯一索引
 - `Tag.slug` 唯一索引
+- `MediaAsset.bucket + storagePath` 唯一索引
+- `MediaAsset.uploaderId + createdAt` 索引
 
 ### 互动相关
 - `Comment.postId` 索引
@@ -523,6 +592,6 @@ prisma/
 - 评论楼中楼层级缓存
 - 消息已读回执与批量通知
 - 全站搜索索引表
-- 图片资源表或对象存储元数据表
+- 图片资源表或对象存储元数据表（若后续需要做图片管理可再补）
 
 这些扩展均可在不破坏现有结构的前提下逐步加入。
