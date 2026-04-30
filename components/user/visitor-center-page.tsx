@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/common/site-header";
 import { historyArticles } from "./visitor-center-page/history-articles";
 import { likedArticles } from "./visitor-center-page/liked-articles";
 import { VisitorCenterConfirmModal } from "@/components/user/visitor-center-page/visitor-center-confirm-modal";
+import { VisitorCenterFavorites } from "@/components/user/visitor-center-page/visitor-center-favorites";
 import { VisitorCenterFavorite } from "@/components/user/visitor-center-page/visitor-center-favorite";
 import { VisitorCenterHistory } from "@/components/user/visitor-center-page/visitor-center-history";
 import { VisitorCenterSidebar } from "@/components/user/visitor-center-page/visitor-center-sidebar";
@@ -80,9 +81,7 @@ export function VisitorCenterPage() {
         />
 
         <section className="space-y-6 pb-10">
-          {activeSection === "liked" ? (
-            <VisitorCenterFavorite articles={likedList} />
-          ) : (
+          {activeSection === "history" ? (
             <>
               <VisitorCenterToolbar
                 // 注意：这里传入的是“浏览记录搜索”状态，而不是 `SiteHeader` 的搜索状态。
@@ -103,7 +102,11 @@ export function VisitorCenterPage() {
                 </button>
               </div>
             </>
-          )}
+          ) : null}
+
+          {activeSection === "liked" ? <VisitorCenterFavorite articles={likedList} /> : null}
+
+          {activeSection === "favorites" ? <VisitorCenterFavorites articles={likedList} /> : null}
         </section>
       </main>
 
