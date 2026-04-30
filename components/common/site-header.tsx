@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { useNotificationCount } from "@/components/common/notification-context";
+
 export type SiteHeaderProps = {
   searchValue: string;
   onSearchChange: (value: string) => void;
@@ -17,6 +19,7 @@ export function SiteHeader({
   onRegisterClick,
   isAuthenticated = true,
 }: SiteHeaderProps) {
+  const { unreadCount } = useNotificationCount();
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-[#111215]/90 backdrop-blur-xl">
       <div className="mx-auto grid h-16 max-w-[1200px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-6 px-6 lg:px-8">
@@ -66,9 +69,14 @@ export function SiteHeader({
               <Link
                 href="/profile/notifications"
                 aria-label="消息通知"
-                className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-zinc-200 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-zinc-200 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
               >
                 <span className="material-symbols-outlined text-[20px] leading-none">notifications</span>
+                {unreadCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#adc6ff] px-1.5 text-[10px] font-semibold text-[#10131a]">
+                    {unreadCount}
+                  </span>
+                ) : null}
               </Link>
               <Link
                 href="/profile/settings"

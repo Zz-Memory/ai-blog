@@ -14,6 +14,7 @@ type VisitorCenterSidebarProps = {
   onSelect: (id: string) => void;
   onLogoutClick: () => void;
   onSettingsClick: () => void;
+  notificationBadgeCount?: number;
 };
 
 // 侧边栏配置数据：把菜单项抽成常量，便于后续增删和统一维护。
@@ -22,14 +23,14 @@ const sidebarItems: VisitorCenterSidebarItem[] = [
   { id: "liked", label: "我的点赞", icon: "favorite" },
   { id: "favorites", label: "我的收藏", icon: "bookmark" },
   { id: "comments", label: "我的评论", icon: "chat_bubble" },
-  { id: "notifications", label: "消息通知", icon: "notifications", badge: 3 },
+  { id: "notifications", label: "消息通知", icon: "notifications" },
   { id: "settings", label: "账号设置", icon: "settings" },
   { id: "logout", label: "退出登录", icon: "logout" },
 ];
 
 // 访客中心左侧导航栏。
 // 当前版本负责切换右侧模块，同时保留账号设置和退出登录两个全局动作。
-export function VisitorCenterSidebar({ activeId, onSelect, onLogoutClick, onSettingsClick }: VisitorCenterSidebarProps) {
+export function VisitorCenterSidebar({ activeId, onSelect, onLogoutClick, onSettingsClick, notificationBadgeCount = 0 }: VisitorCenterSidebarProps) {
   return (
     <aside className="hidden lg:flex lg:flex-col">
       {/* 使用 sticky 是为了让侧边栏在滚动内容较长时保持可见。 */}
@@ -67,10 +68,10 @@ export function VisitorCenterSidebar({ activeId, onSelect, onLogoutClick, onSett
                   {item.label}
                 </span>
 
-                {/* 仅在需要提醒时展示角标，比如未读通知。 */}
-                {item.badge ? (
+                {/* 仅在未读消息数大于 0 时展示角标。 */}
+                {item.id === "notifications" && notificationBadgeCount > 0 ? (
                   <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#9db2ff] px-2 text-xs font-semibold text-[#10131a]">
-                    {item.badge}
+                    {notificationBadgeCount}
                   </span>
                 ) : null}
               </button>

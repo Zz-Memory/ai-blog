@@ -13,8 +13,10 @@ import { VisitorCenterConfirmModal } from "@/components/user/visitor-center-page
 import { VisitorCenterFavorites } from "@/components/user/visitor-center-page/visitor-center-favorites";
 import { VisitorCenterFavorite } from "@/components/user/visitor-center-page/visitor-center-favorite";
 import { VisitorCenterHistory } from "@/components/user/visitor-center-page/visitor-center-history";
+import { VisitorCenterNotifications } from "@/components/user/visitor-center-page/visitor-center-notifications";
 import { VisitorCenterSidebar } from "@/components/user/visitor-center-page/visitor-center-sidebar";
 import { VisitorCenterToolbar } from "@/components/user/visitor-center-page/visitor-center-toolbar";
+import { useNotificationCount } from "@/components/common/notification-context";
 
 export function VisitorCenterPage() {
   // 顶部站点级搜索框的输入值。
@@ -38,6 +40,9 @@ export function VisitorCenterPage() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showSettingsNote, setShowSettingsNote] = useState(false);
+
+  // 从全局通知状态中读取未读数量，供左侧菜单和顶部 `SiteHeader` 共享。
+  const { unreadCount, setUnreadCount } = useNotificationCount();
 
   // 右侧功能模块当前激活项。
   // 通过左侧悬浮菜单切换这个值，右侧区域会据此渲染不同模块。
@@ -83,6 +88,7 @@ export function VisitorCenterPage() {
           onSelect={setActiveSection}
           onLogoutClick={() => setShowLogoutConfirm(true)}
           onSettingsClick={() => setShowSettingsNote(true)}
+          notificationBadgeCount={unreadCount}
         />
 
         <section className="space-y-6 pb-10">
@@ -114,6 +120,8 @@ export function VisitorCenterPage() {
           {activeSection === "favorites" ? <VisitorCenterFavorites articles={likedList} /> : null}
 
           {activeSection === "comments" ? <VisitorCenterComments articles={commentedList} /> : null}
+
+          {activeSection === "notifications" ? <VisitorCenterNotifications onUnreadCountChange={setUnreadCount} /> : null}
         </section>
       </main>
 
