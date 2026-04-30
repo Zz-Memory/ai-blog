@@ -9,6 +9,15 @@ type PasswordState = {
   touched: boolean;
 };
 
+type ValidationState = {
+  account?: string;
+  password?: string;
+  nickname?: string;
+  email?: string;
+  verification?: string;
+  confirmPassword?: string;
+};
+
 function FieldIcon({ icon }: { icon: string }) {
   return <span className="material-symbols-outlined text-[20px] leading-none">{icon}</span>;
 }
@@ -58,13 +67,18 @@ function InputShell({
   );
 }
 
-function passwordMessage(state: PasswordState) {
-  if (!state.touched || !state.value) {
+function passwordRuleMessage(value: string, touched: boolean) {
+  if (!touched && !value) {
     return "密码需由字母与数字组合，长度至少 8 位。";
   }
 
-  const isValid = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(state.value);
+  const isValid = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(value);
   return isValid ? "密码格式符合要求。" : "密码需由字母与数字组合，长度至少 8 位。";
+}
+
+
+function isStrongPassword(value: string) {
+  return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(value);
 }
 
 export function AuthModal({
@@ -79,6 +93,7 @@ export function AuthModal({
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [registerPassword, setRegisterPassword] = useState<PasswordState>({ value: "", touched: false });
   const [resetPassword, setResetPassword] = useState<PasswordState>({ value: "", touched: false });
+  const [errors, setErrors] = useState<ValidationState>({});
 
   useEffect(() => {
     if (isOpen) setMode(initialMode);
@@ -97,6 +112,7 @@ export function AuthModal({
     if (!isOpen) {
       setRegisterPassword({ value: "", touched: false });
       setResetPassword({ value: "", touched: false });
+      setErrors({});
     }
   }, [isOpen]);
 
@@ -104,10 +120,74 @@ export function AuthModal({
   const isRegister = mode === "register";
   const isReset = mode === "reset";
 
-  const registerMessage = useMemo(() => passwordMessage(registerPassword), [registerPassword]);
-  const resetMessage = useMemo(() => passwordMessage(resetPassword), [resetPassword]);
+  const registerMessage = useMemo(() => passwordRuleMessage(registerPassword.value, registerPassword.touched), [registerPassword]);
+  const resetMessage = useMemo(() => passwordRuleMessage(resetPassword.value, resetPassword.touched), [resetPassword]);
 
   if (!isOpen) return null;
+
+  const validateLogin = (formData: FormData) => {
+    const nextErrors: ValidationState = {};
+    const account = String(formData.get("login-account") ?? "").trim();
+    const password = String(formData.get("login-password") ?? "").trim();
+
+    if (!account) nextErrors.account = "请输入账号或邮箱。";
+    if (!password) {
+      nextErrors.password = "请输入密码。";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const validateRegister = (formData: FormData) => {
+    const nextErrors: ValidationState = {};
+    const nickname = String(formData.get("reg-nickname") ?? "").trim();
+    const email = String(formData.get("reg-email") ?? "").trim();
+    const verification = String(formData.get("reg-verification") ?? "").trim();
+    const password = String(formData.get("reg-password") ?? "").trim();
+    const confirmPassword = String(formData.get("reg-confirm-password") ?? "").trim();
+
+    if (!nickname) nextErrors.nickname = "请输入昵称。";
+    if (!email) nextErrors.email = "请输入电子邮箱。";
+    if (!verification) nextErrors.verification = "请输入验证码。";
+    if (!password) {
+      nextErrors.password = "请输入密码。";
+    } else if (!isStrongPassword(password)) {
+      nextErrors.password = "密码格式错误，请输入字母与数字组合，且至少 8 位。";
+    }
+    if (!confirmPassword) {
+      nextErrors.confirmPassword = "请再次输入密码。";
+    } else if (password !== confirmPassword) {
+      nextErrors.confirmPassword = "两次输入的密码不一致。";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const validateReset = (formData: FormData) => {
+    const nextErrors: ValidationState = {};
+    const email = String(formData.get("reset-email") ?? "").trim();
+    const verification = String(formData.get("reset-code") ?? "").trim();
+    const password = String(formData.get("reset-password") ?? "").trim();
+    const confirmPassword = String(formData.get("reset-confirm-password") ?? "").trim();
+
+    if (!email) nextErrors.email = "请输入电子邮箱。";
+    if (!verification) nextErrors.verification = "请输入验证码。";
+    if (!password) {
+      nextErrors.password = "请输入新密码。";
+    } else if (!isStrongPassword(password)) {
+      nextErrors.password = "密码格式错误，请输入字母与数字组合，且至少 8 位。";
+    }
+    if (!confirmPassword) {
+      nextErrors.confirmPassword = "请再次输入新密码。";
+    } else if (password !== confirmPassword) {
+      nextErrors.confirmPassword = "两次输入的密码不一致。";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -139,7 +219,10 @@ export function AuthModal({
         <div className="mt-8 flex rounded-lg bg-white/5 p-1">
           <button
             type="button"
-            onClick={() => setMode("login")}
+            onClick={() => {
+              setMode("login");
+              setErrors({});
+            }}
             className={`flex-1 rounded-md py-2.5 text-[15px] transition ${
               isLogin
                 ? "border border-white/5 bg-[#2a2a2d] text-zinc-100 shadow-sm"
@@ -150,7 +233,10 @@ export function AuthModal({
           </button>
           <button
             type="button"
-            onClick={() => setMode("register")}
+            onClick={() => {
+              setMode("register");
+              setErrors({});
+            }}
             className={`flex-1 rounded-md py-2.5 text-[15px] transition ${
               isRegister
                 ? "border border-white/5 bg-[#2a2a2d] text-zinc-100 shadow-sm"
@@ -163,12 +249,21 @@ export function AuthModal({
 
         <div className="mt-6 max-h-[60vh] overflow-y-auto pr-1">
           {isLogin && (
-            <form className="space-y-5" action="#">
+            <form
+              className="space-y-5"
+              action="#"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const formData = new FormData(event.currentTarget);
+                if (!validateLogin(formData)) return;
+              }}
+            >
               <div>
                 <label className="mb-2 block text-[13px] font-medium text-zinc-300" htmlFor="login-account">
                   账号/邮箱
                 </label>
                 <InputShell icon="person" placeholder="输入您的账号或邮箱" />
+                {errors.account ? <p className="mt-2 text-[12px] text-rose-300">{errors.account}</p> : null}
               </div>
 
               <div>
@@ -185,6 +280,7 @@ export function AuthModal({
                   </button>
                 </div>
                 <InputShell icon="lock" placeholder="输入您的密码" type="password" canToggleVisibility />
+                {errors.password ? <p className="mt-2 text-[12px] text-rose-300">{errors.password}</p> : null}
               </div>
 
               <button
@@ -198,12 +294,21 @@ export function AuthModal({
           )}
 
           {isRegister && (
-            <form className="space-y-4" action="#">
+            <form
+              className="space-y-4"
+              action="#"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const formData = new FormData(event.currentTarget);
+                if (!validateRegister(formData)) return;
+              }}
+            >
               <div>
                 <label className="mb-2 block text-[13px] font-medium text-zinc-300" htmlFor="reg-nickname">
                   昵称
                 </label>
                 <InputShell icon="badge" placeholder="设置您的昵称" />
+                {errors.nickname ? <p className="mt-2 text-[12px] text-rose-300">{errors.nickname}</p> : null}
               </div>
 
               <div>
@@ -211,6 +316,7 @@ export function AuthModal({
                   电子邮箱
                 </label>
                 <InputShell icon="mail" placeholder="输入您的电子邮箱" type="email" />
+                {errors.email ? <p className="mt-2 text-[12px] text-rose-300">{errors.email}</p> : null}
               </div>
 
               <div>
@@ -228,6 +334,7 @@ export function AuthModal({
                     获取验证码
                   </button>
                 </div>
+                {errors.verification ? <p className="mt-2 text-[12px] text-rose-300">{errors.verification}</p> : null}
               </div>
 
               <div>
@@ -240,17 +347,15 @@ export function AuthModal({
                   type="password"
                   canToggleVisibility
                   value={registerPassword.value}
-                  onChange={(value) => setRegisterPassword({ value, touched: true })}
+                  onChange={(value) => {
+                    setRegisterPassword({ value, touched: true });
+                    if (errors.password) {
+                      setErrors((current) => ({ ...current, password: undefined }));
+                    }
+                  }}
                 />
-                <p
-                  className={`mt-2 text-[12px] leading-5 ${
-                    /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(registerPassword.value)
-                      ? "text-emerald-300"
-                      : "text-zinc-400"
-                  }`}
-                >
-                  {registerMessage}
-                </p>
+                <p className="mt-2 text-[12px] leading-5 text-zinc-400">{registerMessage}</p>
+                {errors.password ? <p className="mt-2 text-[12px] text-rose-300">{errors.password}</p> : null}
               </div>
 
               <div>
@@ -258,6 +363,7 @@ export function AuthModal({
                   确认密码
                 </label>
                 <InputShell icon="lock_reset" placeholder="再次输入密码" type="password" canToggleVisibility />
+                {errors.confirmPassword ? <p className="mt-2 text-[12px] text-rose-300">{errors.confirmPassword}</p> : null}
               </div>
 
               <button
@@ -271,12 +377,21 @@ export function AuthModal({
           )}
 
           {isReset && (
-            <form className="space-y-5" action="#">
+            <form
+              className="space-y-5"
+              action="#"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const formData = new FormData(event.currentTarget);
+                if (!validateReset(formData)) return;
+              }}
+            >
               <div>
                 <label className="mb-2 block text-[13px] font-medium text-zinc-300" htmlFor="reset-email">
                   电子邮箱
                 </label>
                 <InputShell icon="mail" placeholder="输入您的电子邮箱" type="email" />
+                {errors.email ? <p className="mt-2 text-[12px] text-rose-300">{errors.email}</p> : null}
               </div>
 
               <div>
@@ -294,6 +409,7 @@ export function AuthModal({
                     获取验证码
                   </button>
                 </div>
+                {errors.verification ? <p className="mt-2 text-[12px] text-rose-300">{errors.verification}</p> : null}
               </div>
 
               <div>
@@ -306,17 +422,15 @@ export function AuthModal({
                   type="password"
                   canToggleVisibility
                   value={resetPassword.value}
-                  onChange={(value) => setResetPassword({ value, touched: true })}
+                  onChange={(value) => {
+                    setResetPassword({ value, touched: true });
+                    if (errors.password) {
+                      setErrors((current) => ({ ...current, password: undefined }));
+                    }
+                  }}
                 />
-                <p
-                  className={`mt-2 text-[12px] leading-5 ${
-                    /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(resetPassword.value)
-                      ? "text-emerald-300"
-                      : "text-zinc-400"
-                  }`}
-                >
-                  {resetMessage}
-                </p>
+                <p className="mt-2 text-[12px] leading-5 text-zinc-400">{resetMessage}</p>
+                {errors.password ? <p className="mt-2 text-[12px] text-rose-300">{errors.password}</p> : null}
               </div>
 
               <div>
@@ -324,6 +438,7 @@ export function AuthModal({
                   确认新密码
                 </label>
                 <InputShell icon="lock_reset" placeholder="再次输入新密码" type="password" canToggleVisibility />
+                {errors.confirmPassword ? <p className="mt-2 text-[12px] text-rose-300">{errors.confirmPassword}</p> : null}
               </div>
 
               <div className="flex gap-3 pt-1">
