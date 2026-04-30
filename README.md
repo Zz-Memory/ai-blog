@@ -21,6 +21,7 @@
 ### 样式方案
 - `Tailwind CSS 4`
 - `@tailwindcss/postcss`
+- 项目图标库Google Material Symbols
 
 ### 数据与后端
 - `Prisma 6`
