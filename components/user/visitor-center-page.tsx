@@ -5,8 +5,10 @@ import { useMemo, useState } from "react";
 import { SiteFooter } from "@/components/common/site-footer";
 import { SiteHeader } from "@/components/common/site-header";
 
+import { commentedArticles } from "./visitor-center-page/commented-articles";
 import { historyArticles } from "./visitor-center-page/history-articles";
 import { likedArticles } from "./visitor-center-page/liked-articles";
+import { VisitorCenterComments } from "@/components/user/visitor-center-page/visitor-center-comments";
 import { VisitorCenterConfirmModal } from "@/components/user/visitor-center-page/visitor-center-confirm-modal";
 import { VisitorCenterFavorites } from "@/components/user/visitor-center-page/visitor-center-favorites";
 import { VisitorCenterFavorite } from "@/components/user/visitor-center-page/visitor-center-favorite";
@@ -44,6 +46,9 @@ export function VisitorCenterPage() {
   // 当前用户“点赞”列表。
   // 这里先使用静态数据，后续可以替换为接口返回值或用户态缓存。
   const likedList = useMemo(() => likedArticles, []);
+
+  // 当前用户评论过的文章列表。
+  const commentedList = useMemo(() => commentedArticles, []);
 
   // 根据浏览记录搜索关键字过滤列表。
   // 这里使用 `useMemo` 只是为了避免在无关状态变化时重复计算，数据量变大后更有意义。
@@ -107,6 +112,8 @@ export function VisitorCenterPage() {
           {activeSection === "liked" ? <VisitorCenterFavorite articles={likedList} /> : null}
 
           {activeSection === "favorites" ? <VisitorCenterFavorites articles={likedList} /> : null}
+
+          {activeSection === "comments" ? <VisitorCenterComments articles={commentedList} /> : null}
         </section>
       </main>
 
