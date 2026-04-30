@@ -1,15 +1,34 @@
 import { PrismaClient } from "@prisma/client";
 import { seedAdminUser } from "./seeds/admin.seed";
+import { seedComments } from "./seeds/comment.seed";
+import { seedPostTags, seedPosts } from "./seeds/post.seed";
+import { seedTags } from "./seeds/tag.seed";
+import { seedVisitorUsers } from "./seeds/visitor.seed";
 
 // Prisma seed 入口文件。
-// 这里仅负责创建 PrismaClient、调用各个子 seed 模块、以及在结束时释放连接。
-// 当后续需要初始化标签、收藏夹、测试文章等数据时，只需要继续在此处引入并调用对应模块即可。
+// 这里统一协调各个子 seed 的执行顺序，确保依赖关系正确：
+// 1. 先创建博主账号与访客账号；
+// 2. 再创建标签；
+// 3. 然后创建文章并绑定标签；
+// 4. 最后为已发布文章生成评论。
 const prisma = new PrismaClient();
 
 async function main() {
-  // 预置系统博主账号。
-  // 这是项目初始化后最基础的一条数据，用于登录后台和进行内容管理。
   await seedAdminUser(prisma);
+  await seedVisitorUsers(prisma);
+  await seedTags(prisma);
+
+  const admin = await prisma.user.findUnique({
+    where: { email: "admin@example.com" },
+  });
+
+  if (!admin) {
+    throw new Error("Admin user was not seeded correctly.");
+  }
+
+  await seedPosts(prisma, admin.id);
+  await seedPostTags(prisma);
+  await seedComments(prisma);
 }
 
 main()

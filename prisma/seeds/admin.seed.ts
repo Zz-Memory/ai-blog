@@ -1,5 +1,6 @@
-import { PrismaClient, UserRole, UserStatus } from "@prisma/client";
-import { randomBytes, scryptSync } from "node:crypto";
+import type { PrismaClient } from "@prisma/client";
+import { UserRole, UserStatus } from "@prisma/client";
+import { hashPassword } from "./helpers";
 
 // 预置博主账号的配置项。
 // 这里集中管理默认邮箱、用户名与初始密码，后续如果需要切换为环境变量，
@@ -11,14 +12,6 @@ const ADMIN_SEED = {
   intro:
     "穿梭于代码与模型之间。以构建一站式 AI 系统为锚，探索智能化工具与创作者精神的共振，用技术重塑表达效率。",
 } as const;
-
-// 对明文密码做哈希，避免在数据库中存储可逆明文。
-// 这里采用 `salt + hash` 的形式，便于后续认证时校验。
-function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const hash = scryptSync(password, salt, 64).toString("hex");
-  return `${salt}:${hash}`;
-}
 
 // 预置系统博主账号。
 // 逻辑说明：
