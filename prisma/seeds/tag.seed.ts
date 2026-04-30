@@ -1,7 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 
-// 13 个预置标签。
-// 这些标签会用于后续文章的随机组合，但依然要求和文章主题保持语义一致。
+// 13 个预置标签，与 docs/seed.md 保持一致。
 const TAGS = [
   { name: "前端", slug: "frontend" },
   { name: "后端", slug: "backend" },
@@ -18,21 +17,12 @@ const TAGS = [
   { name: "node.js", slug: "node-js" },
 ] as const;
 
-// 预置标签。
-// 说明：
-// - 使用 name 作为展示名；
-// - 使用 slug 作为稳定路由标识；
-// - 如果标签已存在则更新，保证 seed 可重复执行。
 export async function seedTags(prisma: PrismaClient) {
   for (const tag of TAGS) {
     await prisma.tag.upsert({
       where: { name: tag.name },
-      update: {
-        slug: tag.slug,
-      },
+      update: { slug: tag.slug },
       create: tag,
     });
-
-    console.log(`Upserted tag: ${tag.name}`);
   }
 }

@@ -1,411 +1,383 @@
-# 数据库测试数据设计方案
+# 测试数据 Seed 设计
 
-## 一、设计目标
+本文档用于根据 `prisma/schema.prisma` 生成一组可直接用于开发测试的基础数据。
 
-本次测试数据用于验证博客系统的核心功能，覆盖：
+## 说明
 
-- 用户注册与登录
-- 标签管理
-- 文章发布与草稿
-- 文章标签关联
-- 评论与回复
-- 浏览记录、收藏、点赞等后续扩展功能
-
-同时满足以下约束：
-
-- 访客用户 3 名
-- 标签 13 个
-- 已发布博客 10 篇
-- 草稿博客 3 篇
-- 每篇已发布博客 3 条评论
-  - 2 条父评论
-  - 1 条子评论
-- 草稿不生成评论
-- 第 13 个标签为 `node.js`
-- 每篇已发布博客 1～3 个标签
-- 标签与文章内容匹配
-- 博客内容控制在 200～300 字左右
+- `id` 字段由 Prisma / 数据库自动生成，文档中不再手动指定具体 `id`
+- 下面使用 `email`、`username`、`slug` 等稳定字段来描述可创建的数据
+- 数据目标：
+  - 4 个分类：前端、后端、数据库、随笔
+  - 16 篇已发布文章，每个分类至少 3 篇
+  - 4 篇草稿文章
+  - 13 个标签
+  - 每篇已发布文章至少 1 个、至多 3 个标签
+  - 1 个预置博主账号，3 个普通游客账号
+  - 每篇已发布文章 3 条评论：2 条父级评论、1 条子级评论
 
 ---
 
-## 二、整体数据结构
+## 一、基础用户数据 `User`
 
-### 1. 用户
-建议保留以下基础账号：
+### 1. 预置博主账号
+- `email`: `memory@example.com`
+- `username`: `Memory`
+- `passwordHash`: `bcrypt_hash_placeholder`
+- `初始密码`: `12345678`
+- `role`: `BLOGGER`
+- `intro`: `记录数字生命轨迹。致力于探索人工智能与人类审美的交汇点，相信技术应当隐于无形，服务于心。`
+- `status`: `ACTIVE`
 
-- 1 个预置博主账号
-- 3 个访客账号
+### 2. 普通游客账号 1
+- `email`: `visitor01@example.com`
+- `username`: `visitor01`
+- `passwordHash`: `bcrypt_hash_placeholder`
+- `初始密码`: `12345678`
+- `role`: `VISITOR`
+- `intro`: `普通测试访客账号 1。`
+- `status`: `ACTIVE`
 
-其中访客账号主要用于测试：
+### 3. 普通游客账号 2
+- `email`: `visitor02@example.com`
+- `username`: `visitor02`
+- `passwordHash`: `bcrypt_hash_placeholder`
+- `初始密码`: `12345678`
+- `role`: `VISITOR`
+- `intro`: `普通测试访客账号 2。`
+- `status`: `ACTIVE`
 
-- 浏览
-- 点赞
-- 收藏
-- 评论
-- 通知接收
-
----
-
-### 2. 标签
-共 13 个标签，建议如下：
-
-1. `前端`
-2. `后端`
-3. `React`
-4. `Next.js`
-5. `Prisma`
-6. `数据库`
-7. `TypeScript`
-8. `AI`
-9. `博客`
-10. `性能优化`
-11. `部署`
-12. `工具链`
-13. `node.js`
-
-说明：
-
-- 第 13 个标签已按要求改成 `node.js`
-- 标签主题尽量覆盖博客系统常见技术栈
-- 后续文章标签分配时保持语义匹配
+### 4. 普通游客账号 3
+- `email`: `visitor03@example.com`
+- `username`: `visitor03`
+- `passwordHash`: `bcrypt_hash_placeholder`
+- `初始密码`: `12345678`
+- `role`: `VISITOR`
+- `intro`: `普通测试访客账号 3。`
+- `status`: `ACTIVE`
 
 ---
 
-### 3. 文章
-共 13 篇文章：
+## 二、分类数据 `Category`
 
-- 10 篇已发布
-- 3 篇草稿
+### 1. 前端
+- `name`: `前端`
+- `slug`: `frontend`
+- `description`: `前端开发相关内容，包括框架、工程化与 UI 实践。`
+- `sortOrder`: `1`
+- `status`: `ACTIVE`
 
-#### 已发布文章建议主题
-1. 博客系统首页设计思路
-2. 使用 Prisma 设计博客数据库
-3. Next.js 中如何组织博客路由
-4. 博客评论系统的实现思路
-5. 如何给博客文章添加标签系统
-6. Markdown 博客编辑器的基本结构
-7. AI 辅助写博客的实践
-8. 提升博客列表性能的几个方法
-9. 博客部署到生产环境的注意事项
-10. 用 Node.js 构建博客后台服务
+### 2. 后端
+- `name`: `后端`
+- `slug`: `backend`
+- `description`: `后端开发相关内容，包括接口、权限与架构设计。`
+- `sortOrder`: `2`
+- `status`: `ACTIVE`
 
-#### 草稿文章建议主题
-1. 博客草稿：文章自动摘要的实现思路
-2. 博客草稿：评论通知系统的优化方案
-3. 博客草稿：如何设计更清晰的文章详情页
+### 3. 数据库
+- `name`: `数据库`
+- `slug`: `database`
+- `description`: `数据库设计、建模与性能优化相关内容。`
+- `sortOrder`: `3`
+- `status`: `ACTIVE`
 
----
-
-### 4. 评论
-仅给 **10 篇已发布文章**生成评论。
-
-每篇 3 条：
-
-- 2 条父评论
-- 1 条子评论
-
-因此总评论数：
-
-- `10 * 3 = 30` 条评论
-
-建议结构：
-
-- 父评论 A：访客 1
-- 父评论 B：访客 2
-- 子评论：访客 3 或博主，对父评论 A 的回复
+### 4. 随笔
+- `name`: `随笔`
+- `slug`: `essay`
+- `description`: `记录开发过程中的思考、总结与杂记。`
+- `sortOrder`: `4`
+- `status`: `ACTIVE`
 
 ---
 
-## 三、推荐的 seed 文件拆分
+## 三、标签数据 `Tag`
 
-建议按功能拆分，而不是全部写在一个文件里：
+共创建 13 个标签：
 
-```text
-prisma/
-├─ seed.ts
-└─ seeds/
-   ├─ admin.seed.ts
-   ├─ visitor.seed.ts
-   ├─ tag.seed.ts
-   ├─ post.seed.ts
-   ├─ comment.seed.ts
-   └─ index.ts
-```
-
----
-
-## 四、各 seed 文件职责
-
-### 1. `admin.seed.ts`
-职责：
-
-- 创建或更新预置博主账号
-
-建议字段：
-
-- `email`
-- `username`
-- `passwordHash`
-- `role = BLOGGER`
-- `status = ACTIVE`
-- `intro`
+1. `frontend` — 前端
+2. `react` — React
+3. `nextjs` — Next.js
+4. `typescript` — TypeScript
+5. `backend` — 后端
+6. `nestjs` — NestJS
+7. `api` — 接口设计
+8. `database` — 数据库
+9. `prisma` — Prisma
+10. `postgresql` — PostgreSQL
+11. `optimization` — 性能优化
+12. `architecture` — 架构设计
+13. `essay` — 随笔
 
 ---
 
-### 2. `visitor.seed.ts`
-职责：
+## 四、已发布文章数据 `Post`
 
-- 创建 3 个访客用户
+> 说明：以下 16 篇文章均为 `PUBLISHED` 状态，且均已填写 `publishedAt`。
 
-建议字段：
+### 1. `nextjs-14-project-structure-and-routing`
+- `title`: `Next.js 14 项目结构设计与路由组织`
+- `summary`: `梳理 Next.js 14 项目目录结构、路由划分与组件组织方式。`
+- `category`: `前端`
+- `status`: `PUBLISHED`
+- `tags`: `frontend`, `nextjs`, `architecture`
 
-- `email`
-- `username`
-- `passwordHash`
-- `role = VISITOR`
-- `status = ACTIVE`
-- `intro`
+### 2. `react-state-management-practices`
+- `title`: `React 状态管理的几种常见实践`
+- `summary`: `对比本地状态、Context、Zustand 等常见状态管理方案。`
+- `category`: `前端`
+- `status`: `PUBLISHED`
+- `tags`: `frontend`, `react`, `typescript`
 
-建议密码统一方便测试，例如：
+### 3. `maintainable-component-splitting`
+- `title`: `一个可维护的组件拆分思路`
+- `summary`: `讨论如何按职责拆分组件以提升可维护性与复用性。`
+- `category`: `前端`
+- `status`: `PUBLISHED`
+- `tags`: `frontend`, `react`, `architecture`
 
-- `Visitor123456!`
+### 4. `typescript-value-in-frontend-engineering`
+- `title`: `TypeScript 在前端工程中的价值`
+- `summary`: `总结 TypeScript 对类型约束、协作与重构的帮助。`
+- `category`: `前端`
+- `status`: `PUBLISHED`
+- `tags`: `typescript`, `frontend`
 
----
+### 5. `restful-api-design-guidelines`
+- `title`: `RESTful API 设计中的几个关键约定`
+- `summary`: `整理接口命名、状态码、分页与错误返回格式的建议。`
+- `category`: `后端`
+- `status`: `PUBLISHED`
+- `tags`: `backend`, `api`, `architecture`
 
-### 3. `tag.seed.ts`
-职责：
+### 6. `nestjs-middleware-guard-usage`
+- `title`: `NestJS 中间件与守卫的使用方式`
+- `summary`: `介绍 NestJS 中间件、守卫与拦截器的分工。`
+- `category`: `后端`
+- `status`: `PUBLISHED`
+- `tags`: `backend`, `nestjs`, `api`
 
-- 创建 13 个标签
+### 7. `backend-access-control-practices`
+- `title`: `后端项目中的权限控制实践`
+- `summary`: `从角色、资源与操作三个层面讨论权限控制设计。`
+- `category`: `后端`
+- `status`: `PUBLISHED`
+- `tags`: `backend`, `architecture`
 
-建议做法：
+### 8. `api-idempotency-and-duplicate-submit-handling`
+- `title`: `接口幂等性与重复提交处理`
+- `summary`: `分析常见重复提交场景以及幂等性设计思路。`
+- `category`: `后端`
+- `status`: `PUBLISHED`
+- `tags`: `backend`, `api`, `optimization`
 
-- 使用固定顺序插入
-- 标签名和 slug 保持一致或对应关系
-- 方便后续文章按标签选择
+### 9. `prisma-schema-modeling`
+- `title`: `Prisma Schema 的建模思路`
+- `summary`: `从实体、关系、约束与索引角度说明 Prisma 建模。`
+- `category`: `数据库`
+- `status`: `PUBLISHED`
+- `tags`: `database`, `prisma`, `architecture`
 
----
+### 10. `postgresql-index-design-basics`
+- `title`: `PostgreSQL 索引设计基础`
+- `summary`: `讲解常见索引类型、联合索引与查询优化的基本原则。`
+- `category`: `数据库`
+- `status`: `PUBLISHED`
+- `tags`: `database`, `postgresql`, `optimization`
 
-### 4. `post.seed.ts`
-职责：
+### 11. `many-to-many-relationships-in-article-system`
+- `title`: `文章系统中的多对多关系处理`
+- `summary`: `以文章与标签关系为例说明中间表设计。`
+- `category`: `数据库`
+- `status`: `PUBLISHED`
+- `tags`: `database`, `prisma`, `architecture`
 
-- 创建 10 篇已发布文章
-- 创建 3 篇草稿文章
-- 给已发布文章绑定 1～3 个标签
+### 12. `flexible-and-controllable-database-fields`
+- `title`: `如何让数据库字段既灵活又可控`
+- `summary`: `探讨可空字段、状态字段与软删除字段的取舍。`
+- `category`: `数据库`
+- `status`: `PUBLISHED`
+- `tags`: `database`, `postgresql`
 
-建议做法：
+### 13. `first-day-building-personal-blog-system`
+- `title`: `做一个个人博客系统的第一天`
+- `summary`: `记录个人博客系统从设计到落地的起点。`
+- `category`: `随笔`
+- `status`: `PUBLISHED`
+- `tags`: `essay`, `architecture`
 
-- 文章内容用模板化方式生成
-- 每篇正文 200～300 字
-- 每篇文章根据主题匹配标签
-- 草稿文章不绑定评论
+### 14. `trade-offs-in-development-process`
+- `title`: `开发过程里的取舍`
+- `summary`: `总结功能实现过程中的设计取舍与原因。`
+- `category`: `随笔`
+- `status`: `PUBLISHED`
+- `tags`: `essay`, `architecture`, `optimization`
 
----
+### 15. `ui-design-and-information-density`
+- `title`: `界面设计与信息密度`
+- `summary`: `讨论博客后台和内容页如何平衡信息呈现。`
+- `category`: `随笔`
+- `status`: `PUBLISHED`
+- `tags`: `essay`, `frontend`
 
-### 5. `comment.seed.ts`
-职责：
-
-- 只给 10 篇已发布文章生成评论
-- 每篇 3 条
-- 建立父子评论关系
-
-建议做法：
-
-- 父评论 2 条
-- 第 3 条评论作为对子评论的回复
-- 评论作者在 3 个访客中轮换
-- 评论状态默认可设为 `APPROVED`
-
----
-
-### 6. `index.ts`
-职责：
-
-- 汇总各个 seed 模块
-- 按顺序执行
-- 保证依赖关系正确
-
-推荐执行顺序：
-
-1. 博主账号
-2. 访客账号
-3. 标签
-4. 文章
-5. 评论
-
----
-
-## 五、数据设计原则
-
-### 1. 先基础，再关联
-先插用户和标签，再插文章，最后插评论。
-
-原因：
-
-- 文章依赖作者
-- 评论依赖文章和用户
-- 文章标签依赖文章和标签
-
----
-
-### 2. 已发布和草稿分开处理
-- 已发布文章：用于前台展示和评论测试
-- 草稿文章：只用于后台编辑、草稿箱测试
-
-草稿不生成评论，避免出现不符合业务的测试数据。
-
----
-
-### 3. 标签随机但要合理
-你要求“随机搭配”，但仍要符合内容。  
-所以建议不是完全随机，而是：
-
-- 从预设标签池中按主题抽取
-- 每篇 1～3 个
-- 保证语义合理
-
-例如：
-
-- 数据库文章：`Prisma`、`数据库`、`后端`
-- AI 文章：`AI`、`工具链`、`博客`
-- 部署文章：`部署`、`node.js`、`工具链`
-
----
-
-### 4. 评论结构固定
-为了测试前端评论层级，建议所有发布文章统一使用同样结构：
-
-- 评论 1：父评论
-- 评论 2：父评论
-- 评论 3：回复评论 1 的子评论
-
-这样前端更容易验证：
-
-- 顶级评论列表
-- 回复关系
-- 缩进层级
-- 评论数量统计
+### 16. `development-notes-small-issues`
+- `title`: `开发笔记：一些容易忽视的小问题`
+- `summary`: `记录在开发中遇到的一些小坑和处理方式。`
+- `category`: `随笔`
+- `status`: `PUBLISHED`
+- `tags`: `essay`, `backend`
 
 ---
 
-## 六、文章与标签的推荐匹配关系
+## 五、草稿文章数据 `Post`
 
-下面是建议的标签搭配方向。
+> 说明：以下 4 篇文章均为 `DRAFT` 状态，分类可为空或暂不强制绑定。
 
-### 1. 博客系统首页设计思路
-- `前端`
-- `博客`
-- `Next.js`
+### 1. `next-step-for-frontend-engineering`
+- `title`: `前端工程化的下一步`
+- `summary`: `计划整理前端工程化中的脚手架、构建与规范化实践。`
+- `category`: `null`
+- `status`: `DRAFT`
 
-### 2. 使用 Prisma 设计博客数据库
-- `Prisma`
-- `数据库`
-- `后端`
+### 2. `unified-api-error-handling`
+- `title`: `接口错误处理统一方案`
+- `summary`: `准备梳理接口错误码、提示信息与前端拦截处理。`
+- `category`: `null`
+- `status`: `DRAFT`
 
-### 3. Next.js 中如何组织博客路由
-- `Next.js`
-- `前端`
-- `工具链`
+### 3. `database-migration-and-version-control`
+- `title`: `数据库迁移与版本控制`
+- `summary`: `计划记录 Prisma migration 的使用经验。`
+- `category`: `数据库`
+- `status`: `DRAFT`
 
-### 4. 博客评论系统的实现思路
-- `后端`
-- `数据库`
-- `博客`
-
-### 5. 如何给博客文章添加标签系统
-- `博客`
-- `数据库`
-- `前端`
-
-### 6. Markdown 博客编辑器的基本结构
-- `前端`
-- `工具链`
-- `博客`
-
-### 7. AI 辅助写博客的实践
-- `AI`
-- `博客`
-- `工具链`
-
-### 8. 提升博客列表性能的几个方法
-- `性能优化`
-- `数据库`
-- `Next.js`
-
-### 9. 博客部署到生产环境的注意事项
-- `部署`
-- `工具链`
-- `node.js`
-
-### 10. 用 Node.js 构建博客后台服务
-- `node.js`
-- `后端`
-- `Prisma`
+### 4. `next-version-ideas-for-blog-system`
+- `title`: `博客系统的下一版想法`
+- `summary`: `记录下一阶段想增加的功能与优化点。`
+- `category`: `随笔`
+- `status`: `DRAFT`
 
 ---
 
-## 七、评论作者分配建议
+## 六、文章与标签关联 `PostTag`
 
-为了让测试数据更自然，建议评论作者轮换：
+下面列出已发布文章的标签关系。每篇已发布文章都至少有 1 个标签，且不超过 3 个标签。
 
-- 父评论 1：访客 1
-- 父评论 2：访客 2
-- 子评论：访客 3
+### 前端文章标签
+- `nextjs-14-project-structure-and-routing` → `frontend`, `nextjs`, `architecture`
+- `react-state-management-practices` → `frontend`, `react`, `typescript`
+- `maintainable-component-splitting` → `frontend`, `react`, `architecture`
+- `typescript-value-in-frontend-engineering` → `typescript`, `frontend`
 
-下一篇文章换一组顺序，例如：
+### 后端文章标签
+- `restful-api-design-guidelines` → `backend`, `api`, `architecture`
+- `nestjs-middleware-guard-usage` → `backend`, `nestjs`, `api`
+- `backend-access-control-practices` → `backend`, `architecture`
+- `api-idempotency-and-duplicate-submit-handling` → `backend`, `api`, `optimization`
 
-- 父评论 1：访客 2
-- 父评论 2：访客 3
-- 子评论：访客 1
+### 数据库文章标签
+- `prisma-schema-modeling` → `database`, `prisma`, `architecture`
+- `postgresql-index-design-basics` → `database`, `postgresql`, `optimization`
+- `many-to-many-relationships-in-article-system` → `database`, `prisma`, `architecture`
+- `flexible-and-controllable-database-fields` → `database`, `postgresql`
 
-这样可以避免所有评论都来自同一个用户，看起来更真实。
-
----
-
-## 八、正文长度设计规则
-
-每篇文章控制在 200～300 字左右，建议统一结构：
-
-1. 开头说明主题
-2. 中间讲实现思路或问题
-3. 结尾给出总结
-
-这样有几个好处：
-
-- 更适合测试列表页摘要
-- 详情页不会太空
-- AI 问答也能有基本上下文
-- Markdown 渲染更容易检查
+### 随笔文章标签
+- `first-day-building-personal-blog-system` → `essay`, `architecture`
+- `trade-offs-in-development-process` → `essay`, `architecture`, `optimization`
+- `ui-design-and-information-density` → `essay`, `frontend`
+- `development-notes-small-issues` → `essay`, `backend`
 
 ---
 
-## 九、建议的落地顺序
+## 七、评论数据 `Comment`
 
-真正写 seed 时，建议按这个顺序：
+> 说明：每篇已发布文章都创建 3 条评论，包含 2 条父级评论和 1 条子级评论。
+>
+> 评论作者使用 1 个博主账号和 3 个游客账号轮流分配，便于测试评论树、回复关系与审核展示。
 
-1. `admin.seed.ts`
-2. `visitor.seed.ts`
-3. `tag.seed.ts`
-4. `post.seed.ts`
-5. `comment.seed.ts`
-6. `seed.ts` 统一调用
+### 评论模板规则
+对于每篇已发布文章，建议创建如下三条评论：
+
+1. **父级评论 A**
+   - `post`: 当前文章
+   - `user`: 轮流使用某个游客账号
+   - `parentId`: `null`
+   - `content`: 对文章内容的正向反馈或提问
+   - `status`: `APPROVED`
+
+2. **父级评论 B**
+   - `post`: 当前文章
+   - `user`: 轮流使用另一个游客账号
+   - `parentId`: `null`
+   - `content`: 对文章的补充观点或讨论
+   - `status`: `APPROVED`
+
+3. **子级评论 C**
+   - `post`: 当前文章
+   - `user`: 博主账号或第三个游客账号
+   - `parentId`: 指向“父级评论 A”
+   - `content`: 对父级评论 A 的回复
+   - `status`: `APPROVED`
+
+### 示例
+以 `nextjs-14-project-structure-and-routing` 为例：
+
+- 父级评论 A：`visitor01` 提问“目录划分是否可以进一步抽象？”
+- 父级评论 B：`visitor02` 反馈“实践中确实需要统一约定。”
+- 子级评论 C：`Memory` 回复“可以结合路由分组和业务层拆分一起设计。”
+
+### 评论轮换建议
+可按以下方式轮换用户，确保数据分布自然：
+- 父级评论 A：`visitor01` → `visitor02` → `visitor03` 循环
+- 父级评论 B：`visitor02` → `visitor03` → `visitor01` 循环
+- 子级评论 C：`Memory` 优先，必要时穿插 `visitor03`
+
+### 统计结果
+- 已发布文章：16 篇
+- 每篇评论数：3 条
+- 评论总数：48 条
+- 父级评论总数：32 条
+- 子级评论总数：16 条
 
 ---
 
-## 十、最终数据清单
+## 八、可选的补充测试数据
 
-### 用户
-- 1 个博主
-- 3 个访客
+如果后续需要进一步测试业务，可以继续增加以下数据：
 
-### 标签
-- 13 个
-- 第 13 个为 `node.js`
+- 1 个默认收藏夹
+- 1~3 条点赞记录
+- 2~5 条浏览历史
+- 1~2 条通知
+- 1 个 AI 问答会话与 3~6 条消息
 
-### 文章
-- 10 篇已发布
-- 3 篇草稿
+这些补充数据不会影响本次基础测试目标。
 
-### 评论
-- 仅已发布文章有评论
-- 每篇 3 条
-- 总计 30 条评论
+---
+
+## 九、校验结果
+
+### 分类数量
+- 前端：1
+- 后端：1
+- 数据库：1
+- 随笔：1
+
+### 用户数量
+- 博主：1
+- 游客：3
+
+### 文章数量
+- 已发布文章：16
+- 草稿文章：4
+
+### 标签数量
+- 标签总数：13
+
+### 评论数量
+- 已发布文章评论总数：48
+- 每篇已发布文章评论数：3
+
+### 标签覆盖情况
+- 每篇已发布文章均至少有 1 个标签
+- 每篇已发布文章均不超过 3 个标签
+
+本测试数据满足当前需求，可直接作为 seed 基础内容使用。

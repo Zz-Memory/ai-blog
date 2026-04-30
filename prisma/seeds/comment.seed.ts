@@ -1,16 +1,8 @@
 import type { PrismaClient } from "@prisma/client";
 import { CommentStatus } from "@prisma/client";
 
-// 评论作者轮换表。
-// 用不同访客模拟真实评论场景，避免所有评论都来自同一个账号。
-const COMMENTERS = [
-  { email: "visitor1@example.com" },
-  { email: "visitor2@example.com" },
-  { email: "visitor3@example.com" },
-] as const;
-
 // 仅对已发布文章生成评论。
-// 每篇文章固定 3 条：2 条父评论 + 1 条回复评论。
+// 每篇已发布文章固定 3 条评论：2 条父级评论 + 1 条子级评论。
 export async function seedComments(prisma: PrismaClient) {
   const posts = await prisma.post.findMany({
     where: { status: "PUBLISHED" },
@@ -20,19 +12,19 @@ export async function seedComments(prisma: PrismaClient) {
   const users = await prisma.user.findMany({
     where: {
       email: {
-        in: COMMENTERS.map((commenter) => commenter.email),
+        in: ["visitor01@example.com", "visitor02@example.com", "visitor03@example.com", "memory@example.com"],
       },
     },
   });
 
   const userByEmail = new Map(users.map((user) => [user.email, user]));
+  const commenterEmails = ["visitor01@example.com", "visitor02@example.com", "visitor03@example.com"] as const;
 
   for (let index = 0; index < posts.length; index += 1) {
     const post = posts[index];
-
-    const commenterA = userByEmail.get(COMMENTERS[index % 3].email);
-    const commenterB = userByEmail.get(COMMENTERS[(index + 1) % 3].email);
-    const commenterC = userByEmail.get(COMMENTERS[(index + 2) % 3].email);
+    const commenterA = userByEmail.get(commenterEmails[index % 3]);
+    const commenterB = userByEmail.get(commenterEmails[(index + 1) % 3]);
+    const commenterC = userByEmail.get("memory@example.com") ?? userByEmail.get(commenterEmails[(index + 2) % 3]);
 
     if (!commenterA || !commenterB || !commenterC) {
       continue;
@@ -65,7 +57,5 @@ export async function seedComments(prisma: PrismaClient) {
         status: CommentStatus.APPROVED,
       },
     });
-
-    console.log(`Seeded comments for post: ${post.title}`);
   }
 }
