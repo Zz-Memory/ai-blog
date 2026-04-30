@@ -11,7 +11,7 @@ import { likedArticles } from "./visitor-center-page/liked-articles";
 import { VisitorCenterComments } from "@/components/user/visitor-center-page/visitor-center-comments";
 import { VisitorCenterConfirmModal } from "@/components/user/visitor-center-page/visitor-center-confirm-modal";
 import { VisitorCenterFavorites } from "@/components/user/visitor-center-page/visitor-center-favorites";
-import { VisitorCenterFavorite } from "@/components/user/visitor-center-page/visitor-center-favorite";
+import { VisitorCenterLiked } from "@/components/user/visitor-center-page/visitor-center-liked";
 import { VisitorCenterHistory } from "@/components/user/visitor-center-page/visitor-center-history";
 import { VisitorCenterNotifications } from "@/components/user/visitor-center-page/visitor-center-notifications";
 import { VisitorCenterSidebar } from "@/components/user/visitor-center-page/visitor-center-sidebar";
@@ -115,7 +115,7 @@ export function VisitorCenterPage() {
             </>
           ) : null}
 
-          {activeSection === "liked" ? <VisitorCenterFavorite articles={likedList} /> : null}
+          {activeSection === "liked" ? <VisitorCenterLiked articles={likedList} /> : null}
 
           {activeSection === "favorites" ? <VisitorCenterFavorites articles={likedList} /> : null}
 

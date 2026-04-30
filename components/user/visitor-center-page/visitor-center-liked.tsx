@@ -1,3 +1,7 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
 import { ArticleCard } from "@/components/common/article-card";
 
 import type { LikedArticle } from "./liked-articles";
@@ -6,9 +10,16 @@ type VisitorCenterLikedProps = {
   articles: LikedArticle[];
 };
 
+const INITIAL_VISIBLE_COUNT = 3;
+
 // “我的点赞”模块：展示当前用户点赞过的文章列表。
 // 该区域与“浏览历史”相互独立，后续可以接入真实接口或点赞态同步逻辑。
 export function VisitorCenterLiked({ articles }: VisitorCenterLikedProps) {
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
+
+  const visibleArticles = useMemo(() => articles.slice(0, visibleCount), [articles, visibleCount]);
+  const hasMore = visibleCount < articles.length;
+
   return (
     <div className="space-y-5 rounded-[28px] border border-white/8 bg-[#14161b] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.22)] sm:p-8">
       <div className="flex items-center justify-between gap-4">
@@ -20,8 +31,8 @@ export function VisitorCenterLiked({ articles }: VisitorCenterLikedProps) {
       </div>
 
       <div className="space-y-4">
-        {articles.length ? (
-          articles.map((article) => (
+        {visibleArticles.length ? (
+          visibleArticles.map((article) => (
             <div key={article.title} className="rounded-[24px] border border-white/8 bg-[#17181d] p-0">
               <ArticleCard
                 href="#"
@@ -37,10 +48,22 @@ export function VisitorCenterLiked({ articles }: VisitorCenterLikedProps) {
           ))
         ) : (
           <div className="rounded-[24px] border border-dashed border-white/10 bg-white/3 px-6 py-12 text-center text-sm text-zinc-500">
-            你还没有喜欢过任何文章。
+            你还没有点赞过任何文章。
           </div>
         )}
       </div>
+
+      {hasMore ? (
+        <div className="flex justify-center pt-2">
+          <button
+            type="button"
+            onClick={() => setVisibleCount((count) => Math.min(count + INITIAL_VISIBLE_COUNT, articles.length))}
+            className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
+          >
+            点击加载更多
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
