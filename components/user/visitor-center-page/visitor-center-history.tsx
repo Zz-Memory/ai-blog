@@ -1,4 +1,4 @@
-import { ArticleCard } from "@/components/blog/article-card";
+import { ArticleCard } from "@/components/common/article-card";
 
 import type { HistoryArticle } from "./history-articles";
 

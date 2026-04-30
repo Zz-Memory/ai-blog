@@ -3,8 +3,10 @@
 import { useMemo, useState } from "react";
 
 import { AuthModal } from "@/components/auth/auth-modal";
+import { CategoryPill } from "@/components/common/category-pill";
 import { SiteFooter } from "@/components/common/site-footer";
 import { SiteHeader } from "@/components/common/site-header";
+import { TagPill } from "@/components/common/tag-pill";
 
 type AuthEntry = "login" | "register";
 
@@ -123,10 +125,8 @@ export function ArticleDetailPage() {
         <article className="mx-auto w-full max-w-[840px]">
           <header className="max-w-[840px]">
             <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
-              <span className="rounded-full border border-white/8 bg-white/5 px-2.5 py-1 text-[11px] text-zinc-400">GraphRAG</span>
+              <CategoryPill label="GraphRAG" />
               <span>发布于 2024-05-24</span>
-              <span className="h-1 w-1 rounded-full bg-zinc-700" />
-              <span>阅读约 8 分钟</span>
             </div>
             <h1 className="mt-5 text-3xl font-semibold leading-tight text-zinc-50 sm:text-4xl lg:text-[52px]">
               超越 RAG：探索下一代上下文感知 AI 系统的构建范式
@@ -283,7 +283,7 @@ print(response.synthesized_answer)`}</code></pre>
 
           <div className="mt-10 flex flex-wrap gap-3 border-t border-white/8 pt-6 max-w-[840px]">
             {articleTags.map((tag) => (
-              <span key={tag} className="rounded-full border border-white/8 bg-white/3 px-4 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-white/15 hover:bg-white/5 hover:text-[#b8c9ff]">#{tag}</span>
+              <TagPill key={tag} label={tag} />
             ))}
           </div>
 

@@ -1,11 +1,13 @@
 import Link from "next/link";
 
+import { CategoryPill } from "@/components/common/category-pill";
 import { TagPill } from "@/components/common/tag-pill";
 
 // 文章卡片所展示的统计信息类型。
 export type ArticleStats = {
   likes: number;
   comments: number;
+  favorites: number;
 };
 
 // 文章卡片的入参类型。
@@ -32,7 +34,7 @@ function Stat({ icon, value }: { icon: string; value: string | number }) {
 }
 
 // 首页中的单篇文章卡片。
-// 该卡片保留了“标题、摘要、标签、时间、点赞/评论数”这些设计稿中的核心信息。
+// 该卡片保留了“标题、摘要、标签、时间、点赞 / 收藏 / 评论数”这些设计稿中的核心信息。
 export function ArticleCard({
   title,
   date,
@@ -52,11 +54,7 @@ export function ArticleCard({
       <article className="transition-transform duration-300 group-hover:-translate-y-0.5">
         <div className={`flex items-start justify-between gap-6 ${compact ? "gap-4" : ""}`}>
           <div className="min-w-0">
-            {category ? (
-              <span className="inline-flex rounded-md border border-blue-400/20 bg-blue-400/10 px-2 py-1 text-xs font-medium uppercase tracking-[0.18em] text-blue-100">
-                {category}
-              </span>
-            ) : null}
+            {category ? <CategoryPill label={category} /> : null}
             <h2 className={`${compact ? "mt-2 text-2xl" : "mt-3 text-[28px]"} font-medium tracking-tight text-zinc-100 transition-colors duration-300 group-hover:text-blue-100`}>
               {title}
             </h2>
@@ -78,6 +76,7 @@ export function ArticleCard({
 
           <div className="flex items-center gap-6 text-sm">
             <Stat icon="favorite" value={stats.likes} />
+            <Stat icon="bookmark" value={stats.favorites} />
             <Stat icon="chat_bubble" value={stats.comments} />
           </div>
         </div>
