@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 
-import { AuthModal } from "@/components/blog/auth-modal";
-import { SiteFooter } from "@/components/blog/site-footer";
-import { SiteHeader } from "@/components/blog/site-header";
+import { AuthModal } from "@/components/auth/auth-modal";
+import { SiteFooter } from "@/components/common/site-footer";
+import { SiteHeader } from "@/components/common/site-header";
 
 type AuthEntry = "login" | "register";
 
@@ -78,17 +78,17 @@ export function ArticleDetailPage() {
 
   const currentUser = isAuthenticated
     ? {
-        name: "Memory",
-        role: "blogger" as const,
-        avatarUrl: "/avatars/blogger-default.png",
-        avatarLabel: "博主头像",
-      }
+      name: "Memory",
+      role: "blogger" as const,
+      avatarUrl: "/avatars/blogger-default.png",
+      avatarLabel: "博主头像",
+    }
     : {
-        name: "访客",
-        role: "visitor" as const,
-        avatarUrl: "/avatars/visitor-default.png",
-        avatarLabel: "访客头像",
-      };
+      name: "访客",
+      role: "visitor" as const,
+      avatarUrl: "/avatars/visitor-default.png",
+      avatarLabel: "访客头像",
+    };
 
   const readingStats = useMemo(
     () => ({

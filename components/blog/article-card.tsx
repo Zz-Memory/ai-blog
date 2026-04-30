@@ -1,10 +1,9 @@
 import Link from "next/link";
 
-import { TagPill } from "@/components/blog/tag-pill";
+import { TagPill } from "@/components/common/tag-pill";
 
 // 文章卡片所展示的统计信息类型。
 export type ArticleStats = {
-  views: string;
   likes: number;
   comments: number;
 };
@@ -17,6 +16,8 @@ export type ArticleCardProps = {
   excerpt: string;
   tags: string[];
   stats: ArticleStats;
+  href?: string;
+  compact?: boolean;
 };
 
 // 统计项小组件。
@@ -31,26 +32,35 @@ function Stat({ icon, value }: { icon: string; value: string | number }) {
 }
 
 // 首页中的单篇文章卡片。
-// 该卡片保留了“标题、摘要、标签、时间、阅读/点赞/评论数”这些设计稿中的核心信息。
-export function ArticleCard({ title, date, category, excerpt, tags, stats }: ArticleCardProps) {
+// 该卡片保留了“标题、摘要、标签、时间、点赞/评论数”这些设计稿中的核心信息。
+export function ArticleCard({
+  title,
+  date,
+  category,
+  excerpt,
+  tags,
+  stats,
+  href = "#",
+  compact = false,
+}: ArticleCardProps) {
   return (
     <Link
-      href="#"
+      href={href}
       aria-label={`查看文章：${title}`}
       className="group block rounded-2xl border border-white/8 bg-[#17181d] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition duration-300 hover:border-blue-400/20 hover:bg-[#1a1b21]"
     >
       <article className="transition-transform duration-300 group-hover:-translate-y-0.5">
-        <div className="flex items-start justify-between gap-6">
+        <div className={`flex items-start justify-between gap-6 ${compact ? "gap-4" : ""}`}>
           <div className="min-w-0">
             {category ? (
               <span className="inline-flex rounded-md border border-blue-400/20 bg-blue-400/10 px-2 py-1 text-xs font-medium uppercase tracking-[0.18em] text-blue-100">
                 {category}
               </span>
             ) : null}
-            <h2 className="mt-3 text-[28px] font-medium tracking-tight text-zinc-100 transition-colors duration-300 group-hover:text-blue-100">
+            <h2 className={`${compact ? "mt-2 text-2xl" : "mt-3 text-[28px]"} font-medium tracking-tight text-zinc-100 transition-colors duration-300 group-hover:text-blue-100`}>
               {title}
             </h2>
-            <p className="mt-4 max-w-3xl text-[15px] leading-7 text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300">
+            <p className={`${compact ? "mt-3 max-w-2xl text-sm leading-6" : "mt-4 max-w-3xl text-[15px] leading-7"} text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300`}>
               {excerpt}
             </p>
           </div>
@@ -59,7 +69,7 @@ export function ArticleCard({ title, date, category, excerpt, tags, stats }: Art
           </time>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+        <div className={`mt-5 flex flex-wrap items-center justify-between gap-4 ${compact ? "mt-4" : ""}`}>
           <div className="flex flex-wrap gap-3">
             {tags.map((tag) => (
               <TagPill key={tag} label={tag} />
@@ -67,7 +77,6 @@ export function ArticleCard({ title, date, category, excerpt, tags, stats }: Art
           </div>
 
           <div className="flex items-center gap-6 text-sm">
-            <Stat icon="visibility" value={stats.views} />
             <Stat icon="favorite" value={stats.likes} />
             <Stat icon="chat_bubble" value={stats.comments} />
           </div>

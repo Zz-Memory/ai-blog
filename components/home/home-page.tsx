@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 
-import { SiteFooter } from "@/components/blog/site-footer";
-import { SiteHeader } from "@/components/blog/site-header";
-import { HomeSidebar } from "@/components/blog/home-sidebar";
-import { HomeArticleList, featuredPosts } from "@/components/blog/home-article-list";
-import { HomePagination } from "@/components/blog/home-pagination";
-import { AuthModal } from "@/components/blog/auth-modal";
+import { SiteFooter } from "@/components/common/site-footer";
+import { SiteHeader } from "@/components/common/site-header";
+import { HomeSidebar } from "@/components/home/home-sidebar";
+import { HomeArticleList, featuredPosts } from "@/components/home/home-article-list";
+import { HomePagination } from "@/components/home/home-pagination";
+import { AuthModal } from "@/components/auth/auth-modal";
 
 type AuthEntry = "login" | "register";
 

@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-import { SidebarCard } from "@/components/blog/sidebar-card";
-import { TagPill } from "@/components/blog/tag-pill";
+import { SidebarCard } from "@/components/home/sidebar-card";
+import { TagPill } from "@/components/common/tag-pill";
 
 // 侧边栏数据保持独立，便于后续接入真实接口。
 // 目前先写死为设计稿中的示例内容，之后可替换成数据库动态数据。
@@ -62,8 +62,8 @@ export function HomeSidebar() {
               key={category.name}
               type="button"
               className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition ${category.active
-                  ? "border-blue-400/30 bg-blue-400/10 text-blue-100"
-                  : "border-white/8 bg-[#111215] text-zinc-400 hover:border-white/15 hover:bg-white/5 hover:text-zinc-200"
+                ? "border-blue-400/30 bg-blue-400/10 text-blue-100"
+                : "border-white/8 bg-[#111215] text-zinc-400 hover:border-white/15 hover:bg-white/5 hover:text-zinc-200"
                 }`}
             >
               <span className="text-sm font-medium">{category.name}</span>
