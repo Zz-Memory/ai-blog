@@ -6,7 +6,9 @@ import { SiteFooter } from "@/components/common/site-footer";
 import { SiteHeader } from "@/components/common/site-header";
 
 import { historyArticles } from "./visitor-center-page/history-articles";
+import { likedArticles } from "./visitor-center-page/liked-articles";
 import { VisitorCenterConfirmModal } from "@/components/user/visitor-center-page/visitor-center-confirm-modal";
+import { VisitorCenterFavorite } from "@/components/user/visitor-center-page/visitor-center-favorite";
 import { VisitorCenterHistory } from "@/components/user/visitor-center-page/visitor-center-history";
 import { VisitorCenterSidebar } from "@/components/user/visitor-center-page/visitor-center-sidebar";
 import { VisitorCenterToolbar } from "@/components/user/visitor-center-page/visitor-center-toolbar";
@@ -33,6 +35,14 @@ export function VisitorCenterPage() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showSettingsNote, setShowSettingsNote] = useState(false);
+
+  // 右侧功能模块当前激活项。
+  // 通过左侧悬浮菜单切换这个值，右侧区域会据此渲染不同模块。
+  const [activeSection, setActiveSection] = useState("history");
+
+  // 当前用户“点赞”列表。
+  // 这里先使用静态数据，后续可以替换为接口返回值或用户态缓存。
+  const likedList = useMemo(() => likedArticles, []);
 
   // 根据浏览记录搜索关键字过滤列表。
   // 这里使用 `useMemo` 只是为了避免在无关状态变化时重复计算，数据量变大后更有意义。
@@ -62,30 +72,38 @@ export function VisitorCenterPage() {
 
       <main className="mx-auto grid min-h-[calc(100vh-64px)] max-w-[1440px] grid-cols-1 gap-8 px-4 py-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6 xl:px-8">
         <VisitorCenterSidebar
+          activeId={activeSection}
           // 左侧栏只负责触发全局动作，真正的确认交给弹窗处理。
+          onSelect={setActiveSection}
           onLogoutClick={() => setShowLogoutConfirm(true)}
           onSettingsClick={() => setShowSettingsNote(true)}
         />
 
         <section className="space-y-6 pb-10">
-          <VisitorCenterToolbar
-            // 注意：这里传入的是“浏览记录搜索”状态，而不是 `SiteHeader` 的搜索状态。
-            searchValue={historySearchValue}
-            onSearchChange={setHistorySearchValue}
-            onSearchSubmit={setHistorySearchKeyword}
-            onClearHistoryClick={() => setShowClearConfirm(true)}
-          />
+          {activeSection === "liked" ? (
+            <VisitorCenterFavorite articles={likedList} />
+          ) : (
+            <>
+              <VisitorCenterToolbar
+                // 注意：这里传入的是“浏览记录搜索”状态，而不是 `SiteHeader` 的搜索状态。
+                searchValue={historySearchValue}
+                onSearchChange={setHistorySearchValue}
+                onSearchSubmit={setHistorySearchKeyword}
+                onClearHistoryClick={() => setShowClearConfirm(true)}
+              />
 
-          <VisitorCenterHistory articles={filteredArticles} />
+              <VisitorCenterHistory articles={filteredArticles} />
 
-          <div className="flex justify-center pt-4">
-            <button
-              type="button"
-              className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
-            >
-              加载更早的记录
-            </button>
-          </div>
+              <div className="flex justify-center pt-4">
+                <button
+                  type="button"
+                  className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
+                >
+                  加载更早的记录
+                </button>
+              </div>
+            </>
+          )}
         </section>
       </main>
 
