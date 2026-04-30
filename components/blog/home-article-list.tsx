@@ -1,8 +1,17 @@
 import { ArticleCard } from "@/components/blog/article-card";
 
+export type FeaturedPost = {
+  title: string;
+  date: string;
+  category: string;
+  excerpt: string;
+  tags: string[];
+  stats: { views: string; likes: number; comments: number };
+};
+
 // 首页文章列表数据。
 // 当前先使用静态示例数据，后续可替换为数据库查询结果或接口返回值。
-const featuredPosts = [
+export const featuredPosts: FeaturedPost[] = [
   {
     title: "超越 RAG：探索下一代上下文感知 AI 系统的构建范式",
     date: "2024.05.24",
@@ -42,10 +51,10 @@ const featuredPosts = [
 ];
 
 // 右侧文章流区域，负责承载首页主内容。
-export function HomeArticleList() {
+export function HomeArticleList({ posts }: { posts: FeaturedPost[] }) {
   return (
     <div className="flex flex-col gap-8">
-      {featuredPosts.map((post) => (
+      {posts.map((post) => (
         <ArticleCard key={post.title} {...post} />
       ))}
     </div>

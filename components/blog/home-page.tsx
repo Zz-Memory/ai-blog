@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { SiteFooter } from "@/components/blog/site-footer";
 import { SiteHeader } from "@/components/blog/site-header";
 import { HomeSidebar } from "@/components/blog/home-sidebar";
-import { HomeArticleList } from "@/components/blog/home-article-list";
+import { HomeArticleList, featuredPosts } from "@/components/blog/home-article-list";
 import { HomePagination } from "@/components/blog/home-pagination";
 import { AuthModal } from "@/components/blog/auth-modal";
 
@@ -21,10 +21,27 @@ type AuthEntry = "login" | "register";
 export function HomePage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authEntry, setAuthEntry] = useState<AuthEntry>("login");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchKeyword, setSearchKeyword] = useState("");
+
+  const filteredPosts = useMemo(() => {
+    const keyword = searchKeyword.trim().toLowerCase();
+    if (!keyword) return featuredPosts;
+
+    return featuredPosts.filter((post) => {
+      const haystack = [post.title, post.excerpt, post.category, ...post.tags].join(" ").toLowerCase();
+      return haystack.includes(keyword);
+    });
+  }, [searchKeyword]);
+
+  const isAuthenticated = false;
 
   return (
     <div className="min-h-screen bg-[#111215] text-zinc-200">
       <SiteHeader
+        searchValue={searchInput}
+        onSearchChange={setSearchInput}
+        onSearchSubmit={(value) => setSearchKeyword(value)}
         onLoginClick={() => {
           setAuthEntry("login");
           setAuthOpen(true);
@@ -33,6 +50,7 @@ export function HomePage() {
           setAuthEntry("register");
           setAuthOpen(true);
         }}
+        isAuthenticated={isAuthenticated}
       />
 
       {/* 主内容区：左侧固定栏 + 右侧文章流 */}
@@ -40,7 +58,7 @@ export function HomePage() {
         <HomeSidebar />
 
         <section className="space-y-8">
-          <HomeArticleList />
+          <HomeArticleList posts={filteredPosts} />
           <HomePagination />
         </section>
       </main>
