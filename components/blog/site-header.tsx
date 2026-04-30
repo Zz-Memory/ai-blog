@@ -20,8 +20,7 @@ export function SiteHeader({
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-[#111215]/90 backdrop-blur-xl">
       <div className="mx-auto grid h-16 max-w-[1200px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-6 px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 text-zinc-100 transition hover:text-white">
-          <span className="material-symbols-outlined text-[20px] text-blue-200">memory</span>
+        <Link href="/" className="flex items-center text-zinc-100 transition hover:text-white">
           <span className="text-[22px] font-semibold tracking-wide">
             Memory的小破站
           </span>
@@ -74,9 +73,9 @@ export function SiteHeader({
               <Link
                 href="/profile/settings"
                 aria-label="用户中心"
-                className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-blue-400/20 bg-[#b8c9ff] text-[#14161b] transition hover:scale-[1.02]"
+                className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-blue-400/20 bg-[#b8c9ff] transition hover:scale-[1.02]"
               >
-                <span className="text-sm font-semibold">M</span>
+                <img src="/avatars/user-default.png" alt="用户头像" className="h-full w-full object-cover" />
               </Link>
             </>
           ) : (
