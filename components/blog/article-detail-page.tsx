@@ -71,16 +71,24 @@ export function ArticleDetailPage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authEntry, setAuthEntry] = useState<AuthEntry>("login");
   const [commentDraft, setCommentDraft] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatQuestion, setChatQuestion] = useState("");
   const [isAuthenticated] = useState(false);
   const [canComment] = useState(true);
 
   const currentUser = isAuthenticated
     ? {
         name: "Memory",
-        avatarUrl: "/avatars/user-default.png",
-        avatarLabel: "用户头像",
+        role: "blogger" as const,
+        avatarUrl: "/avatars/blogger-default.png",
+        avatarLabel: "博主头像",
       }
-    : null;
+    : {
+        name: "访客",
+        role: "visitor" as const,
+        avatarUrl: "/avatars/visitor-default.png",
+        avatarLabel: "访客头像",
+      };
 
   const readingStats = useMemo(
     () => ({
@@ -138,6 +146,94 @@ export function ArticleDetailPage() {
 
           <div className="mt-8 max-w-[840px] space-y-8 text-[15px] leading-8 text-zinc-300">
             <p id="intro">在过去的十二个月里，检索增强生成（RAG）几乎成为了企业级 AI 应用的默认架构。通过将外部知识库与大语言模型（LLM）结合，我们成功缓解了幻觉问题，并赋予了模型处理私有数据的能力。然而，随着应用场景的复杂化，传统 RAG 架构的局限性也日益凸显。</p>
+
+            <div className="hidden md:block">
+              <div className="fixed bottom-24 right-6 z-50 xl:right-[max(24px,calc((100vw-1600px)/2+24px))]">
+                <button
+                  type="button"
+                  onClick={() => setChatOpen((value) => !value)}
+                  className="group relative flex h-14 w-14 items-center justify-center rounded-full border border-primary-container/50 bg-surface-container-high shadow-[0_0_20px_rgba(75,142,255,0.15)] transition hover:shadow-[0_0_30px_rgba(75,142,255,0.3)]"
+                  aria-label="打开 AI 问答"
+                >
+                  <div className="absolute inset-0 rounded-full bg-primary-container/20 opacity-20 animate-ping" />
+                  <span className="material-symbols-outlined relative z-10 text-primary-container transition group-hover:scale-110 text-[20px]">smart_toy</span>
+                </button>
+              </div>
+            </div>
+
+            {chatOpen ? (
+              <section className="fixed bottom-40 right-6 z-40 w-[760px] max-w-[92vw] rounded-2xl border border-white/8 bg-[#181a20] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.35)] xl:right-[max(24px,calc((100vw-1600px)/2+24px))]">
+                <div className="flex items-center justify-between border-b border-white/8 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-primary/20 text-primary">
+                      <span className="material-symbols-outlined text-[20px]">smart_toy</span>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-zinc-100">小智 AI 助手</h4>
+                      <p className="text-xs text-zinc-500">全栈开发与AI研究导师</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setChatQuestion("")}
+                      className="rounded-full p-2 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-200"
+                      aria-label="清空对话"
+                      title="清空对话"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChatQuestion((value) => value.trim())}
+                      className="rounded-full p-2 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-200"
+                      aria-label="刷新对话"
+                      title="刷新对话"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">refresh</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-4">
+                  <div className="flex justify-end gap-3">
+                    <div className="rounded-2xl rounded-tr-sm border border-white/8 bg-white/5 px-4 py-3 text-sm text-zinc-200">
+                      帮我总结一下这篇文章的核心观点。
+                    </div>
+                    <div className="h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                      <img src={currentUser.avatarUrl} alt={currentUser.avatarLabel} className="h-full w-full object-cover" />
+                    </div>
+                  </div>
+                  <div className="flex justify-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-primary/20 text-primary">
+                      <span className="material-symbols-outlined text-[18px]">smart_toy</span>
+                    </div>
+                    <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-white/8 bg-[#101215] px-4 py-3 text-sm leading-7 text-zinc-300">
+                      <p>本文主要探讨了传统 RAG 架构的局限性，并介绍了微软提出的 GraphRAG 作为下一代上下文感知系统的构建范式。</p>
+                      <p className="mt-3 font-medium text-zinc-100">核心观点包括：</p>
+                      <ul className="mt-2 list-disc space-y-2 pl-5">
+                        <li>传统 RAG 在面对多跳推理、全局语境理解和复杂实体关系时存在明显不足。</li>
+                        <li>GraphRAG 通过在索引阶段利用 LLM 构建图谱（实体、关系、社区），实现了从简单的文本检索向深度知识图谱检索的转变。</li>
+                        <li>这种新范式特别适合回答宏观的、需要综合全局信息的复杂问题。</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-center gap-3 rounded-2xl border border-white/8 bg-surface-container px-4 py-3">
+                  <input
+                    value={chatQuestion}
+                    onChange={(event) => setChatQuestion(event.target.value)}
+                    placeholder="向小智提问关于本文的任何问题..."
+                    className="w-full bg-transparent text-sm text-zinc-200 outline-none placeholder:text-zinc-500"
+                  />
+                  <button type="button" className="rounded-xl p-2 text-zinc-400 transition hover:bg-primary/10 hover:text-primary">
+                    <span className="material-symbols-outlined text-[24px]">send</span>
+                  </button>
+                </div>
+                <p className="mt-3 text-center text-[11px] text-zinc-500">AI 生成的内容可能不准确，请注意甄别。</p>
+              </section>
+            ) : null}
 
             <section id="rag-issues" className="space-y-4">
               <h2 className="text-2xl font-semibold text-zinc-50">当前 RAG 架构的困境</h2>
