@@ -23,7 +23,7 @@
 - `email`: `memory@example.com`
 - `username`: `Memory`
 - `passwordHash`: `bcrypt_hash_placeholder`
-- `初始密码`: `12345678`
+- `初始密码`: `ecut12345`
 - `role`: `BLOGGER`
 - `intro`: `记录数字生命轨迹。致力于探索人工智能与人类审美的交汇点，相信技术应当隐于无形，服务于心。`
 - `status`: `ACTIVE`
@@ -32,7 +32,7 @@
 - `email`: `visitor01@example.com`
 - `username`: `visitor01`
 - `passwordHash`: `bcrypt_hash_placeholder`
-- `初始密码`: `12345678`
+- `初始密码`: `ecut12345`
 - `role`: `VISITOR`
 - `intro`: `普通测试访客账号 1。`
 - `status`: `ACTIVE`
@@ -41,7 +41,7 @@
 - `email`: `visitor02@example.com`
 - `username`: `visitor02`
 - `passwordHash`: `bcrypt_hash_placeholder`
-- `初始密码`: `12345678`
+- `初始密码`: `ecut12345`
 - `role`: `VISITOR`
 - `intro`: `普通测试访客账号 2。`
 - `status`: `ACTIVE`
@@ -50,7 +50,7 @@
 - `email`: `visitor03@example.com`
 - `username`: `visitor03`
 - `passwordHash`: `bcrypt_hash_placeholder`
-- `初始密码`: `12345678`
+- `初始密码`: `ecut12345`
 - `role`: `VISITOR`
 - `intro`: `普通测试访客账号 3。`
 - `status`: `ACTIVE`
