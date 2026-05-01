@@ -38,6 +38,19 @@ type ArticleItem = {
   status: ArticleStatus;
 };
 
+type ReviewStatus = "pending" | "approved";
+
+type ReviewItem = {
+  id: string;
+  articleTitle: string;
+  author: string;
+  content: string;
+  createdAt: string;
+  likes: number;
+  replies: number;
+  status: ReviewStatus;
+};
+
 const initialMessages: SendMessageItem[] = [
   { title: "2024 年度技术回顾报告", audience: "所有访客", updatedAt: "2024-05-20 14:30", status: "published" },
   { title: "（草稿）关于社区维护的通知", audience: "未设置", updatedAt: "2024-05-22 11:30", status: "draft" },
@@ -52,6 +65,21 @@ const articleTabs: Array<{ id: ArticleStatus; label: string; count: number }> = 
   { id: "published", label: "已发布", count: 124 },
   { id: "draft", label: "草稿箱", count: 8 },
 ];
+
+const reviewStatusMeta: Record<ReviewStatus, { label: string; className: string }> = {
+  pending: { label: "待审核", className: "bg-amber-500/10 text-amber-300" },
+  approved: { label: "已通过", className: "bg-emerald-500/10 text-emerald-300" },
+};
+
+const reviewActionMap: Record<ReviewStatus, Array<{ label: string; className: string }>> = {
+  pending: [
+    { label: "通过", className: "text-emerald-300 hover:bg-emerald-500/10" },
+    { label: "删除", className: "text-rose-300 hover:bg-rose-500/10" },
+  ],
+  approved: [
+    { label: "删除", className: "text-rose-300 hover:bg-rose-500/10" },
+  ],
+};
 
 export function BloggerCenterPage() {
   const [siteSearchValue, setSiteSearchValue] = useState("");
@@ -70,6 +98,11 @@ export function BloggerCenterPage() {
   const [activeArticleMenu, setActiveArticleMenu] = useState<string | null>(null);
   const [activeArticleMenuPosition, setActiveArticleMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewFilter, setReviewFilter] = useState<ReviewStatus | "all">("all");
+  const [activeReviewMenu, setActiveReviewMenu] = useState<string | null>(null);
+  const [activeReviewMenuPosition, setActiveReviewMenuPosition] = useState<{ top: number; left: number } | null>(null);
+
   const [activeMessageMenu, setActiveMessageMenu] = useState<string | null>(null);
   const [activeMessageMenuPosition, setActiveMessageMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
@@ -87,6 +120,13 @@ export function BloggerCenterPage() {
       setActiveArticleMenu(null);
       setActiveArticleMenuPosition(null);
     }
+
+    if (activeSection === "comments-review") {
+      setReviewPage(1);
+    } else {
+      setActiveReviewMenu(null);
+      setActiveReviewMenuPosition(null);
+    }
   }, [activeSection]);
 
   const { unreadCount, setUnreadCount } = useNotificationCount();
@@ -103,6 +143,92 @@ export function BloggerCenterPage() {
   useEffect(() => {
     setArticlePage(1);
   }, [activeArticleTab]);
+
+  const reviewItems: ReviewItem[] = useMemo(
+    () => [
+      {
+        id: "r-1",
+        articleTitle: "AI 原生极简主义：界面即智能容器",
+        author: "晨曦",
+        content: "这篇文章把 AI 与极简风格结合得很自然，尤其是留白处理非常舒服。",
+        createdAt: "2024-05-22 09:10",
+        likes: 18,
+        replies: 2,
+        status: "pending",
+      },
+      {
+        id: "r-2",
+        articleTitle: "前端工程化的下一个十年",
+        author: "小蓝",
+        content: "关于云端 IDE 的那段分析很有启发，期待后续补充更多实践案例。",
+        createdAt: "2024-05-21 21:45",
+        likes: 26,
+        replies: 4,
+        status: "pending",
+      },
+      {
+        id: "r-3",
+        articleTitle: "2024 个人年度数字足迹图鉴",
+        author: "Neo",
+        content: "内容很完整，建议可以增加一个数据来源说明，会更有说服力。",
+        createdAt: "2024-05-21 16:20",
+        likes: 8,
+        replies: 1,
+        status: "approved",
+      },
+      {
+        id: "r-4",
+        articleTitle: "构建响应式设计系统的新范式",
+        author: "阿橙",
+        content: "这部分的案例很实用，不过某些段落可以再压缩一点，提升阅读效率。",
+        createdAt: "2024-05-20 18:05",
+        likes: 3,
+        replies: 0,
+        status: "pending",
+      },
+      {
+        id: "r-5",
+        articleTitle: "（草稿）LLM 推理优化指南：KV Cache 深度解析",
+        author: "小马",
+        content: "如果后面能补一张 KV Cache 流程图就更好了。",
+        createdAt: "2024-05-20 10:30",
+        likes: 2,
+        replies: 0,
+        status: "pending",
+      },
+      {
+        id: "r-6",
+        articleTitle: "（草稿）Framer Motion 进阶：复杂序列动画编排",
+        author: "风铃",
+        content: "动效展示很不错，建议加一个动图演示。",
+        createdAt: "2024-05-19 19:50",
+        likes: 6,
+        replies: 1,
+        status: "approved",
+      },
+      {
+        id: "r-7",
+        articleTitle: "（草稿）个人工作站自动化：从 Raycast 到 Hammerspoon",
+        author: "momo",
+        content: "这类工具链文章很受欢迎，读完后我也想整理自己的工作流。",
+        createdAt: "2024-05-19 12:10",
+        likes: 11,
+        replies: 3,
+        status: "pending",
+      },
+      {
+        id: "r-8",
+        articleTitle: "（草稿）WebGPU 开启前端渲染的新篇章",
+        author: "Luna",
+        content: "很期待你后续补充 WebGPU 的兼容性方案。",
+        createdAt: "2024-05-18 20:15",
+        likes: 4,
+        replies: 0,
+        status: "pending",
+      },
+    ],
+    [],
+  );
 
   const articleRows: Array<ArticleItem & { category: string }> = useMemo(
     () => [
@@ -125,6 +251,15 @@ export function BloggerCenterPage() {
   const totalArticlePages = Math.max(1, Math.ceil(activeArticles.length / articlesPerPage));
   const visibleArticles = activeArticles.slice((articlePage - 1) * articlesPerPage, articlePage * articlesPerPage);
 
+  const filteredReviews = reviewItems.filter((review) => reviewFilter === "all" || review.status === reviewFilter);
+  const reviewsPerPage = 6;
+  const totalReviewPages = Math.max(1, Math.ceil(filteredReviews.length / reviewsPerPage));
+  const visibleReviews = filteredReviews.slice((reviewPage - 1) * reviewsPerPage, reviewPage * reviewsPerPage);
+
+  useEffect(() => {
+    setReviewPage(1);
+  }, [reviewFilter]);
+
   return (
     <div className="min-h-screen bg-[#111215] text-zinc-200">
       <SiteHeader
@@ -146,6 +281,141 @@ export function BloggerCenterPage() {
         />
 
         <section className="space-y-6 pb-10">
+          {activeSection === "comments-review" ? (
+            <div className="space-y-6">
+              <div className="flex items-end justify-between gap-4 border-b border-white/5 pb-4">
+                <div>
+                  <h1 className="text-3xl font-bold tracking-[-0.03em] text-zinc-100 md:text-4xl">评论审核</h1>
+                  <p className="mt-2 text-sm text-zinc-400">集中处理文章下的用户评论，快速完成审核、回复与管理。</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: "all", label: "全部" },
+                    { id: "pending", label: "待审核" },
+                    { id: "approved", label: "已通过" },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setReviewFilter(item.id as ReviewStatus | "all")}
+                      className={`rounded-full border px-4 py-2 text-sm transition ${reviewFilter === item.id ? "border-[#adc6ff]/30 bg-[#182033] text-[#adc6ff]" : "border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200"}`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-[24px] border border-white/8 bg-[#14161b] shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[940px] border-collapse text-left">
+                    <thead>
+                      <tr className="border-b border-white/8 bg-white/[0.03]">
+                        <th className="px-6 py-4 text-sm font-medium text-zinc-300">文章标题</th>
+                        <th className="px-6 py-4 text-sm font-medium text-zinc-300">评论者</th>
+                        <th className="px-6 py-4 text-sm font-medium text-zinc-300">评论内容</th>
+                        <th className="px-6 py-4 text-sm font-medium text-zinc-300">评论状态</th>
+                        <th className="px-6 py-4 text-right text-sm font-medium text-zinc-300">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/8">
+                      {visibleReviews.length ? (
+                        visibleReviews.map((review) => (
+                          <tr key={review.id} className="transition hover:bg-white/[0.03]">
+                            <td className="px-6 py-4">
+                              <div className="max-w-[220px] truncate text-sm font-medium text-zinc-100">{review.articleTitle}</div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-zinc-300">{review.author}</td>
+                            <td className="px-6 py-4">
+                              <div className="max-w-[420px] max-h-24 overflow-y-auto break-words text-sm leading-7 text-zinc-300">
+                                {review.content}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${reviewStatusMeta[review.status].className}`}>{reviewStatusMeta[review.status].label}</span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="relative inline-flex">
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    const rect = event.currentTarget.getBoundingClientRect();
+                                    const menuHeight = review.status === "approved" ? 96 : 132;
+                                    const menuWidth = 160;
+                                    const gap = 8;
+                                    const pad = 12;
+                                    const openUp = window.innerHeight - rect.bottom < menuHeight + gap;
+                                    const top = openUp ? Math.max(pad, rect.top - menuHeight - gap) : Math.min(window.innerHeight - menuHeight - pad, rect.bottom + gap);
+                                    const left = Math.min(window.innerWidth - menuWidth - pad, Math.max(pad, rect.right - menuWidth));
+                                    setActiveReviewMenu((cur) => (cur === review.id ? null : review.id));
+                                    setActiveReviewMenuPosition((cur) => (cur && activeReviewMenu === review.id ? null : { top, left }));
+                                  }}
+                                  className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/8 hover:text-zinc-100"
+                                >
+                                  <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                                </button>
+
+                                {activeReviewMenu === review.id && activeReviewMenuPosition ? (
+                                  <div className="fixed z-50 w-40 overflow-hidden rounded-xl border border-white/10 bg-[#161922] shadow-2xl" style={{ top: activeReviewMenuPosition.top, left: activeReviewMenuPosition.left }}>
+                                    {reviewActionMap[review.status].map((action) => (
+                                      <button
+                                        key={action.label}
+                                        type="button"
+                                        onClick={() => {
+                                          setActiveReviewMenu(null);
+                                          setActiveReviewMenuPosition(null);
+                                        }}
+                                        className={`block w-full px-4 py-2 text-left text-sm transition ${action.className}`}
+                                      >
+                                        {action.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr className="h-[220px]">
+                          <td colSpan={6} className="px-6 py-10 text-center text-sm text-zinc-500">
+                            当前筛选条件下没有评论
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex flex-col items-start justify-between gap-4 border-t border-white/8 px-6 py-5 sm:flex-row sm:items-center">
+                  <div className="text-sm text-zinc-500">显示 {(reviewPage - 1) * reviewsPerPage + 1} - {Math.min(reviewPage * reviewsPerPage, filteredReviews.length)}，共 {filteredReviews.length} 条评论</div>
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <button type="button" onClick={() => setReviewPage((page) => Math.max(1, page - 1))} className="rounded-lg border border-white/10 px-3 py-1.5 text-zinc-400 transition hover:border-white/20 hover:bg-white/5 hover:text-zinc-100" disabled={reviewPage === 1}>
+                      上一页
+                    </button>
+                    {Array.from({ length: Math.min(totalReviewPages, 5) }, (_, index) => {
+                      const page = index + 1;
+                      return (
+                        <button key={page} type="button" onClick={() => setReviewPage(page)} className={`rounded-lg border px-3 py-1.5 ${reviewPage === page ? "border-[#6e8cff]/30 bg-[#182033] text-[#adc6ff]" : "border-transparent text-zinc-400 hover:bg-white/5 hover:text-zinc-100"}`}>
+                          {page}
+                        </button>
+                      );
+                    })}
+                    {totalReviewPages > 5 ? <span className="px-1 text-zinc-500">...</span> : null}
+                    {totalReviewPages > 5 ? (
+                      <button type="button" onClick={() => setReviewPage(totalReviewPages)} className={`rounded-lg border px-3 py-1.5 ${reviewPage === totalReviewPages ? "border-[#6e8cff]/30 bg-[#182033] text-[#adc6ff]" : "border-transparent text-zinc-400 hover:bg-white/5 hover:text-zinc-100"}`}>
+                        {totalReviewPages}
+                      </button>
+                    ) : null}
+                    <button type="button" onClick={() => setReviewPage((page) => Math.min(totalReviewPages, page + 1))} className="rounded-lg border border-white/10 px-3 py-1.5 text-zinc-400 transition hover:border-white/20 hover:bg-white/5 hover:text-zinc-100" disabled={reviewPage === totalReviewPages}>
+                      下一页
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {activeSection === "articles" ? (
             <div className="space-y-6">
               <div className="flex items-end justify-between gap-4 border-b border-white/5 pb-4">
@@ -444,15 +714,15 @@ export function BloggerCenterPage() {
                               const messageActions =
                                 message.status === "published"
                                   ? [
-                                      { label: "撤回", className: "text-zinc-100 hover:bg-white/8" },
-                                      { label: "编辑", className: "text-zinc-100 hover:bg-white/8" },
-                                      { label: "删除", className: "text-rose-300 hover:bg-rose-500/10" },
-                                    ]
+                                    { label: "撤回", className: "text-zinc-100 hover:bg-white/8" },
+                                    { label: "编辑", className: "text-zinc-100 hover:bg-white/8" },
+                                    { label: "删除", className: "text-rose-300 hover:bg-rose-500/10" },
+                                  ]
                                   : [
-                                      { label: "发布", className: "text-[#adc6ff] hover:bg-[#adc6ff]/10" },
-                                      { label: "编辑", className: "text-zinc-100 hover:bg-white/8" },
-                                      { label: "删除", className: "text-rose-300 hover:bg-rose-500/10" },
-                                    ];
+                                    { label: "发布", className: "text-[#adc6ff] hover:bg-[#adc6ff]/10" },
+                                    { label: "编辑", className: "text-zinc-100 hover:bg-white/8" },
+                                    { label: "删除", className: "text-rose-300 hover:bg-rose-500/10" },
+                                  ];
 
                               return (
                                 <tr key={`${message.title}-${message.updatedAt}`} className="transition hover:bg-white/[0.03]">
