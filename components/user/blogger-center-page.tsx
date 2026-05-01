@@ -121,13 +121,17 @@ export function BloggerCenterPage() {
   const [reviewFilter, setReviewFilter] = useState<ReviewStatus | "all">("all");
   const [activeReviewMenu, setActiveReviewMenu] = useState<string | null>(null);
   const [activeReviewMenuPosition, setActiveReviewMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const [reviewDeleteTarget, setReviewDeleteTarget] = useState<ReviewItem | null>(null);
 
   const [activeMessageMenu, setActiveMessageMenu] = useState<string | null>(null);
   const [activeMessageMenuPosition, setActiveMessageMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const [messageDeleteTarget, setMessageDeleteTarget] = useState<MessageItem | null>(null);
+  const [articleDeleteTarget, setArticleDeleteTarget] = useState<ArticleRow | null>(null);
 
   const [users, setUsers] = useState(initialUsers);
   const [activeUserMenu, setActiveUserMenu] = useState<string | null>(null);
   const [activeUserMenuPosition, setActiveUserMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const [userDeleteTarget, setUserDeleteTarget] = useState<UserItem | null>(null);
   const [userSearchValue, setUserSearchValue] = useState("");
   const [userPage, setUserPage] = useState(1);
 
@@ -231,8 +235,27 @@ export function BloggerCenterPage() {
     setUsers((current) => current.map((user) => (user.id === userId ? { ...user, status: user.status === "active" ? "muted" : "active" } : user)));
   };
 
-  const handleDeleteUser = (userId: string) => {
-    setUsers((current) => current.filter((user) => user.id !== userId));
+  const handleRequestDeleteUser = (userId: string) => {
+    setUserDeleteTarget(users.find((user) => user.id === userId) ?? null);
+  };
+
+  const handleRequestDeleteReview = (reviewId: string) => {
+    setReviewDeleteTarget(reviewItems.find((review) => review.id === reviewId) ?? null);
+  };
+
+  const handleRequestDeleteMessage = (messageTitle: string) => {
+    setMessageDeleteTarget(initialMessages.find((message) => message.title === messageTitle) ?? null);
+  };
+
+  const handleConfirmDeleteArticle = () => {
+    if (!articleDeleteTarget) return;
+    setArticleDeleteTarget(null);
+  };
+
+  const handleConfirmDeleteUser = () => {
+    if (!userDeleteTarget) return;
+    setUsers((current) => current.filter((user) => user.id !== userDeleteTarget.id));
+    setUserDeleteTarget(null);
   };
 
   return (
@@ -272,6 +295,7 @@ export function BloggerCenterPage() {
                 setActiveArticleMenu(null);
                 setActiveArticleMenuPosition(null);
               }}
+              onRequestDelete={(article) => setArticleDeleteTarget(article)}
               publishedArticlesLength={publishedArticles.length}
               draftArticlesLength={draftArticles.length}
               articlePage={articlePage}
@@ -304,6 +328,7 @@ export function BloggerCenterPage() {
                 setActiveReviewMenu(null);
                 setActiveReviewMenuPosition(null);
               }}
+              onRequestDelete={handleRequestDeleteReview}
               reviewStatusMeta={reviewStatusMeta}
               reviewActionMap={reviewActionMap}
             />
@@ -328,6 +353,7 @@ export function BloggerCenterPage() {
                 setActiveMessageMenu(null);
                 setActiveMessageMenuPosition(null);
               }}
+              onRequestDelete={handleRequestDeleteMessage}
             />
           ) : null}
 
@@ -337,7 +363,7 @@ export function BloggerCenterPage() {
               activeMenuId={activeUserMenu}
               activeMenuPosition={activeUserMenuPosition}
               onToggleStatus={handleToggleUserStatus}
-              onDelete={handleDeleteUser}
+              onRequestDelete={handleRequestDeleteUser}
               onMenuOpen={(userId, top, left) => {
                 setActiveUserMenu(userId);
                 setActiveUserMenuPosition({ top, left });
@@ -397,6 +423,7 @@ export function BloggerCenterPage() {
                 setActiveReviewMenu(null);
                 setActiveReviewMenuPosition(null);
               }}
+              onRequestDelete={handleRequestDeleteReview}
               reviewStatusMeta={reviewStatusMeta}
               reviewActionMap={reviewActionMap}
             />
@@ -429,6 +456,56 @@ export function BloggerCenterPage() {
         confirmButtonClassName="bg-[#adc6ff] text-[#001a41] hover:bg-[#c3d2ff]"
         onClose={() => setShowLogoutConfirm(false)}
         onConfirm={() => setShowLogoutConfirm(false)}
+      />
+
+      <VisitorCenterConfirmModal
+        open={Boolean(userDeleteTarget)}
+        title="确认删除用户？"
+        description={userDeleteTarget ? `确定要删除用户「${userDeleteTarget.nickname}」吗？删除后无法恢复。` : "确定要删除该用户吗？删除后无法恢复。"}
+        cancelLabel="取消"
+        confirmLabel="确认删除"
+        confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400"
+        onClose={() => setUserDeleteTarget(null)}
+        onConfirm={handleConfirmDeleteUser}
+      />
+
+      <VisitorCenterConfirmModal
+        open={Boolean(reviewDeleteTarget)}
+        title="确认删除评论？"
+        description={reviewDeleteTarget ? `确定要删除评论「${reviewDeleteTarget.articleTitle} / ${reviewDeleteTarget.author}」吗？删除后无法恢复。` : "确定要删除该评论吗？删除后无法恢复。"}
+        cancelLabel="取消"
+        confirmLabel="确认删除"
+        confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400"
+        onClose={() => setReviewDeleteTarget(null)}
+        onConfirm={() => {
+          if (!reviewDeleteTarget) return;
+          setReviewDeleteTarget(null);
+        }}
+      />
+
+      <VisitorCenterConfirmModal
+        open={Boolean(articleDeleteTarget)}
+        title="确认删除文章？"
+        description={articleDeleteTarget ? `确定要删除文章「${articleDeleteTarget.title}」吗？删除后无法恢复。` : "确定要删除该文章吗？删除后无法恢复。"}
+        cancelLabel="取消"
+        confirmLabel="确认删除"
+        confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400"
+        onClose={() => setArticleDeleteTarget(null)}
+        onConfirm={handleConfirmDeleteArticle}
+      />
+
+      <VisitorCenterConfirmModal
+        open={Boolean(messageDeleteTarget)}
+        title="确认删除消息？"
+        description={messageDeleteTarget ? `确定要删除消息「${messageDeleteTarget.title}」吗？删除后无法恢复。` : "确定要删除该消息吗？删除后无法恢复。"}
+        cancelLabel="取消"
+        confirmLabel="确认删除"
+        confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400"
+        onClose={() => setMessageDeleteTarget(null)}
+        onConfirm={() => {
+          if (!messageDeleteTarget) return;
+          setMessageDeleteTarget(null);
+        }}
       />
 
       <SiteFooter />

@@ -15,7 +15,7 @@ type Props = {
   activeMenuId: string | null;
   activeMenuPosition: { top: number; left: number } | null;
   onToggleStatus: (userId: string) => void;
-  onDelete: (userId: string) => void;
+  onRequestDelete: (userId: string) => void;
   onMenuOpen: (userId: string, top: number, left: number) => void;
   onMenuClose: () => void;
   searchValue: string;
@@ -33,7 +33,7 @@ export function BloggerCenterUsers({
   activeMenuId,
   activeMenuPosition,
   onToggleStatus,
-  onDelete,
+  onRequestDelete,
   onMenuOpen,
   onMenuClose,
   searchValue,
@@ -120,7 +120,7 @@ export function BloggerCenterUsers({
                             <button
                               type="button"
                               onClick={() => {
-                                onDelete(user.id);
+                                onRequestDelete(user.id);
                                 onMenuClose();
                               }}
                               className="block w-full px-4 py-2 text-left text-sm text-rose-300 transition hover:bg-rose-500/10"

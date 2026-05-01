@@ -22,6 +22,7 @@ type Props = {
   activeArticleMenuPosition: { top: number; left: number } | null;
   onMenuOpen: (title: string, top: number, left: number) => void;
   onMenuClose: () => void;
+  onRequestDelete: (article: ArticleItem & { category: string }) => void;
   publishedArticlesLength: number;
   draftArticlesLength: number;
   articlePage: number;
@@ -41,6 +42,7 @@ export function BloggerCenterArticles({
   activeArticleMenuPosition,
   onMenuOpen,
   onMenuClose,
+  onRequestDelete,
   publishedArticlesLength,
   draftArticlesLength,
   articlePage,
@@ -99,7 +101,7 @@ export function BloggerCenterArticles({
                     <td className="px-6 py-4 text-right">
                       <div className="relative inline-flex">
                         <button type="button" onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const menuHeight = 132; const menuWidth = 160; const gap = 8; const pad = 12; const openUp = window.innerHeight - rect.bottom < menuHeight + gap; const top = openUp ? Math.max(pad, rect.top - menuHeight - gap) : Math.min(window.innerHeight - menuHeight - pad, rect.bottom + gap); const left = Math.min(window.innerWidth - menuWidth - pad, Math.max(pad, rect.right - menuWidth)); onMenuOpen(article.title, top, left); }} className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/8 hover:text-zinc-100"><span className="material-symbols-outlined text-[20px]">more_vert</span></button>
-                        {activeArticleMenu === article.title && activeArticleMenuPosition ? (<div className="fixed z-50 w-40 overflow-hidden rounded-xl border border-white/10 bg-[#161922] shadow-2xl" style={{ top: activeArticleMenuPosition.top, left: activeArticleMenuPosition.left }}>{(article.status === "published" ? ["撤回", "编辑", "删除"] : ["发布", "编辑", "删除"]).map((label) => (<button key={label} type="button" onClick={onMenuClose} className={`block w-full px-4 py-2 text-left text-sm transition ${label === "删除" ? "text-rose-300 hover:bg-rose-500/10" : label === "发布" ? "text-[#adc6ff] hover:bg-[#adc6ff]/10" : "text-zinc-100 hover:bg-white/8"}`}>{label}</button>))}</div>) : null}
+                        {activeArticleMenu === article.title && activeArticleMenuPosition ? (<div className="fixed z-50 w-40 overflow-hidden rounded-xl border border-white/10 bg-[#161922] shadow-2xl" style={{ top: activeArticleMenuPosition.top, left: activeArticleMenuPosition.left }}>{(article.status === "published" ? ["撤回", "编辑", "删除"] : ["发布", "编辑", "删除"]).map((label) => (<button key={label} type="button" onClick={() => { if (label === "删除") onRequestDelete(article); onMenuClose(); }} className={`block w-full px-4 py-2 text-left text-sm transition ${label === "删除" ? "text-rose-300 hover:bg-rose-500/10" : label === "发布" ? "text-[#adc6ff] hover:bg-[#adc6ff]/10" : "text-zinc-100 hover:bg-white/8"}`}>{label}</button>))}</div>) : null}
                       </div>
                     </td>
                   </tr>
