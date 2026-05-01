@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/common/site-header";
 import { commentedArticles } from "./visitor-center-page/commented-articles";
 import { historyArticles } from "./visitor-center-page/history-articles";
 import { likedArticles } from "./visitor-center-page/liked-articles";
+import { VisitorCenterAccountSettings } from "@/components/user/visitor-center-page/visitor-center-account-settings";
 import { VisitorCenterComments } from "@/components/user/visitor-center-page/visitor-center-comments";
 import { VisitorCenterConfirmModal } from "@/components/user/visitor-center-page/visitor-center-confirm-modal";
 import { VisitorCenterFavorites } from "@/components/user/visitor-center-page/visitor-center-favorites";
@@ -39,7 +40,6 @@ export function VisitorCenterPage() {
   // 这样做的好处是：每个操作的确认语义都清晰，不会互相串状态。
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showSettingsNote, setShowSettingsNote] = useState(false);
 
   // 从全局通知状态中读取未读数量，供左侧菜单和顶部 `SiteHeader` 共享。
   const { unreadCount, setUnreadCount } = useNotificationCount();
@@ -87,7 +87,7 @@ export function VisitorCenterPage() {
           // 左侧栏只负责触发全局动作，真正的确认交给弹窗处理。
           onSelect={setActiveSection}
           onLogoutClick={() => setShowLogoutConfirm(true)}
-          onSettingsClick={() => setShowSettingsNote(true)}
+          onSettingsClick={() => setActiveSection("settings")}
           notificationBadgeCount={unreadCount}
         />
 
@@ -122,6 +122,8 @@ export function VisitorCenterPage() {
           {activeSection === "comments" ? <VisitorCenterComments articles={commentedList} /> : null}
 
           {activeSection === "notifications" ? <VisitorCenterNotifications onUnreadCountChange={setUnreadCount} /> : null}
+
+          {activeSection === "settings" ? <VisitorCenterAccountSettings /> : null}
         </section>
       </main>
 
@@ -150,19 +152,6 @@ export function VisitorCenterPage() {
         confirmButtonClassName="bg-[#adc6ff] text-[#001a41] hover:bg-[#c3d2ff]"
         onClose={() => setShowLogoutConfirm(false)}
         onConfirm={() => setShowLogoutConfirm(false)}
-      />
-
-      {/* 账号设置提示弹窗：当前作为占位说明，后续可替换成真正的设置页入口。 */}
-      <VisitorCenterConfirmModal
-        open={showSettingsNote}
-        title="账号设置"
-        description="这里后续可以接入头像、昵称、密码和偏好设置页面。"
-        cancelLabel=""
-        confirmLabel="我知道了"
-        confirmButtonClassName="bg-[#adc6ff] text-[#001a41] hover:bg-[#c3d2ff]"
-        hideCancelButton
-        onClose={() => setShowSettingsNote(false)}
-        onConfirm={() => setShowSettingsNote(false)}
       />
 
       <SiteFooter />
