@@ -112,7 +112,7 @@ export function BloggerCenterArticles({
         </div>
 
         <div className="flex flex-col items-start justify-between gap-4 border-t border-white/8 px-6 py-4 text-xs text-zinc-500 sm:flex-row sm:items-center">
-          <div>{activeTab === "published" ? `显示 ${(articlePage - 1) * articlesPerPage + 1} - ${Math.min(articlePage * articlesPerPage, publishedArticlesLength)}，共 ${publishedArticlesLength} 篇已发布文章（每页 6 篇）` : `显示 ${(articlePage - 1) * articlesPerPage + 1} - ${Math.min(articlePage * articlesPerPage, draftArticlesLength)}，共 ${draftArticlesLength} 篇草稿文章（每页 6 篇）`}</div>
+          <div>{activeTab === "published" ? `显示 ${(articlePage - 1) * articlesPerPage + 1} - ${Math.min(articlePage * articlesPerPage, publishedArticlesLength)}，共 ${publishedArticlesLength} 篇已发布文章` : `显示 ${(articlePage - 1) * articlesPerPage + 1} - ${Math.min(articlePage * articlesPerPage, draftArticlesLength)}，共 ${draftArticlesLength} 篇草稿文章`}</div>
           <div className="flex items-center gap-1">
             <button type="button" onClick={onPrevPage} className="flex h-8 w-8 items-center justify-center rounded hover:bg-white/5 disabled:opacity-30" disabled={articlePage === 1}><span className="material-symbols-outlined text-[18px]">chevron_left</span></button>
             {Array.from({ length: Math.min(totalArticlePages, 5) }, (_, index) => { const page = index + 1; return (<button key={page} type="button" onClick={() => onPageChange(page)} className={`flex h-8 w-8 items-center justify-center rounded ${articlePage === page ? "border border-[#adc6ff]/20 bg-[#182033] font-medium text-[#adc6ff]" : "hover:bg-white/5"}`}>{page}</button>); })}

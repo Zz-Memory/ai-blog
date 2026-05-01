@@ -18,6 +18,7 @@ const bloggerItems: BloggerCenterSidebarItem[] = [
   { id: "articles", label: "文章管理", icon: "article" },
   { id: "comments-review", label: "评论管理", icon: "comment" },
   { id: "send-message", label: "消息管理", icon: "send" },
+  { id: "users", label: "用户管理", icon: "group" },
 ];
 
 const visitorItems: BloggerCenterSidebarItem[] = [

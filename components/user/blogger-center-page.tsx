@@ -19,10 +19,21 @@ import { BloggerCenterArticles } from "./blogger-center-page/blogger-center-arti
 import { BloggerCenterComments } from "./blogger-center-page/blogger-center-comments";
 import { BloggerCenterMessages } from "./blogger-center-page/blogger-center-messages";
 import { BloggerCenterSidebar } from "./blogger-center-page/blogger-center-sidebar";
+import { BloggerCenterUsers } from "./blogger-center-page/blogger-center-users";
 
 type ArticleStatus = "published" | "draft";
 type ReviewStatus = "pending" | "approved";
 type MessageStatus = "published" | "draft";
+
+type UserStatus = "active" | "muted";
+
+type UserItem = {
+  id: string;
+  nickname: string;
+  email: string;
+  joinedAt: string;
+  status: UserStatus;
+};
 
 type ArticleItem = {
   title: string;
@@ -70,6 +81,15 @@ const reviewActionMap: Record<ReviewStatus, Array<{ label: string; className: st
   approved: [{ label: "删除", className: "text-rose-300 hover:bg-rose-500/10" }],
 };
 
+const initialUsers: UserItem[] = [
+  { id: "u-1", nickname: "AlexChen", email: "alexchen@example.com", joinedAt: "2024-04-02", status: "active" },
+  { id: "u-2", nickname: "晨曦", email: "chenxi@example.com", joinedAt: "2024-04-08", status: "active" },
+  { id: "u-3", nickname: "小蓝", email: "xiaolan@example.com", joinedAt: "2024-04-12", status: "muted" },
+  { id: "u-4", nickname: "Neo", email: "neo@example.com", joinedAt: "2024-04-18", status: "active" },
+  { id: "u-5", nickname: "momo", email: "momo@example.com", joinedAt: "2024-04-20", status: "active" },
+  { id: "u-6", nickname: "Luna", email: "luna@example.com", joinedAt: "2024-04-21", status: "muted" },
+];
+
 const initialMessages: MessageItem[] = [
   { title: "2024 年度技术回顾报告", audience: "所有访客", updatedAt: "2024-05-20 14:30", status: "published" },
   { title: "（草稿）关于社区维护的通知", audience: "未设置", updatedAt: "2024-05-22 11:30", status: "draft" },
@@ -104,6 +124,12 @@ export function BloggerCenterPage() {
 
   const [activeMessageMenu, setActiveMessageMenu] = useState<string | null>(null);
   const [activeMessageMenuPosition, setActiveMessageMenuPosition] = useState<{ top: number; left: number } | null>(null);
+
+  const [users, setUsers] = useState(initialUsers);
+  const [activeUserMenu, setActiveUserMenu] = useState<string | null>(null);
+  const [activeUserMenuPosition, setActiveUserMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const [userSearchValue, setUserSearchValue] = useState("");
+  const [userPage, setUserPage] = useState(1);
 
   const { unreadCount, setUnreadCount } = useNotificationCount();
 
@@ -186,6 +212,28 @@ export function BloggerCenterPage() {
     if (!q) return history;
     return history.filter((item) => [item.title, item.excerpt, item.category, ...item.tags].join(" ").toLowerCase().includes(q));
   }, [history, historySearchKeyword]);
+
+  const filteredUsers = useMemo(() => {
+    const q = userSearchValue.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter((user) => [user.nickname, user.email].join(" ").toLowerCase().includes(q));
+  }, [userSearchValue, users]);
+
+  const usersPerPage = 6;
+  const totalUserPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
+  const visibleUsers = filteredUsers.slice((userPage - 1) * usersPerPage, userPage * usersPerPage);
+
+  useEffect(() => {
+    setUserPage(1);
+  }, [userSearchValue]);
+
+  const handleToggleUserStatus = (userId: string) => {
+    setUsers((current) => current.map((user) => (user.id === userId ? { ...user, status: user.status === "active" ? "muted" : "active" } : user)));
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    setUsers((current) => current.filter((user) => user.id !== userId));
+  };
 
   return (
     <div className="min-h-screen bg-[#111215] text-zinc-200">
@@ -280,6 +328,32 @@ export function BloggerCenterPage() {
                 setActiveMessageMenu(null);
                 setActiveMessageMenuPosition(null);
               }}
+            />
+          ) : null}
+
+          {activeSection === "users" ? (
+            <BloggerCenterUsers
+              users={visibleUsers}
+              activeMenuId={activeUserMenu}
+              activeMenuPosition={activeUserMenuPosition}
+              onToggleStatus={handleToggleUserStatus}
+              onDelete={handleDeleteUser}
+              onMenuOpen={(userId, top, left) => {
+                setActiveUserMenu(userId);
+                setActiveUserMenuPosition({ top, left });
+              }}
+              onMenuClose={() => {
+                setActiveUserMenu(null);
+                setActiveUserMenuPosition(null);
+              }}
+              searchValue={userSearchValue}
+              onSearchChange={setUserSearchValue}
+              page={userPage}
+              pageSize={usersPerPage}
+              totalPages={totalUserPages}
+              onPrevPage={() => setUserPage((page) => Math.max(1, page - 1))}
+              onNextPage={() => setUserPage((page) => Math.min(totalUserPages, page + 1))}
+              onPageChange={setUserPage}
             />
           ) : null}
 
