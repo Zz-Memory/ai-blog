@@ -285,8 +285,8 @@ export function BloggerCenterPage() {
             <div className="space-y-6">
               <div className="flex items-end justify-between gap-4 border-b border-white/5 pb-4">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-[-0.03em] text-zinc-100 md:text-4xl">评论审核</h1>
-                  <p className="mt-2 text-sm text-zinc-400">集中处理文章下的用户评论，快速完成审核、回复与管理。</p>
+                  <h1 className="text-3xl font-bold tracking-[-0.03em] text-zinc-100 md:text-4xl">评论管理</h1>
+                  <p className="mt-2 text-sm text-zinc-400">集中管理文章下的用户评论，快速完成通过与删除操作。</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {[
@@ -596,8 +596,8 @@ export function BloggerCenterPage() {
           {activeSection === "send-message" ? (
             <div className="space-y-6">
               <div className="space-y-3">
-                <h1 className="text-3xl font-bold tracking-[-0.03em] text-zinc-100 md:text-4xl">发送消息</h1>
-                <p className="text-base text-zinc-400">让用户听到您的声音吧</p>
+                <h1 className="text-3xl font-bold tracking-[-0.03em] text-zinc-100 md:text-4xl">消息管理</h1>
+                <p className="text-base text-zinc-400">集中管理站内消息的发布与草稿状态</p>
               </div>
 
               <div className="flex gap-10 border-b border-white/10">

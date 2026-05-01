@@ -16,8 +16,8 @@ type BloggerCenterSidebarProps = {
 const bloggerItems: BloggerCenterSidebarItem[] = [
   { id: "new-article", label: "新建文章", icon: "edit_square" },
   { id: "articles", label: "文章管理", icon: "article" },
-  { id: "comments-review", label: "评论审核", icon: "add_moderator" },
-  { id: "send-message", label: "发送消息", icon: "send" },
+  { id: "comments-review", label: "评论管理", icon: "comment" },
+  { id: "send-message", label: "消息管理", icon: "send" },
 ];
 
 const visitorItems: BloggerCenterSidebarItem[] = [
