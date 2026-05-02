@@ -1,5 +1,9 @@
+"use client";
+
+import Image from "next/image";
 import Link from "next/link";
 
+import { useAuth } from "@/components/common/auth-context";
 import { useNotificationCount } from "@/components/common/notification-context";
 
 export type SiteHeaderProps = {
@@ -17,9 +21,13 @@ export function SiteHeader({
   onSearchSubmit,
   onLoginClick,
   onRegisterClick,
-  isAuthenticated = true,
 }: SiteHeaderProps) {
   const { unreadCount } = useNotificationCount();
+  const { user } = useAuth();
+  const isAuthenticated = Boolean(user);
+  const profileHref = user?.role === "BLOGGER" ? "/blogger-center" : "/visitor-center";
+  const notificationHref = user?.role === "BLOGGER" ? "/blogger-center?section=notifications" : "/visitor-center?section=notifications";
+  const avatarSrc = user?.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png";
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-[#111215]/90 backdrop-blur-xl">
       <div className="mx-auto grid h-16 max-w-[1200px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-6 px-6 lg:px-8">
@@ -47,7 +55,7 @@ export function SiteHeader({
               id="site-search"
               value={searchValue}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="搜索标题/摘要/分类/标签"
+              placeholder="搜索标题/分类/标签"
               className="w-64 bg-transparent text-sm text-zinc-200 outline-none placeholder:text-zinc-500"
             />
             {searchValue ? (
@@ -67,7 +75,7 @@ export function SiteHeader({
           {isAuthenticated ? (
             <>
               <Link
-                href="/visitor-center/notifications"
+                href={notificationHref}
                 aria-label="消息通知"
                 className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-zinc-200 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
               >
@@ -79,11 +87,11 @@ export function SiteHeader({
                 ) : null}
               </Link>
               <Link
-                href="/visitor-center/settings"
+                href={profileHref}
                 aria-label="用户中心"
                 className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-blue-400/20 bg-[#b8c9ff] transition hover:scale-[1.02]"
               >
-                <img src="/avatars/user-default.png" alt="用户头像" className="h-full w-full object-cover" />
+                <Image src={avatarSrc} alt="用户头像" width={44} height={44} className="h-full w-full object-cover" />
               </Link>
             </>
           ) : (

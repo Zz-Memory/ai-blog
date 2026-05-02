@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/components/common/auth-context";
 
 type AuthMode = "login" | "register" | "reset";
 
@@ -86,6 +87,7 @@ async function readApiMessage(response: Response) {
 }
 
 export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; initialMode: Exclude<AuthMode, "reset">; onClose: () => void; }) {
+  const { refreshUser } = useAuth();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [registerPassword, setRegisterPassword] = useState<PasswordState>({ value: "", touched: false });
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
@@ -159,6 +161,10 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
       });
       const message = await readApiMessage(response);
       setSubmitMessage(message);
+      if (response.ok) {
+        await refreshUser();
+        onClose();
+      }
     } catch {
       setSubmitMessage("登录失败，请稍后重试。");
     } finally {

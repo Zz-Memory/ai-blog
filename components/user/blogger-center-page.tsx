@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { SiteFooter } from "@/components/common/site-footer";
 import { SiteHeader } from "@/components/common/site-header";
+import { useAuth } from "@/components/common/auth-context";
 import { useNotificationCount } from "@/components/common/notification-context";
 import { VisitorCenterAccountSettings } from "@/components/user/visitor-center-page/visitor-center-account-settings";
 import { VisitorCenterConfirmModal } from "@/components/user/visitor-center-page/visitor-center-confirm-modal";
@@ -101,6 +103,9 @@ const initialMessages: MessageItem[] = [
 ];
 
 export function BloggerCenterPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { logout } = useAuth();
   const [siteSearchValue, setSiteSearchValue] = useState("");
   const [historySearchValue, setHistorySearchValue] = useState("");
   const [historySearchKeyword, setHistorySearchKeyword] = useState("");
@@ -181,6 +186,11 @@ export function BloggerCenterPage() {
   const visibleReviews = filteredReviews.slice((reviewPage - 1) * reviewsPerPage, reviewPage * reviewsPerPage);
 
   useEffect(() => {
+    const section = searchParams.get("section");
+    if (section === "notifications") setActiveSection("notifications");
+  }, [searchParams]);
+
+  useEffect(() => {
     if (activeSection === "send-message") {
       setActiveTab("compose");
     } else {
@@ -201,7 +211,7 @@ export function BloggerCenterPage() {
       setActiveReviewMenu(null);
       setActiveReviewMenuPosition(null);
     }
-  }, [activeSection]);
+  }, [activeSection, searchParams]);
 
   useEffect(() => {
     setArticlePage(1);
@@ -266,7 +276,6 @@ export function BloggerCenterPage() {
         onSearchSubmit={() => undefined}
         onLoginClick={() => undefined}
         onRegisterClick={() => undefined}
-        isAuthenticated
       />
 
       <main className="mx-auto grid min-h-[calc(100vh-64px)] max-w-[1440px] grid-cols-1 gap-8 px-4 py-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6 xl:px-8">
@@ -455,7 +464,12 @@ export function BloggerCenterPage() {
         confirmLabel="确认退出"
         confirmButtonClassName="bg-[#adc6ff] text-[#001a41] hover:bg-[#c3d2ff]"
         onClose={() => setShowLogoutConfirm(false)}
-        onConfirm={() => setShowLogoutConfirm(false)}
+        onConfirm={async () => {
+          await logout();
+          setShowLogoutConfirm(false);
+          router.push("/");
+          router.refresh();
+        }}
       />
 
       <VisitorCenterConfirmModal

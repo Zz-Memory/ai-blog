@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NotificationProvider } from "@/components/common/notification-context";
+import { AuthProvider } from "@/components/common/auth-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,7 +36,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <NotificationProvider>{children}</NotificationProvider>
+        <AuthProvider>
+          <NotificationProvider>{children}</NotificationProvider>
+        </AuthProvider>
       </body>
     </html>
   );
