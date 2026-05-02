@@ -65,7 +65,6 @@
 用于注册、修改（找回）密码、绑定邮箱、注销账号等一次性验证场景。
 
 #### 主要字段
-- `id`
 - `email`
 - `code`
 - `purpose`：`REGISTER | RESET_PASSWORD | BIND_EMAIL | DELETE_ACCOUNT`
@@ -77,6 +76,7 @@
 - 验证码应短时有效
 - 同一邮箱在短时间内应限流
 - 验证成功后标记已使用，避免重复利用
+- 不与 `User` 表建立外键关系，按 `email + code + purpose` 查询即可完成验证
 
 ---
 

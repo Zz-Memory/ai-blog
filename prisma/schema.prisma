@@ -75,7 +75,6 @@ model User {
   updatedAt        DateTime           @updatedAt
 
   posts            Post[]
-  verificationCodes VerificationCode[]
   sessions         Session[]
   comments         Comment[]
   likes            Like[]
@@ -99,9 +98,7 @@ model VerificationCode {
   consumedAt DateTime?
   createdAt  DateTime            @default(now())
 
-  user       User?               @relation(fields: [email], references: [email], onDelete: Cascade)
-
-  @@index([email, purpose])
+  @@index([email, code, purpose])
   @@index([expiresAt])
 }
 
