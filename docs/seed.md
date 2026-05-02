@@ -5,7 +5,7 @@
 ## 说明
 
 - `id` 字段由 Prisma / 数据库自动生成，文档中不再手动指定具体 `id`
-- 下面使用 `email`、`username`、`slug` 等稳定字段来描述可创建的数据
+- 下面使用 `email`、`username`、`name` 等稳定字段来描述可创建的数据
 - 数据目标：
   - 4 个分类：前端、后端、数据库、随笔
   - 16 篇已发布文章，每个分类至少 3 篇
@@ -61,31 +61,19 @@
 
 ### 1. 前端
 - `name`: `前端`
-- `slug`: `frontend`
 - `description`: `前端开发相关内容，包括框架、工程化与 UI 实践。`
-- `sortOrder`: `1`
-- `status`: `ACTIVE`
 
 ### 2. 后端
 - `name`: `后端`
-- `slug`: `backend`
 - `description`: `后端开发相关内容，包括接口、权限与架构设计。`
-- `sortOrder`: `2`
-- `status`: `ACTIVE`
 
 ### 3. 数据库
 - `name`: `数据库`
-- `slug`: `database`
 - `description`: `数据库设计、建模与性能优化相关内容。`
-- `sortOrder`: `3`
-- `status`: `ACTIVE`
 
 ### 4. 随笔
 - `name`: `随笔`
-- `slug`: `essay`
 - `description`: `记录开发过程中的思考、总结与杂记。`
-- `sortOrder`: `4`
-- `status`: `ACTIVE`
 
 ---
 
@@ -93,19 +81,19 @@
 
 共创建 13 个标签：
 
-1. `frontend` — 前端
-2. `react` — React
-3. `nextjs` — Next.js
-4. `typescript` — TypeScript
-5. `backend` — 后端
-6. `nestjs` — NestJS
-7. `api` — 接口设计
-8. `database` — 数据库
-9. `prisma` — Prisma
-10. `postgresql` — PostgreSQL
-11. `optimization` — 性能优化
-12. `architecture` — 架构设计
-13. `essay` — 随笔
+1. `前端`
+2. `React`
+3. `Next.js`
+4. `TypeScript`
+5. `后端`
+6. `NestJS`
+7. `接口设计`
+8. `数据库`
+9. `Prisma`
+10. `PostgreSQL`
+11. `性能优化`
+12. `架构设计`
+13. `随笔`
 
 ---
 
@@ -118,112 +106,112 @@
 - `summary`: `梳理 Next.js 14 项目目录结构、路由划分与组件组织方式。`
 - `category`: `前端`
 - `status`: `PUBLISHED`
-- `tags`: `frontend`, `nextjs`, `architecture`
+- `tags`: `前端`, `Next.js`, `架构设计`
 
 ### 2. `react-state-management-practices`
 - `title`: `React 状态管理的几种常见实践`
 - `summary`: `对比本地状态、Context、Zustand 等常见状态管理方案。`
 - `category`: `前端`
 - `status`: `PUBLISHED`
-- `tags`: `frontend`, `react`, `typescript`
+- `tags`: `前端`, `React`, `TypeScript`
 
 ### 3. `maintainable-component-splitting`
 - `title`: `一个可维护的组件拆分思路`
 - `summary`: `讨论如何按职责拆分组件以提升可维护性与复用性。`
 - `category`: `前端`
 - `status`: `PUBLISHED`
-- `tags`: `frontend`, `react`, `architecture`
+- `tags`: `前端`, `React`, `架构设计`
 
 ### 4. `typescript-value-in-frontend-engineering`
 - `title`: `TypeScript 在前端工程中的价值`
 - `summary`: `总结 TypeScript 对类型约束、协作与重构的帮助。`
 - `category`: `前端`
 - `status`: `PUBLISHED`
-- `tags`: `typescript`, `frontend`
+- `tags`: `TypeScript`, `前端`
 
 ### 5. `restful-api-design-guidelines`
 - `title`: `RESTful API 设计中的几个关键约定`
 - `summary`: `整理接口命名、状态码、分页与错误返回格式的建议。`
 - `category`: `后端`
 - `status`: `PUBLISHED`
-- `tags`: `backend`, `api`, `architecture`
+- `tags`: `后端`, `接口设计`, `架构设计`
 
 ### 6. `nestjs-middleware-guard-usage`
 - `title`: `NestJS 中间件与守卫的使用方式`
 - `summary`: `介绍 NestJS 中间件、守卫与拦截器的分工。`
 - `category`: `后端`
 - `status`: `PUBLISHED`
-- `tags`: `backend`, `nestjs`, `api`
+- `tags`: `后端`, `NestJS`, `接口设计`
 
 ### 7. `backend-access-control-practices`
 - `title`: `后端项目中的权限控制实践`
 - `summary`: `从角色、资源与操作三个层面讨论权限控制设计。`
 - `category`: `后端`
 - `status`: `PUBLISHED`
-- `tags`: `backend`, `architecture`
+- `tags`: `后端`, `架构设计`
 
 ### 8. `api-idempotency-and-duplicate-submit-handling`
 - `title`: `接口幂等性与重复提交处理`
 - `summary`: `分析常见重复提交场景以及幂等性设计思路。`
 - `category`: `后端`
 - `status`: `PUBLISHED`
-- `tags`: `backend`, `api`, `optimization`
+- `tags`: `后端`, `接口设计`, `性能优化`
 
 ### 9. `prisma-schema-modeling`
 - `title`: `Prisma Schema 的建模思路`
 - `summary`: `从实体、关系、约束与索引角度说明 Prisma 建模。`
 - `category`: `数据库`
 - `status`: `PUBLISHED`
-- `tags`: `database`, `prisma`, `architecture`
+- `tags`: `数据库`, `Prisma`, `架构设计`
 
 ### 10. `postgresql-index-design-basics`
 - `title`: `PostgreSQL 索引设计基础`
 - `summary`: `讲解常见索引类型、联合索引与查询优化的基本原则。`
 - `category`: `数据库`
 - `status`: `PUBLISHED`
-- `tags`: `database`, `postgresql`, `optimization`
+- `tags`: `数据库`, `PostgreSQL`, `性能优化`
 
 ### 11. `many-to-many-relationships-in-article-system`
 - `title`: `文章系统中的多对多关系处理`
 - `summary`: `以文章与标签关系为例说明中间表设计。`
 - `category`: `数据库`
 - `status`: `PUBLISHED`
-- `tags`: `database`, `prisma`, `architecture`
+- `tags`: `数据库`, `Prisma`, `架构设计`
 
 ### 12. `flexible-and-controllable-database-fields`
 - `title`: `如何让数据库字段既灵活又可控`
 - `summary`: `探讨可空字段、状态字段与软删除字段的取舍。`
 - `category`: `数据库`
 - `status`: `PUBLISHED`
-- `tags`: `database`, `postgresql`
+- `tags`: `数据库`, `PostgreSQL`
 
 ### 13. `first-day-building-personal-blog-system`
 - `title`: `做一个个人博客系统的第一天`
 - `summary`: `记录个人博客系统从设计到落地的起点。`
 - `category`: `随笔`
 - `status`: `PUBLISHED`
-- `tags`: `essay`, `architecture`
+- `tags`: `随笔`, `架构设计`
 
 ### 14. `trade-offs-in-development-process`
 - `title`: `开发过程里的取舍`
 - `summary`: `总结功能实现过程中的设计取舍与原因。`
 - `category`: `随笔`
 - `status`: `PUBLISHED`
-- `tags`: `essay`, `architecture`, `optimization`
+- `tags`: `随笔`, `架构设计`, `性能优化`
 
 ### 15. `ui-design-and-information-density`
 - `title`: `界面设计与信息密度`
 - `summary`: `讨论博客后台和内容页如何平衡信息呈现。`
 - `category`: `随笔`
 - `status`: `PUBLISHED`
-- `tags`: `essay`, `frontend`
+- `tags`: `随笔`, `前端`
 
 ### 16. `development-notes-small-issues`
 - `title`: `开发笔记：一些容易忽视的小问题`
 - `summary`: `记录在开发中遇到的一些小坑和处理方式。`
 - `category`: `随笔`
 - `status`: `PUBLISHED`
-- `tags`: `essay`, `backend`
+- `tags`: `随笔`, `后端`
 
 ---
 
@@ -343,7 +331,7 @@
 
 如果后续需要进一步测试业务，可以继续增加以下数据：
 
-- 1 个默认收藏夹
+- 每个已登录用户 1 个默认收藏夹
 - 1~3 条点赞记录
 - 2~5 条浏览历史
 - 1~2 条通知
@@ -371,6 +359,9 @@
 
 ### 标签数量
 - 标签总数：13
+
+### 收藏夹数量
+- 每个已登录用户默认收藏夹：1
 
 ### 评论数量
 - 已发布文章评论总数：48

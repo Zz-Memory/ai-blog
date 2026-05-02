@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { seedAdminUser } from "./seeds/admin.seed";
 import { seedCategories } from "./seeds/category.seed";
 import { seedComments } from "./seeds/comment.seed";
+import { seedCollectionFolders } from "./seeds/collection-folder.seed";
 import { seedPostTags, seedPosts } from "./seeds/post.seed";
 import { seedTags } from "./seeds/tag.seed";
 import { seedVisitorUsers } from "./seeds/visitor.seed";
@@ -19,6 +20,7 @@ async function main() {
   await seedVisitorUsers(prisma);
   await seedCategories(prisma);
   await seedTags(prisma);
+  await seedCollectionFolders(prisma);
 
   const admin = await prisma.user.findUnique({
     where: { email: "memory@example.com" },

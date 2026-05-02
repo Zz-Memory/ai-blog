@@ -10,7 +10,7 @@
 2. **支持 Next.js 服务端访问**：所有敏感数据统一由后端接口或 Server Actions 访问，避免前端直接操作数据库。
 3. **便于 Prisma 建模**：以清晰的实体关系建模，减少复杂拼接 SQL。
 4. **兼顾扩展性**：为后续内容管理、消息通知、AI 问答历史等留出空间。
-5. **兼顾安全性**：密码哈希存储、验证码有效期、权限控制、删除标记与审计字段等均纳入设计。
+5. **兼顾安全性**：密码哈希存储、验证码有效期、权限控制与必要的审计字段等均纳入设计。
 
 ---
 
@@ -46,10 +46,9 @@
 - `passwordHash`
 - `role`：`BLOGGER | VISITOR`
 - `intro`
-- `status`：`ACTIVE | DISABLED | DELETED`
+- `status`：`ACTIVE | BANNED`
 - `createdAt`
 - `updatedAt`
-- `deletedAt`
 
 #### 设计要点
 - `email` 唯一
@@ -57,6 +56,7 @@
 - `passwordHash` 只保存加盐哈希后的结果
 - `role` 仅区分博主与访客
 - 头像统一使用默认资源，由前端按角色从 `public/` 进行兜底显示，不再支持头像修改
+- 用户删除采用物理删除，删除后连同其相关数据一并清理
 
 ---
 
@@ -123,7 +123,6 @@
 - `publishedAt`
 - `createdAt`
 - `updatedAt`
-- `deletedAt`
 
 #### 设计要点
 - `slug` 用于 SEO 友好的详情页路由
@@ -149,20 +148,15 @@
 #### 主要字段
 - `id`
 - `name`
-- `slug`
 - `description`
-- `sortOrder`
-- `status`：`ACTIVE | DISABLED`
 - `createdAt`
 - `updatedAt`
-- `deletedAt`
 
 #### 设计要点
 - `name` 唯一
-- `slug` 用于分类路由与稳定标识
-- `sortOrder` 用于前台分类排序
-- `status` 用于分类上架/下架控制
-- 分类被停用后，历史文章仍可保留关联，但新文章不应再选择该分类
+- 分类仅作为文章筛选和归档维度，不再维护路由标识
+- 分类不再维护排序字段或状态字段
+- 分类删除采用物理删除
 
 ---
 
@@ -173,15 +167,14 @@
 #### 主要字段
 - `id`
 - `name`
-- `slug`
 - `createdAt`
 - `updatedAt`
-- `deletedAt`
 
 #### 设计要点
 - `name` 唯一
-- `slug` 用于标签路由与稳定标识
+- 标签仅作为文章筛选和归档维度，不再维护路由标识
 - 标签支持多对多关联
+- 标签删除采用物理删除
 
 ---
 
@@ -215,16 +208,16 @@
 - `userId`
 - `parentId`
 - `content`
-- `status`：`PENDING | APPROVED | REJECTED | DELETED`
+- `status`：`PENDING | APPROVED`
 - `likeCount`
 - `createdAt`
 - `updatedAt`
-- `deletedAt`
 
 #### 设计要点
 - `parentId` 支持评论回复树
-- `status` 支持评论审核流
+- `status` 仅表示评论审核结果
 - `content` 需做 XSS 清洗与转义
+- 父评论删除时，其子评论一并物理删除
 
 ---
 
@@ -255,11 +248,11 @@
 - `isDefault`
 - `createdAt`
 - `updatedAt`
-- `deletedAt`
 
 #### 设计要点
 - 每个用户可拥有多个收藏夹
 - 至少保留一个默认收藏夹
+- 收藏夹删除采用物理删除，删除时其内收藏文章一并取消收藏
 
 ---
 
@@ -315,20 +308,22 @@
 - `title`
 - `content`
 - `linkUrl`
+- `status`：`PUBLISHED | DRAFT`
 - `isRead`
 - `createdAt`
 - `readAt`
-- `deletedAt`
 
 #### 设计要点
 - 统一通知模型更便于扩展
 - `linkUrl` 方便点击后跳转到文章或评论位置
+- 草稿消息仅用于后台编辑与暂存，已发布消息才会进入用户通知列表
+- 通知删除采用物理删除
 
 ---
 
 ### 15. AI 问答会话表 `AiChatSession`
 
-用于保存单次 AI 问答会话。
+用于保存一次 AI 问答会话。
 
 #### 业务说明
 - AI 问答悬浮球只出现在文章详情页。
@@ -340,35 +335,32 @@
 - `id`
 - `userId`
 - `postId`
-- `mode`：`POST_CONTEXT | GENERAL`
-- `title`
 - `createdAt`
 - `updatedAt`
-- `deletedAt`
 
 #### 设计要点
-- 文章上下文问答与通用问答统一管理
-- 会话历史与具体文章绑定
-- 只按登录用户保存归属，不区分博主或访客身份
-- 不在个人中心单独提供 AI 历史入口
+- 会话与具体文章绑定，满足文章详情页内的历史回看
+- 不区分“文章上下文问答”和“通用问答”，由 AI 在运行时判断上下文
+- 不需要软删除字段，会话删除即物理删除
+- 不需要 `title`，会话列表也不依赖标题展示
 
 ---
 
 ### 16. AI 问答消息表 `AiChatMessage`
 
-用于保存对话中每一条消息。
+用于保存对话中的每一条消息。
 
 #### 主要字段
 - `id`
 - `sessionId`
-- `role`：`USER | ASSISTANT | SYSTEM`
+- `role`：`USER | ASSISTANT`
 - `content`
-- `tokenCount`
 - `createdAt`
 
 #### 设计要点
 - 支持连续对话与历史回放
 - 便于流式回复和消息列表渲染
+- 不单独维护 token 统计字段，按需在业务层计算或由模型调用侧记录
 
 ---
 

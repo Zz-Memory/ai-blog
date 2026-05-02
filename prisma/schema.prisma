@@ -3,24 +3,22 @@ generator client {
 }
 
 // 数据库连接配置，实际连接串通过环境变量注入
- datasource db {
+datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 // ============ 用户与认证相关枚举 ============
 
-// 用户角色：博主与访客
 enum UserRole {
   BLOGGER
   VISITOR
 }
 
-// 用户状态：正常、禁用、删除
+// 用户状态：活跃、禁言
 enum UserStatus {
   ACTIVE
-  DISABLED
-  DELETED
+  BANNED
 }
 
 // 验证码用途：注册、重置密码、绑定邮箱、注销账号
@@ -33,27 +31,16 @@ enum VerificationPurpose {
 
 // ============ 内容管理相关枚举 ============
 
-// 文章状态：仅保留草稿与已发布
 enum PostStatus {
   DRAFT
   PUBLISHED
 }
 
-// 分类状态：启用与停用
-enum CategoryStatus {
-  ACTIVE
-  DISABLED
-}
-
-// 评论状态：待审核、已通过、已拒绝、已删除
 enum CommentStatus {
   PENDING
   APPROVED
-  REJECTED
-  DELETED
 }
 
-// 通知类型：点赞、评论、回复、系统、审核、新用户
 enum NotificationType {
   LIKE
   COMMENT
@@ -63,160 +50,99 @@ enum NotificationType {
   NEW_USER
 }
 
-// AI 问答模式：文章上下文模式与通用模式
-enum AiChatMode {
-  POST_CONTEXT
-  GENERAL
+// 消息通知状态：草稿、已发布
+enum NotificationStatus {
+  DRAFT
+  PUBLISHED
 }
 
-// AI 消息角色：用户、助手、系统
+// AI 消息角色：用户、助手
 enum AiChatRole {
   USER
   ASSISTANT
-  SYSTEM
 }
 
 // ============ 用户表 ============
-// 存储系统中的所有登录用户，包括博主与访客
 model User {
-  // 主键 ID，使用 cuid 生成
-  id                String           @id @default(cuid())
-  // 登录邮箱，唯一
-  email             String           @unique
-  // 用户名，唯一
-  username          String           @unique
-  // 密码哈希值，仅保存加盐后的结果
-  passwordHash      String
-  // 用户角色，默认访客
-  role              UserRole         @default(VISITOR)
-  // 个人简介，可空
-  intro             String?
-  // 用户状态，默认正常
-  status            UserStatus       @default(ACTIVE)
-  // 创建时间
-  createdAt         DateTime         @default(now())
-  // 更新时间
-  updatedAt         DateTime         @updatedAt
-  // 软删除时间
-  deletedAt         DateTime?
+  id               String             @id @default(cuid())
+  email            String             @unique
+  username         String             @unique
+  passwordHash     String
+  role             UserRole           @default(VISITOR)
+  intro            String?
+  status           UserStatus         @default(ACTIVE)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
-  // 该用户创建的文章
-  posts              Post[]
-  // 该用户收到或发起的验证码记录
-  verificationCodes  VerificationCode[]
-  // 该用户的登录会话
-  sessions           Session[]
-  // 该用户发表的评论
-  comments           Comment[]
-  // 该用户的点赞记录
-  likes              Like[]
-  // 该用户的收藏夹
-  collectionFolders  CollectionFolder[]
-  // 该用户的收藏记录
-  bookmarks          Bookmark[]
-  // 该用户的浏览历史
-  browseHistories    BrowseHistory[]
-  // 该用户发送的通知
-  notificationsSent  Notification[]  @relation("NotificationSender")
-  // 该用户接收的通知
-  notificationsRecv  Notification[]  @relation("NotificationRecipient")
-  // 该用户的 AI 会话
-  aiChatSessions     AiChatSession[]
+  posts            Post[]
+  verificationCodes VerificationCode[]
+  sessions         Session[]
+  comments         Comment[]
+  likes            Like[]
+  collectionFolders CollectionFolder[]
+  bookmarks        Bookmark[]
+  browseHistories  BrowseHistory[]
+  notificationsSent Notification[]    @relation("NotificationSender")
+  notificationsRecv Notification[]    @relation("NotificationRecipient")
+  aiChatSessions   AiChatSession[]
 
   @@index([status])
 }
 
 // ============ 验证码表 ============
-// 用于邮箱验证码验证场景
 model VerificationCode {
-  id          String                @id @default(cuid())
-  // 验证码所属邮箱
-  email       String
-  // 验证码内容
-  code        String
-  // 使用场景
-  purpose     VerificationPurpose
-  // 过期时间
-  expiresAt   DateTime
-  // 被消费时间，消费后表示已使用
-  consumedAt  DateTime?
-  // 创建时间
-  createdAt   DateTime              @default(now())
+  id         String              @id @default(cuid())
+  email      String
+  code       String
+  purpose    VerificationPurpose
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime            @default(now())
 
-  // 关联到用户邮箱；如果用户不存在也可先记录验证码
-  user        User?                 @relation(fields: [email], references: [email], onDelete: Cascade)
+  user       User?               @relation(fields: [email], references: [email], onDelete: Cascade)
 
   @@index([email, purpose])
   @@index([expiresAt])
 }
 
 // ============ 会话表 ============
-// 保存登录态，不直接存储明文 token
 model Session {
-  id                String   @id @default(cuid())
-  // 所属用户
-  userId            String
-  // 会话 token 的哈希值
-  sessionTokenHash  String   @unique
-  // 过期时间
-  expiresAt         DateTime
-  // 创建时间
-  createdAt         DateTime @default(now())
-  // 更新时间
-  updatedAt         DateTime @updatedAt
+  id               String   @id @default(cuid())
+  userId           String
+  sessionTokenHash String   @unique
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  // 关联用户
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
 }
 
 // ============ 文章表 ============
-// 博客系统的核心内容表
 model Post {
-  id               String      @id @default(cuid())
-  // 文章作者
-  authorId         String
-  // 文章分类，可空：未发布文章初始可能未分配分类
-  categoryId       String?
-  // 文章标题
-  title            String
-  // URL 友好的唯一标识
-  slug             String      @unique
-  // 摘要，可用于列表页和搜索预览
-  summary          String?
-  // 原始 Markdown 内容
-  contentMarkdown  String
-  // 渲染后的 HTML 缓存内容，可空
-  contentHtml      String?
-  // 文章状态：草稿 / 已发布
-  status           PostStatus  @default(DRAFT)
-  // 发布时间，发布后填写
-  publishedAt      DateTime?
-  // 创建时间
-  createdAt        DateTime    @default(now())
-  // 更新时间
-  updatedAt        DateTime    @updatedAt
-  // 删除时间；如需彻底删除则由业务层直接物理删除
-  deletedAt        DateTime?
+  id              String      @id @default(cuid())
+  authorId        String
+  categoryId      String?
+  title           String
+  slug            String      @unique
+  summary         String?
+  contentMarkdown String
+  contentHtml     String?
+  status          PostStatus  @default(DRAFT)
+  publishedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
-  // 关联作者
-  author           User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  // 关联分类，允许为空
-  category         Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  // 文章评论
-  comments         Comment[]
-  // 文章点赞
-  likes            Like[]
-  // 文章收藏
-  bookmarks        Bookmark[]
-  // 文章浏览历史
-  browseHistories  BrowseHistory[]
-  // 文章标签关联
-  postTags         PostTag[]
-  // 文章相关 AI 会话
-  aiChatSessions   AiChatSession[]
+  author          User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category        Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  comments        Comment[]
+  likes           Like[]
+  bookmarks       Bookmark[]
+  browseHistories BrowseHistory[]
+  postTags        PostTag[]
+  aiChatSessions  AiChatSession[]
 
   @@index([authorId])
   @@index([categoryId])
@@ -224,100 +150,55 @@ model Post {
 }
 
 // ============ 分类表 ============
-// 用于文章的一级归档与导航筛选
 model Category {
-  id          String         @id @default(cuid())
-  // 分类名称
-  name        String         @unique
-  // 分类路由标识
-  slug        String         @unique
-  // 分类描述
+  id          String   @id @default(cuid())
+  name        String   @unique
   description String?
-  // 排序权重，越小越靠前
-  sortOrder   Int            @default(0)
-  // 分类状态
-  status      CategoryStatus @default(ACTIVE)
-  // 创建时间
-  createdAt   DateTime       @default(now())
-  // 更新时间
-  updatedAt   DateTime       @updatedAt
-  // 软删除时间
-  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  // 该分类下的文章
   posts       Post[]
 }
 
 // ============ 标签表 ============
-// 用于文章标签管理
 model Tag {
-  id         String   @id @default(cuid())
-  // 标签名称
-  name       String   @unique
-  // 标签路由标识
-  slug       String   @unique
-  // 创建时间
-  createdAt  DateTime @default(now())
-  // 更新时间
-  updatedAt  DateTime @updatedAt
-  // 软删除时间
-  deletedAt  DateTime?
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // 与文章的关联记录
   postTags   PostTag[]
 }
 
 // ============ 文章标签关联表 ============
-// 文章与标签的多对多关系中间表
 model PostTag {
-  // 文章 ID
-  postId     String
-  // 标签 ID
-  tagId      String
-  // 创建时间
-  createdAt  DateTime @default(now())
+  postId    String
+  tagId     String
+  createdAt DateTime @default(now())
 
-  // 关联文章
-  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  // 关联标签
-  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
-  // 复合主键，避免重复关联
   @@id([postId, tagId])
   @@index([tagId])
 }
 
 // ============ 评论表 ============
-// 支持文章评论与回复
 model Comment {
-  id         String         @id @default(cuid())
-  // 所属文章
-  postId     String
-  // 评论作者
-  userId     String
-  // 父评论 ID，用于回复树
-  parentId   String?
-  // 评论内容
-  content    String
-  // 审核状态
-  status     CommentStatus  @default(PENDING)
-  // 点赞数
-  likeCount  Int            @default(0)
-  // 创建时间
-  createdAt  DateTime       @default(now())
-  // 更新时间
-  updatedAt  DateTime       @updatedAt
-  // 软删除时间
-  deletedAt  DateTime?
+  id        String        @id @default(cuid())
+  postId    String
+  userId    String
+  parentId  String?
+  content   String
+  status    CommentStatus @default(PENDING)
+  likeCount Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
-  // 关联文章
-  post       Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
-  // 关联用户
-  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // 父评论
-  parent     Comment?       @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
-  // 子评论
-  replies    Comment[]      @relation("CommentReplies")
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]     @relation("CommentReplies")
 
   @@index([postId])
   @@index([userId])
@@ -326,70 +207,46 @@ model Comment {
 }
 
 // ============ 点赞表 ============
-// 记录用户对文章的点赞关系
 model Like {
-  id         String   @id @default(cuid())
-  // 点赞用户
-  userId     String
-  // 被点赞文章
-  postId     String
-  // 创建时间
-  createdAt  DateTime @default(now())
+  id      String   @id @default(cuid())
+  userId  String
+  postId  String
+  createdAt DateTime @default(now())
 
-  // 关联用户
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // 关联文章
-  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@index([postId])
 }
 
 // ============ 收藏夹表 ============
-// 一个用户可以拥有多个收藏夹
 model CollectionFolder {
-  id         String   @id @default(cuid())
-  // 所属用户
-  userId     String
-  // 收藏夹名称
-  name       String
-  // 是否为默认收藏夹
-  isDefault  Boolean  @default(false)
-  // 创建时间
-  createdAt  DateTime @default(now())
-  // 更新时间
-  updatedAt  DateTime @updatedAt
-  // 软删除时间
-  deletedAt  DateTime?
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // 关联用户
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // 收藏夹中的收藏记录
-  bookmarks  Bookmark[]
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookmarks Bookmark[]
 
   @@index([userId])
   @@index([userId, isDefault])
 }
 
 // ============ 收藏记录表 ============
-// 用户收藏文章的记录
 model Bookmark {
-  id         String   @id @default(cuid())
-  // 收藏用户
-  userId     String
-  // 被收藏文章
-  postId     String
-  // 所属收藏夹，可空，默认收藏夹业务层处理
-  folderId   String?
-  // 创建时间
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  folderId  String
+  createdAt DateTime @default(now())
 
-  // 关联用户
-  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // 关联文章
-  post       Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
-  // 关联收藏夹
-  folder     CollectionFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  folder    CollectionFolder  @relation(fields: [folderId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@index([folderId])
@@ -397,110 +254,68 @@ model Bookmark {
 }
 
 // ============ 浏览历史表 ============
-// 记录用户浏览过的文章
 model BrowseHistory {
-  id         String   @id @default(cuid())
-  // 浏览用户
-  userId     String
-  // 浏览文章
-  postId     String
-  // 最近访问时间
-  visitedAt  DateTime @default(now())
-  // 创建时间
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  visitedAt DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  // 关联用户
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // 关联文章
-  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([userId, visitedAt])
   @@index([postId])
 }
 
 // ============ 通知表 ============
-// 用于站内消息通知
 model Notification {
-  id          String           @id @default(cuid())
-  // 接收者
+  id          String             @id @default(cuid())
   recipientId String
-  // 发送者，可为空，系统通知时可不指定
   senderId    String?
-  // 通知类型
   type        NotificationType
-  // 标题
+  status      NotificationStatus @default(DRAFT)
   title       String
-  // 内容
   content     String
-  // 跳转链接，可为空
   linkUrl     String?
-  // 是否已读
-  isRead      Boolean          @default(false)
-  // 创建时间
-  createdAt   DateTime         @default(now())
-  // 已读时间
+  isRead      Boolean            @default(false)
+  createdAt   DateTime           @default(now())
   readAt      DateTime?
-  // 软删除时间
-  deletedAt   DateTime?
 
-  // 接收者
-  recipient   User             @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  // 发送者
-  sender      User?            @relation("NotificationSender", fields: [senderId], references: [id], onDelete: SetNull)
+  recipient   User               @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  sender      User?              @relation("NotificationSender", fields: [senderId], references: [id], onDelete: SetNull)
 
   @@index([recipientId, createdAt])
   @@index([senderId])
   @@index([type])
+  @@index([status])
 }
 
 // ============ AI 问答会话表 ============
-// 保存文章详情页内的 AI 对话会话
 model AiChatSession {
-  id         String       @id @default(cuid())
-  // 发起者用户
-  userId     String
-  // 所属文章，可为空：通用问答不绑定文章
-  postId     String?
-  // 会话模式
-  mode       AiChatMode   @default(POST_CONTEXT)
-  // 会话标题
-  title      String?
-  // 创建时间
-  createdAt  DateTime     @default(now())
-  // 更新时间
-  updatedAt  DateTime     @updatedAt
-  // 软删除时间
-  deletedAt  DateTime?
+  id        String         @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
-  // 关联用户
-  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // 关联文章
-  post       Post?        @relation(fields: [postId], references: [id], onDelete: SetNull)
-  // 会话消息列表
-  messages   AiChatMessage[]
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  messages  AiChatMessage[]
 
   @@index([userId, createdAt])
   @@index([postId])
-  @@index([mode])
 }
 
 // ============ AI 问答消息表 ============
-// 保存 AI 会话中的每一条消息
 model AiChatMessage {
-  id          String       @id @default(cuid())
-  // 所属会话
-  sessionId   String
-  // 消息角色
-  role        AiChatRole
-  // 消息内容
-  content     String
-  // token 数量，可用于统计
-  tokenCount  Int?
-  // 创建时间
-  createdAt   DateTime     @default(now())
+  id        String       @id @default(cuid())
+  sessionId String
+  role      AiChatRole
+  content   String
+  createdAt DateTime     @default(now())
 
-  // 关联会话
-  session     AiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session   AiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId, createdAt])
 }
