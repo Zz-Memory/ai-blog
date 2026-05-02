@@ -92,6 +92,7 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
   const [registerPassword, setRegisterPassword] = useState<PasswordState>({ value: "", touched: false });
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
   const [resetPassword, setResetPassword] = useState<PasswordState>({ value: "", touched: false });
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
   const [registerVerification, setRegisterVerification] = useState("");
   const [resetVerification, setResetVerification] = useState("");
   const [registerNickname, setRegisterNickname] = useState("");
@@ -117,6 +118,7 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
     setRegisterPassword({ value: "", touched: false });
     setRegisterConfirmPassword("");
     setResetPassword({ value: "", touched: false });
+    setResetConfirmPassword("");
     setRegisterVerification("");
     setResetVerification("");
     setRegisterNickname("");
@@ -172,6 +174,38 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
     }
   };
 
+  const handleResetSubmit = async () => {
+    if (!validateReset()) return;
+
+    setSubmitMessage("");
+    setIsSendingCode(true);
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: resetEmail.trim(),
+          verificationCode: resetVerification.trim(),
+          password: resetPassword.value,
+          confirmPassword: resetConfirmPassword.trim(),
+        }),
+      });
+      setSubmitMessage(await readApiMessage(response));
+      if (response.ok) {
+        setMode("login");
+        setResetPassword({ value: "", touched: false });
+        setResetConfirmPassword("");
+        setResetVerification("");
+        setResetEmail("");
+        setErrors({});
+      }
+    } catch {
+      setSubmitMessage("重置密码失败，请稍后重试。");
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
   const handleRegisterSubmit = async () => {
     if (!validateRegister()) return;
 
@@ -214,6 +248,7 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
     if (!resetEmail.trim()) nextErrors.email = "请输入电子邮箱。";
     if (!resetVerification.trim()) nextErrors.verification = "请输入验证码。";
     if (!resetPassword.value) nextErrors.password = "请输入新密码。"; else if (!isStrongPassword(resetPassword.value)) nextErrors.password = "密码格式错误，请输入字母与数字组合，且至少 8 位。";
+    if (!resetConfirmPassword) nextErrors.confirmPassword = "请再次输入新密码。"; else if (resetPassword.value !== resetConfirmPassword) nextErrors.confirmPassword = "两次输入的新密码不一致。";
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -249,10 +284,31 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
             </form>
           )}
           {isReset && (
-            <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); if (!validateReset()) return; setSubmitMessage("重置密码功能稍后接入。"); }}>
-              <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">电子邮箱</label><InputShell icon="mail" placeholder="输入您的电子邮箱" type="email" value={resetEmail} onChange={setResetEmail} /></div>
-              <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">验证码</label><div className="flex gap-3"><div className="flex-1"><InputShell icon="security" placeholder="输入验证码" value={resetVerification} onChange={setResetVerification} /></div><button type="button" disabled={isSendingCode} className="whitespace-nowrap rounded-lg border border-white/10 bg-white/5 px-4 text-[13px] font-medium text-zinc-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60" onClick={() => void handleSendVerificationCode(resetEmail.trim(), "reset")}>{isSendingCode ? "发送中..." : "获取验证码"}</button></div></div>
-              <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">新密码</label><InputShell icon="lock" placeholder="设置新的密码" type="password" canToggleVisibility value={resetPassword.value} onChange={(value) => setResetPassword({ value, touched: true })} /><p className="mt-2 text-[12px] leading-5 text-zinc-400">{resetMessage}</p></div>
+            <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); void handleResetSubmit(); }}>
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-zinc-300">电子邮箱</label>
+                <InputShell icon="mail" placeholder="输入您的电子邮箱" type="email" value={resetEmail} onChange={setResetEmail} />
+                {errors.email ? <p className="mt-2 text-[12px] text-rose-300">{errors.email}</p> : null}
+              </div>
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-zinc-300">验证码</label>
+                <div className="flex gap-3">
+                  <div className="flex-1"><InputShell icon="security" placeholder="输入验证码" value={resetVerification} onChange={setResetVerification} /></div>
+                  <button type="button" disabled={isSendingCode} className="whitespace-nowrap rounded-lg border border-white/10 bg-white/5 px-4 text-[13px] font-medium text-zinc-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60" onClick={() => void handleSendVerificationCode(resetEmail.trim(), "reset")}>{isSendingCode ? "发送中..." : "获取验证码"}</button>
+                </div>
+                {errors.verification ? <p className="mt-2 text-[12px] text-rose-300">{errors.verification}</p> : null}
+              </div>
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-zinc-300">设置新密码</label>
+                <InputShell icon="lock" placeholder="设置新的密码" type="password" canToggleVisibility value={resetPassword.value} onChange={(value) => setResetPassword({ value, touched: true })} />
+                <p className="mt-2 text-[12px] leading-5 text-zinc-400">{resetMessage}</p>
+                {errors.password ? <p className="mt-2 text-[12px] text-rose-300">{errors.password}</p> : null}
+              </div>
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-zinc-300">确认新密码</label>
+                <InputShell icon="lock_reset" placeholder="再次输入新密码" type="password" canToggleVisibility value={resetConfirmPassword} onChange={setResetConfirmPassword} />
+                {errors.confirmPassword ? <p className="mt-2 text-[12px] text-rose-300">{errors.confirmPassword}</p> : null}
+              </div>
               <div className="flex gap-3 pt-1"><button type="button" className="flex-1 rounded-lg border border-white/10 bg-white/5 py-3.5 text-[15px] font-medium text-zinc-100 transition hover:bg-white/10" onClick={() => setMode("login")}>返回登录</button><button type="submit" className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#adc6ff] py-3.5 text-[15px] font-medium text-[#001a41] shadow-[0_0_15px_rgba(173,198,255,0.2)] transition hover:bg-[#c3d2ff]"><span>重置密码</span><FieldIcon icon="arrow_forward" /></button></div>
             </form>
           )}

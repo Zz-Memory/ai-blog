@@ -186,8 +186,9 @@ export function BloggerCenterPage() {
   const visibleReviews = filteredReviews.slice((reviewPage - 1) * reviewsPerPage, reviewPage * reviewsPerPage);
 
   useEffect(() => {
-    const section = searchParams.get("section");
-    if (section === "notifications") setActiveSection("notifications");
+    if (searchParams.get("section") === "notifications") {
+      setActiveSection("notifications");
+    }
   }, [searchParams]);
 
   useEffect(() => {

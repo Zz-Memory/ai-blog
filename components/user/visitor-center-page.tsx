@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/common/auth-context";
 
 import { SiteFooter } from "@/components/common/site-footer";
@@ -23,6 +23,7 @@ import { useNotificationCount } from "@/components/common/notification-context";
 
 export function VisitorCenterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { logout } = useAuth();
   // 顶部站点级搜索框的输入值。
   // 它只服务于 `SiteHeader`，和下方“浏览记录”的搜索互不影响。
@@ -58,6 +59,12 @@ export function VisitorCenterPage() {
 
   // 当前用户评论过的文章列表。
   const commentedList = useMemo(() => commentedArticles, []);
+
+  useEffect(() => {
+    if (searchParams.get("section") === "notifications") {
+      setActiveSection("notifications");
+    }
+  }, [searchParams]);
 
   // 根据浏览记录搜索关键字过滤列表。
   // 这里使用 `useMemo` 只是为了避免在无关状态变化时重复计算，数据量变大后更有意义。
