@@ -98,16 +98,35 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
   const [loginAccount, setLoginAccount] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
   const [errors, setErrors] = useState<ValidationState>({});
 
-  useEffect(() => { if (isOpen) setMode(initialMode); }, [isOpen, initialMode]);
   useEffect(() => { const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); }; if (isOpen) window.addEventListener("keydown", onKeyDown); return () => window.removeEventListener("keydown", onKeyDown); }, [isOpen, onClose]);
-  useEffect(() => { if (!isOpen) { setRegisterPassword({ value: "", touched: false }); setRegisterConfirmPassword(""); setResetPassword({ value: "", touched: false }); setRegisterVerification(""); setResetVerification(""); setRegisterNickname(""); setRegisterEmail(""); setResetEmail(""); setLoginAccount(""); setLoginPassword(""); setIsSendingCode(false); setSubmitMessage(""); setErrors({}); } }, [isOpen]);
 
   const isLogin = mode === "login";
   const isRegister = mode === "register";
   const isReset = mode === "reset";
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setMode(initialMode);
+    setRegisterPassword({ value: "", touched: false });
+    setRegisterConfirmPassword("");
+    setResetPassword({ value: "", touched: false });
+    setRegisterVerification("");
+    setResetVerification("");
+    setRegisterNickname("");
+    setRegisterEmail("");
+    setResetEmail("");
+    setLoginAccount("");
+    setLoginPassword("");
+    setIsSendingCode(false);
+    setIsLoggingIn(false);
+    setSubmitMessage("");
+    setErrors({});
+  }, [isOpen, initialMode]);
 
   const registerMessage = useMemo(() => passwordRuleMessage(registerPassword.value, registerPassword.touched), [registerPassword]);
   const resetMessage = useMemo(() => passwordRuleMessage(resetPassword.value, resetPassword.touched), [resetPassword]);
@@ -121,6 +140,56 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
       const response = await fetch("/api/auth/verification", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, purpose: purpose === "reset" ? "RESET_PASSWORD" : "REGISTER" }) });
       setSubmitMessage(await readApiMessage(response));
     } catch { setSubmitMessage("验证码发送失败，请稍后重试。"); } finally { setIsSendingCode(false); }
+  };
+
+  const handleLoginSubmit = async () => {
+    const nextErrors: ValidationState = {};
+    if (!loginAccount.trim()) nextErrors.account = "请输入账号或邮箱。";
+    if (!loginPassword.trim()) nextErrors.password = "请输入密码。";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    setSubmitMessage("");
+    setIsLoggingIn(true);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ account: loginAccount.trim(), password: loginPassword }),
+      });
+      const message = await readApiMessage(response);
+      setSubmitMessage(message);
+    } catch {
+      setSubmitMessage("登录失败，请稍后重试。");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleRegisterSubmit = async () => {
+    if (!validateRegister()) return;
+
+    setSubmitMessage("");
+    setIsRegistering(true);
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nickname: registerNickname.trim(),
+          email: registerEmail.trim(),
+          verification: registerVerification.trim(),
+          password: registerPassword.value,
+          confirmPassword: registerConfirmPassword.trim(),
+        }),
+      });
+      const message = await readApiMessage(response);
+      setSubmitMessage(message);
+    } catch {
+      setSubmitMessage("注册失败，请稍后重试。");
+    } finally {
+      setIsRegistering(false);
+    }
   };
 
   const validateRegister = () => {
@@ -157,20 +226,20 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
         <div className="mt-6 max-h-[60vh] overflow-y-auto pr-1">
           {submitMessage ? <div className="mb-4 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-[13px] leading-6 text-zinc-200">{submitMessage}</div> : null}
           {isLogin && (
-            <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); setSubmitMessage("登录功能稍后接入。"); }}>
+            <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); void handleLoginSubmit(); }}>
               <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">账号/邮箱</label><InputShell icon="person" placeholder="输入您的账号或邮箱" value={loginAccount} onChange={setLoginAccount} /></div>
               <div><div className="mb-2 flex items-center justify-between"><label className="block text-[13px] font-medium text-zinc-300">密码</label><button type="button" className="text-[13px] text-blue-200 transition hover:text-blue-100" onClick={() => setMode("reset")}>忘记密码？</button></div><InputShell icon="lock" placeholder="输入您的密码" type="password" canToggleVisibility value={loginPassword} onChange={setLoginPassword} /></div>
-              <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#adc6ff] py-3.5 text-[15px] font-medium text-[#001a41] shadow-[0_0_15px_rgba(173,198,255,0.2)] transition hover:bg-[#c3d2ff]"><span>登录</span><FieldIcon icon="arrow_forward" /></button>
+              <button type="submit" disabled={isLoggingIn} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#adc6ff] py-3.5 text-[15px] font-medium text-[#001a41] shadow-[0_0_15px_rgba(173,198,255,0.2)] transition hover:bg-[#c3d2ff] disabled:cursor-not-allowed disabled:opacity-70"><span>{isLoggingIn ? "登录中..." : "登录"}</span><FieldIcon icon="arrow_forward" /></button>
             </form>
           )}
           {isRegister && (
-            <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); if (!validateRegister()) return; void (async () => { setSubmitMessage(""); const response = await fetch("/api/auth/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nickname: registerNickname.trim(), email: registerEmail.trim(), verification: registerVerification.trim(), password: registerPassword.value, confirmPassword: registerConfirmPassword.trim() }) }); setSubmitMessage(await readApiMessage(response)); })(); }}>
+            <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void handleRegisterSubmit(); }}>
               <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">昵称</label><InputShell icon="badge" placeholder="设置您的昵称" value={registerNickname} onChange={setRegisterNickname} />{errors.nickname ? <p className="mt-2 text-[12px] text-rose-300">{errors.nickname}</p> : null}</div>
               <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">电子邮箱</label><InputShell icon="mail" placeholder="输入您的电子邮箱" type="email" value={registerEmail} onChange={setRegisterEmail} />{errors.email ? <p className="mt-2 text-[12px] text-rose-300">{errors.email}</p> : null}</div>
               <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">验证码</label><div className="flex gap-3"><div className="flex-1"><InputShell icon="security" placeholder="输入验证码" value={registerVerification} onChange={setRegisterVerification} /></div><button type="button" disabled={isSendingCode} className="whitespace-nowrap rounded-lg border border-white/10 bg-white/5 px-4 text-[13px] font-medium text-zinc-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60" onClick={() => void handleSendVerificationCode(registerEmail.trim(), "register")}>{isSendingCode ? "发送中..." : "获取验证码"}</button></div>{errors.verification ? <p className="mt-2 text-[12px] text-rose-300">{errors.verification}</p> : null}</div>
               <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">设置密码</label><InputShell icon="lock" placeholder="设置您的密码" type="password" canToggleVisibility value={registerPassword.value} onChange={(value) => setRegisterPassword({ value, touched: true })} /><p className="mt-2 text-[12px] leading-5 text-zinc-400">{registerMessage}</p>{errors.password ? <p className="mt-2 text-[12px] text-rose-300">{errors.password}</p> : null}</div>
               <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">确认密码</label><InputShell icon="lock_reset" placeholder="再次输入密码" type="password" canToggleVisibility value={registerConfirmPassword} onChange={setRegisterConfirmPassword} />{errors.confirmPassword ? <p className="mt-2 text-[12px] text-rose-300">{errors.confirmPassword}</p> : null}</div>
-              <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#adc6ff] py-3.5 text-[15px] font-medium text-[#001a41] shadow-[0_0_15px_rgba(173,198,255,0.2)] transition hover:bg-[#c3d2ff]"><span>注册</span><FieldIcon icon="arrow_forward" /></button>
+              <button type="submit" disabled={isRegistering} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#adc6ff] py-3.5 text-[15px] font-medium text-[#001a41] shadow-[0_0_15px_rgba(173,198,255,0.2)] transition hover:bg-[#c3d2ff] disabled:cursor-not-allowed disabled:opacity-70"><span>{isRegistering ? "注册中..." : "注册"}</span><FieldIcon icon="arrow_forward" /></button>
             </form>
           )}
           {isReset && (
