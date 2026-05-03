@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 
+import { AuthModal } from "@/components/auth/auth-modal";
 import { CategoryPill } from "@/components/common/category-pill";
 import { TagPill } from "@/components/common/tag-pill";
+import { useAuth } from "@/components/common/auth-context";
 import { formatChinaDate } from "@/lib/date";
 
 // 文章卡片所展示的统计信息类型。
@@ -63,15 +65,30 @@ export function ArticleCard({
   compact = false,
 }: ArticleCardProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authEntry, setAuthEntry] = useState<"login" | "register">("login");
   const [likesCount, setLikesCount] = useState(stats.likes);
   const [bookmarksCount, setBookmarksCount] = useState(stats.favorites);
   const [commentsCount] = useState(stats.comments);
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  const toggleLike = async (event: React.MouseEvent) => {
+  const openLogin = () => {
+    setAuthEntry("login");
+    setAuthOpen(true);
+  };
+
+  const requireLogin = (event: React.MouseEvent) => {
+    if (user) return true;
     event.preventDefault();
     event.stopPropagation();
+    openLogin();
+    return false;
+  };
+
+  const toggleLike = async (event: React.MouseEvent) => {
+    if (!requireLogin(event)) return;
     const nextLiked = !isLiked;
     setIsLiked(nextLiked);
     setLikesCount((value) => value + (nextLiked ? 1 : -1));
@@ -83,8 +100,7 @@ export function ArticleCard({
   };
 
   const toggleBookmark = async (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
+    if (!requireLogin(event)) return;
     const nextBookmarked = !isBookmarked;
     setIsBookmarked(nextBookmarked);
     setBookmarksCount((value) => value + (nextBookmarked ? 1 : -1));
@@ -102,41 +118,45 @@ export function ArticleCard({
   };
 
   return (
-    <Link
-      href={href}
-      aria-label={`查看文章：${title}`}
-      className="group block rounded-2xl border border-white/8 bg-[#17181d] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition duration-300 hover:border-blue-400/20 hover:bg-[#1a1b21]"
-    >
-      <article className="transition-transform duration-300 group-hover:-translate-y-0.5">
-        <div className={`flex items-start justify-between gap-6 ${compact ? "gap-4" : ""}`}>
-          <div className="min-w-0">
-            {category ? <CategoryPill label={category} /> : null}
-            <h2 className={`${compact ? "mt-2 text-2xl" : "mt-3 text-[28px]"} font-medium tracking-tight text-zinc-100 transition-colors duration-300 group-hover:text-blue-100`}>
-              {title}
-            </h2>
-            <p className={`${compact ? "mt-3 max-w-2xl text-sm leading-6" : "mt-4 max-w-3xl text-[15px] leading-7"} text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300`}>
-              {excerpt}
-            </p>
-          </div>
-          <time className="shrink-0 pt-1 text-sm text-zinc-500 transition-colors duration-300 group-hover:text-zinc-400">
-            {formatChinaDate(date)}
-          </time>
-        </div>
-
-        <div className={`mt-5 flex flex-wrap items-center justify-between gap-4 ${compact ? "mt-4" : ""}`}>
-          <div className="flex flex-wrap gap-3">
-            {tags.map((tag) => (
-              <TagPill key={tag} label={tag} />
-            ))}
+    <>
+      <Link
+        href={href}
+        aria-label={`查看文章：${title}`}
+        className="group block rounded-2xl border border-white/8 bg-[#17181d] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition duration-300 hover:border-blue-400/20 hover:bg-[#1a1b21]"
+      >
+        <article className="transition-transform duration-300 group-hover:-translate-y-0.5">
+            <div className={`flex items-start justify-between gap-6 ${compact ? "gap-4" : ""}`}>
+            <div className="min-w-0">
+              {category ? <CategoryPill label={category} /> : null}
+              <h2 className={`${compact ? "mt-2 text-2xl" : "mt-3 text-[28px]"} font-medium tracking-tight text-zinc-100 transition-colors duration-300 group-hover:text-blue-100`}>
+                {title}
+              </h2>
+              <p className={`${compact ? "mt-3 max-w-2xl text-sm leading-6" : "mt-4 max-w-3xl text-[15px] leading-7"} text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300`}>
+                {excerpt}
+              </p>
+            </div>
+            <time className="shrink-0 pt-1 text-sm text-zinc-500 transition-colors duration-300 group-hover:text-zinc-400">
+              {formatChinaDate(date)}
+            </time>
           </div>
 
-          <div className="flex items-center gap-6 text-sm">
-            <Stat icon="favorite" value={likesCount} active={isLiked} onClick={toggleLike} ariaLabel={isLiked ? "取消点赞" : "点赞文章"} />
-            <Stat icon="bookmark" value={bookmarksCount} active={isBookmarked} onClick={toggleBookmark} ariaLabel={isBookmarked ? "取消收藏" : "收藏文章"} />
-            <Stat icon="chat_bubble" value={commentsCount} onClick={goToComments} ariaLabel="查看文章评论" />
+          <div className={`mt-5 flex flex-wrap items-center justify-between gap-4 ${compact ? "mt-4" : ""}`}>
+            <div className="flex flex-wrap gap-3">
+              {tags.map((tag) => (
+                <TagPill key={tag} label={tag} />
+              ))}
+            </div>
+
+            <div className="flex items-center gap-6 text-sm">
+              <Stat icon="favorite" value={likesCount} active={isLiked} onClick={toggleLike} ariaLabel={isLiked ? "取消点赞" : "点赞文章"} />
+              <Stat icon="bookmark" value={bookmarksCount} active={isBookmarked} onClick={toggleBookmark} ariaLabel={isBookmarked ? "取消收藏" : "收藏文章"} />
+              <Stat icon="chat_bubble" value={commentsCount} onClick={goToComments} ariaLabel="查看文章评论" />
+            </div>
           </div>
-        </div>
-      </article>
-    </Link>
+        </article>
+      </Link>
+
+      <AuthModal isOpen={authOpen} initialMode={authEntry} onClose={() => setAuthOpen(false)} />
+    </>
   );
 }

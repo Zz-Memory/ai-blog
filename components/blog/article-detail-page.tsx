@@ -81,16 +81,17 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
   const commentsRef = useRef<HTMLElement | null>(null);
   const { user } = useAuth();
 
   const currentUser: CurrentUserView | null = user
     ? {
-      name: user.username,
-      role: user.role === "BLOGGER" ? "blogger" : "visitor",
-      avatarUrl: user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
-      avatarLabel: user.role === "BLOGGER" ? "博主头像" : "访客头像",
-    }
+        name: user.username,
+        role: user.role === "BLOGGER" ? "blogger" : "visitor",
+        avatarUrl: user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
+        avatarLabel: user.role === "BLOGGER" ? "博主头像" : "访客头像",
+      }
     : null;
 
   const readingStats = useMemo(
@@ -117,6 +118,12 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
     setAuthOpen(true);
   };
 
+  const requireLogin = () => {
+    if (user) return true;
+    openLogin();
+    return false;
+  };
+
   const scrollToComments = () => {
     commentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -129,6 +136,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   };
 
   const toggleLike = async () => {
+    if (!requireLogin()) return;
     const nextLiked = !isLiked;
     setIsLiked(nextLiked);
     setLikesCount((value) => value + (nextLiked ? 1 : -1));
@@ -140,6 +148,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   };
 
   const toggleBookmark = async () => {
+    if (!requireLogin()) return;
     const nextBookmarked = !isBookmarked;
     setIsBookmarked(nextBookmarked);
     setBookmarksCount((value) => value + (nextBookmarked ? 1 : -1));
@@ -148,6 +157,11 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ postId: article.slug }),
     });
+  };
+
+  const toggleCommentLike = (id: string) => {
+    if (!requireLogin()) return;
+    setLikedComments((current) => ({ ...current, [id]: !current[id] }));
   };
 
   return (
@@ -251,8 +265,28 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                       <div className="flex items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{comment.author}</span><span className="text-xs text-zinc-500">{formatChinaDateTime(comment.time)}</span></div>
                       <p className="mt-2 text-sm leading-7 text-zinc-400">{comment.content}</p>
                       <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
-                        <button className="flex items-center gap-1 transition hover:text-[#b8c9ff]"><span className="material-symbols-outlined text-[16px]">thumb_up</span>{comment.likes}</button>
-                        <button className="flex items-center gap-1 transition hover:text-zinc-300"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
+                        <button
+                          type="button"
+                          onClick={() => toggleCommentLike(comment.id)}
+                          className={`flex items-center gap-1 transition ${likedComments[comment.id] ? "text-[#b8c9ff]" : "hover:text-[#b8c9ff]"}`}
+                          aria-label={likedComments[comment.id] ? "取消点赞评论" : "点赞评论"}
+                        >
+                          <span className="material-symbols-outlined text-[16px]">{likedComments[comment.id] ? "thumb_up" : "thumb_up_off_alt"}</span>
+                          {comment.likes + (likedComments[comment.id] ? 1 : 0)}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!user) {
+                              openLogin();
+                              return;
+                            }
+                          }}
+                          className="flex items-center gap-1 transition hover:text-zinc-300"
+                          aria-label="回复评论"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">reply</span>回复
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -267,8 +301,28 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                             <div className="flex flex-wrap items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{reply.author}</span><span className="text-xs text-zinc-500">回复 {reply.replyTo}</span><span className="text-xs text-zinc-500">{formatChinaDateTime(reply.time)}</span></div>
                             <p className="mt-2 text-sm leading-7 text-zinc-400">{reply.content}</p>
                             <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
-                              <button className="flex items-center gap-1 transition hover:text-[#b8c9ff]"><span className="material-symbols-outlined text-[16px]">thumb_up</span>{reply.likes}</button>
-                              <button className="flex items-center gap-1 transition hover:text-zinc-300"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
+                              <button
+                                type="button"
+                                onClick={() => toggleCommentLike(reply.id)}
+                                className={`flex items-center gap-1 transition ${likedComments[reply.id] ? "text-[#b8c9ff]" : "hover:text-[#b8c9ff]"}`}
+                                aria-label={likedComments[reply.id] ? "取消点赞回复" : "点赞回复"}
+                              >
+                                <span className="material-symbols-outlined text-[16px]">{likedComments[reply.id] ? "thumb_up" : "thumb_up_off_alt"}</span>
+                                {reply.likes + (likedComments[reply.id] ? 1 : 0)}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!user) {
+                                    openLogin();
+                                    return;
+                                  }
+                                }}
+                                className="flex items-center gap-1 transition hover:text-zinc-300"
+                                aria-label="回复回复"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">reply</span>回复
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -324,7 +378,10 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
           <div className="fixed bottom-24 right-6 z-50 xl:right-[max(24px,calc((100vw-1600px)/2+24px))]">
             <button
               type="button"
-              onClick={() => setChatOpen((value) => !value)}
+              onClick={() => {
+                if (!requireLogin()) return;
+                setChatOpen((value) => !value);
+              }}
               className="group relative flex h-14 w-14 items-center justify-center rounded-full border border-primary-container/50 bg-surface-container-high shadow-[0_0_20px_rgba(75,142,255,0.15)] transition hover:shadow-[0_0_30px_rgba(75,142,255,0.3)]"
               aria-label="打开 AI 问答"
             >
