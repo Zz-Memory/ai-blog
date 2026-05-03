@@ -87,11 +87,11 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
 
   const currentUser: CurrentUserView | null = user
     ? {
-        name: user.username,
-        role: user.role === "BLOGGER" ? "blogger" : "visitor",
-        avatarUrl: user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
-        avatarLabel: user.role === "BLOGGER" ? "博主头像" : "访客头像",
-      }
+      name: user.username,
+      role: user.role === "BLOGGER" ? "blogger" : "visitor",
+      avatarUrl: user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
+      avatarLabel: user.role === "BLOGGER" ? "博主头像" : "访客头像",
+    }
     : null;
 
   const readingStats = useMemo(
@@ -162,6 +162,10 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   const toggleCommentLike = (id: string) => {
     if (!requireLogin()) return;
     setLikedComments((current) => ({ ...current, [id]: !current[id] }));
+  };
+
+  const handleReplyClick = () => {
+    if (!requireLogin()) return;
   };
 
   return (
@@ -274,19 +278,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                           <span className="material-symbols-outlined text-[16px]">{likedComments[comment.id] ? "thumb_up" : "thumb_up_off_alt"}</span>
                           {comment.likes + (likedComments[comment.id] ? 1 : 0)}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!user) {
-                              openLogin();
-                              return;
-                            }
-                          }}
-                          className="flex items-center gap-1 transition hover:text-zinc-300"
-                          aria-label="回复评论"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">reply</span>回复
-                        </button>
+                        <button type="button" onClick={handleReplyClick} className="flex items-center gap-1 transition hover:text-zinc-300" aria-label="回复评论"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
                       </div>
                     </div>
                   </div>
@@ -310,19 +302,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                                 <span className="material-symbols-outlined text-[16px]">{likedComments[reply.id] ? "thumb_up" : "thumb_up_off_alt"}</span>
                                 {reply.likes + (likedComments[reply.id] ? 1 : 0)}
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (!user) {
-                                    openLogin();
-                                    return;
-                                  }
-                                }}
-                                className="flex items-center gap-1 transition hover:text-zinc-300"
-                                aria-label="回复回复"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">reply</span>回复
-                              </button>
+                              <button type="button" onClick={handleReplyClick} className="flex items-center gap-1 transition hover:text-zinc-300" aria-label="回复回复"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
                             </div>
                           </div>
                         </div>
@@ -340,9 +320,8 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
             <button
               type="button"
               onClick={toggleLike}
-              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${
-                isLiked ? "border border-[#7aa2ff]/40 bg-[#7aa2ff]/15 text-[#b8c9ff] shadow-[0_0_18px_rgba(122,162,255,0.22)]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"
-              }`}
+              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${isLiked ? "border border-[#7aa2ff]/40 bg-[#7aa2ff]/15 text-[#b8c9ff] shadow-[0_0_18px_rgba(122,162,255,0.22)]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"
+                }`}
               aria-label={isLiked ? "取消点赞" : "点赞文章"}
             >
               <span className="material-symbols-outlined text-[24px]">{isLiked ? "favorite" : "favorite_border"}</span>
@@ -353,9 +332,8 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
             <button
               type="button"
               onClick={toggleBookmark}
-              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${
-                isBookmarked ? "border border-[#7aa2ff]/40 bg-[#7aa2ff]/15 text-[#b8c9ff] shadow-[0_0_18px_rgba(122,162,255,0.22)]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"
-              }`}
+              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${isBookmarked ? "border border-[#7aa2ff]/40 bg-[#7aa2ff]/15 text-[#b8c9ff] shadow-[0_0_18px_rgba(122,162,255,0.22)]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"
+                }`}
               aria-label={isBookmarked ? "取消收藏" : "收藏文章"}
             >
               <span className="material-symbols-outlined text-[24px]">{isBookmarked ? "bookmark" : "bookmark_border"}</span>
