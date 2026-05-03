@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { AuthModal } from "@/components/auth/auth-modal";
 import { CategoryPill } from "@/components/common/category-pill";
@@ -8,6 +8,7 @@ import { useAuth } from "@/components/common/auth-context";
 import { SiteFooter } from "@/components/common/site-footer";
 import { SiteHeader } from "@/components/common/site-header";
 import { TagPill } from "@/components/common/tag-pill";
+import { formatChinaDate, formatChinaDateTime } from "@/lib/date";
 
 type AuthEntry = "login" | "register";
 
@@ -45,6 +46,7 @@ type CommentNode = {
   id: string;
   author: string;
   avatarText: string;
+  avatarUrl: string;
   time: string;
   content: string;
   likes: number;
@@ -52,6 +54,7 @@ type CommentNode = {
     id: string;
     author: string;
     avatarText: string;
+    avatarUrl: string;
     time: string;
     content: string;
     likes: number;
@@ -73,6 +76,12 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   const [commentDraft, setCommentDraft] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
   const [chatQuestion, setChatQuestion] = useState("");
+  const [likesCount, setLikesCount] = useState(engagement.likes);
+  const [bookmarksCount, setBookmarksCount] = useState(engagement.bookmarks);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const commentsRef = useRef<HTMLElement | null>(null);
   const { user } = useAuth();
 
   const currentUser: CurrentUserView | null = user
@@ -86,16 +95,14 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
 
   const readingStats = useMemo(
     () => ({
-      likes: engagement.likes,
-      bookmarks: engagement.bookmarks,
+      likes: likesCount,
+      bookmarks: bookmarksCount,
       comments: engagement.comments,
     }),
-    [engagement.bookmarks, engagement.comments, engagement.likes]
+    [bookmarksCount, engagement.comments, likesCount]
   );
 
-  const publishedLabel = article.publishedAt
-    ? new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(article.publishedAt))
-    : "待发布";
+  const publishedLabel = article.publishedAt ? formatChinaDate(article.publishedAt) : "待发布";
 
   const articleCategory = article.category ?? "文章";
   const articleTags = article.tags.length ? article.tags : [{ id: "default-tag", label: "AI博客" }];
@@ -108,6 +115,39 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   const openRegister = () => {
     setAuthEntry("register");
     setAuthOpen(true);
+  };
+
+  const scrollToComments = () => {
+    commentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const shareArticle = async () => {
+    const url = `${window.location.origin}/article/${article.slug}`;
+    await navigator.clipboard.writeText(url);
+    setCopiedUrl(true);
+    window.setTimeout(() => setCopiedUrl(false), 2000);
+  };
+
+  const toggleLike = async () => {
+    const nextLiked = !isLiked;
+    setIsLiked(nextLiked);
+    setLikesCount((value) => value + (nextLiked ? 1 : -1));
+    await fetch("/api/posts/like", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId: article.slug }),
+    });
+  };
+
+  const toggleBookmark = async () => {
+    const nextBookmarked = !isBookmarked;
+    setIsBookmarked(nextBookmarked);
+    setBookmarksCount((value) => value + (nextBookmarked ? 1 : -1));
+    await fetch("/api/posts/bookmark", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId: article.slug }),
+    });
   };
 
   return (
@@ -157,7 +197,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
             ))}
           </div>
 
-          <section className="mt-12 max-w-[840px]">
+          <section ref={commentsRef} id="comments" className="mt-12 max-w-[840px] scroll-mt-24">
             <h3 className="text-2xl font-semibold text-zinc-50">评论 ({readingStats.comments})</h3>
             <div className="mt-6 rounded-2xl border border-white/8 bg-white/3 p-5 backdrop-blur-xl">
               {currentUser ? (
@@ -204,9 +244,11 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               {comments.map((comment) => (
                 <div key={comment.id} className="space-y-4">
                   <div className="flex gap-4">
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800 text-sm font-semibold text-zinc-200"><div className="flex h-full w-full items-center justify-center">{comment.avatarText}</div></div>
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                      <img src={comment.avatarUrl} alt={comment.author} className="h-full w-full object-cover" />
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{comment.author}</span><span className="text-xs text-zinc-500">{comment.time}</span></div>
+                      <div className="flex items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{comment.author}</span><span className="text-xs text-zinc-500">{formatChinaDateTime(comment.time)}</span></div>
                       <p className="mt-2 text-sm leading-7 text-zinc-400">{comment.content}</p>
                       <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
                         <button className="flex items-center gap-1 transition hover:text-[#b8c9ff]"><span className="material-symbols-outlined text-[16px]">thumb_up</span>{comment.likes}</button>
@@ -218,9 +260,11 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                     <div className="ml-14 space-y-4 border-l border-white/8 pl-4">
                       {comment.replies.map((reply) => (
                         <div key={reply.id} className="flex gap-4 rounded-xl bg-white/3 p-4">
-                          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800 text-sm font-semibold text-zinc-200"><div className="flex h-full w-full items-center justify-center">{reply.avatarText}</div></div>
+                          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                            <img src={reply.avatarUrl} alt={reply.author} className="h-full w-full object-cover" />
+                          </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{reply.author}</span><span className="text-xs text-zinc-500">回复 {reply.replyTo}</span><span className="text-xs text-zinc-500">{reply.time}</span></div>
+                            <div className="flex flex-wrap items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{reply.author}</span><span className="text-xs text-zinc-500">回复 {reply.replyTo}</span><span className="text-xs text-zinc-500">{formatChinaDateTime(reply.time)}</span></div>
                             <p className="mt-2 text-sm leading-7 text-zinc-400">{reply.content}</p>
                             <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
                               <button className="flex items-center gap-1 transition hover:text-[#b8c9ff]"><span className="material-symbols-outlined text-[16px]">thumb_up</span>{reply.likes}</button>
@@ -239,19 +283,40 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
 
         <aside className="pointer-events-none fixed left-6 top-1/2 z-20 hidden -translate-y-1/2 lg:block xl:left-[max(24px,calc((100vw-1600px)/2+24px))]">
           <div className="pointer-events-auto flex flex-col items-center gap-4 rounded-2xl border border-white/5 bg-white/3 px-3 py-4 backdrop-blur-xl">
-            <button className="relative flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="点赞文章">
-              <span className="material-symbols-outlined text-[24px]">favorite</span>
-              <span className="absolute right-0 top-0 rounded-full border border-white/10 bg-[#1e2026] px-1.5 py-0.5 text-[10px] font-semibold text-zinc-100">{readingStats.likes}</span>
+            <button
+              type="button"
+              onClick={toggleLike}
+              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${
+                isLiked ? "border border-[#7aa2ff]/40 bg-[#7aa2ff]/15 text-[#b8c9ff] shadow-[0_0_18px_rgba(122,162,255,0.22)]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"
+              }`}
+              aria-label={isLiked ? "取消点赞" : "点赞文章"}
+            >
+              <span className="material-symbols-outlined text-[24px]">{isLiked ? "favorite" : "favorite_border"}</span>
+              <span className={`absolute right-0 top-0 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${isLiked ? "border-[#7aa2ff]/30 bg-[#7aa2ff] text-[#10131a]" : "border-white/10 bg-[#1e2026] text-zinc-100"}`}>
+                {readingStats.likes}
+              </span>
             </button>
-            <button className="relative flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="收藏文章">
-              <span className="material-symbols-outlined text-[24px]">bookmark</span>
-              <span className="absolute right-0 top-0 rounded-full border border-white/10 bg-[#1e2026] px-1.5 py-0.5 text-[10px] font-semibold text-zinc-100">{readingStats.bookmarks}</span>
+            <button
+              type="button"
+              onClick={toggleBookmark}
+              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${
+                isBookmarked ? "border border-[#7aa2ff]/40 bg-[#7aa2ff]/15 text-[#b8c9ff] shadow-[0_0_18px_rgba(122,162,255,0.22)]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"
+              }`}
+              aria-label={isBookmarked ? "取消收藏" : "收藏文章"}
+            >
+              <span className="material-symbols-outlined text-[24px]">{isBookmarked ? "bookmark" : "bookmark_border"}</span>
+              <span className={`absolute right-0 top-0 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${isBookmarked ? "border-[#7aa2ff]/30 bg-[#7aa2ff] text-[#10131a]" : "border-white/10 bg-[#1e2026] text-zinc-100"}`}>
+                {readingStats.bookmarks}
+              </span>
             </button>
-            <button className="relative flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="评论文章">
+            <button type="button" onClick={scrollToComments} className="relative flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="定位到评论区">
               <span className="material-symbols-outlined text-[24px]">chat_bubble</span>
               <span className="absolute right-0 top-0 rounded-full border border-white/10 bg-[#1e2026] px-1.5 py-0.5 text-[10px] font-semibold text-zinc-100">{readingStats.comments}</span>
             </button>
-            <button className="flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="分享文章"><span className="material-symbols-outlined text-[24px]">share</span></button>
+            <button type="button" onClick={shareArticle} className="relative flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="分享文章">
+              <span className="material-symbols-outlined text-[24px]">share</span>
+              {copiedUrl ? <span className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#10131a] px-3 py-1 text-xs text-zinc-100 shadow-lg">已复制网址</span> : null}
+            </button>
           </div>
         </aside>
 

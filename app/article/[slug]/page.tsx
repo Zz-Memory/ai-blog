@@ -61,6 +61,7 @@ export default async function Page({ params }: PageProps) {
           user: {
             select: {
               username: true,
+              role: true,
             },
           },
           replies: {
@@ -74,6 +75,7 @@ export default async function Page({ params }: PageProps) {
               user: {
                 select: {
                   username: true,
+                  role: true,
                 },
               },
             },
@@ -91,6 +93,7 @@ export default async function Page({ params }: PageProps) {
     id: comment.id,
     author: comment.user.username,
     avatarText: comment.user.username.charAt(0).toUpperCase(),
+    avatarUrl: comment.user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
     time: comment.createdAt.toISOString(),
     content: comment.content,
     likes: comment.likeCount,
@@ -98,6 +101,7 @@ export default async function Page({ params }: PageProps) {
       id: reply.id,
       author: reply.user.username,
       avatarText: reply.user.username.charAt(0).toUpperCase(),
+      avatarUrl: reply.user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
       time: reply.createdAt.toISOString(),
       content: reply.content,
       likes: reply.likeCount,

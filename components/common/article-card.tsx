@@ -1,7 +1,12 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useState } from "react";
 
 import { CategoryPill } from "@/components/common/category-pill";
 import { TagPill } from "@/components/common/tag-pill";
+import { formatChinaDate } from "@/lib/date";
 
 // 文章卡片所展示的统计信息类型。
 export type ArticleStats = {
@@ -12,6 +17,7 @@ export type ArticleStats = {
 
 // 文章卡片的入参类型。
 export type ArticleCardProps = {
+  postId: string;
   title: string;
   date: string;
   category?: string;
@@ -20,22 +26,33 @@ export type ArticleCardProps = {
   stats: ArticleStats;
   href?: string;
   compact?: boolean;
+  likesCount?: number;
+  bookmarksCount?: number;
+  commentsCount?: number;
+  isLiked?: boolean;
+  isBookmarked?: boolean;
 };
 
 // 统计项小组件。
 // 这里将图标 + 数值的展示逻辑集中封装，避免在卡片内重复书写。
-function Stat({ icon, value }: { icon: string; value: string | number }) {
+function Stat({ icon, value, active = false, onClick, ariaLabel }: { icon: string; value: string | number; active?: boolean; onClick?: () => void; ariaLabel: string }) {
   return (
-    <div className="flex items-center gap-1.5 text-zinc-400">
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className={`flex items-center gap-1.5 transition ${active ? "text-[#b8c9ff]" : "text-zinc-400 hover:text-zinc-200"}`}
+    >
       <span className="material-symbols-outlined text-[16px] leading-none">{icon}</span>
       <span className="text-sm">{value}</span>
-    </div>
+    </button>
   );
 }
 
 // 首页中的单篇文章卡片。
 // 该卡片保留了“标题、摘要、标签、时间、点赞 / 收藏 / 评论数”这些设计稿中的核心信息。
 export function ArticleCard({
+  postId,
   title,
   date,
   category,
@@ -45,6 +62,45 @@ export function ArticleCard({
   href = "#",
   compact = false,
 }: ArticleCardProps) {
+  const router = useRouter();
+  const [likesCount, setLikesCount] = useState(stats.likes);
+  const [bookmarksCount, setBookmarksCount] = useState(stats.favorites);
+  const [commentsCount] = useState(stats.comments);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  const toggleLike = async (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const nextLiked = !isLiked;
+    setIsLiked(nextLiked);
+    setLikesCount((value) => value + (nextLiked ? 1 : -1));
+    await fetch("/api/posts/like", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId }),
+    });
+  };
+
+  const toggleBookmark = async (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const nextBookmarked = !isBookmarked;
+    setIsBookmarked(nextBookmarked);
+    setBookmarksCount((value) => value + (nextBookmarked ? 1 : -1));
+    await fetch("/api/posts/bookmark", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId }),
+    });
+  };
+
+  const goToComments = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    router.push(`${href}#comments`);
+  };
+
   return (
     <Link
       href={href}
@@ -63,7 +119,7 @@ export function ArticleCard({
             </p>
           </div>
           <time className="shrink-0 pt-1 text-sm text-zinc-500 transition-colors duration-300 group-hover:text-zinc-400">
-            {date}
+            {formatChinaDate(date)}
           </time>
         </div>
 
@@ -75,9 +131,9 @@ export function ArticleCard({
           </div>
 
           <div className="flex items-center gap-6 text-sm">
-            <Stat icon="favorite" value={stats.likes} />
-            <Stat icon="bookmark" value={stats.favorites} />
-            <Stat icon="chat_bubble" value={stats.comments} />
+            <Stat icon="favorite" value={likesCount} active={isLiked} onClick={toggleLike} ariaLabel={isLiked ? "取消点赞" : "点赞文章"} />
+            <Stat icon="bookmark" value={bookmarksCount} active={isBookmarked} onClick={toggleBookmark} ariaLabel={isBookmarked ? "取消收藏" : "收藏文章"} />
+            <Stat icon="chat_bubble" value={commentsCount} onClick={goToComments} ariaLabel="查看文章评论" />
           </div>
         </div>
       </article>
