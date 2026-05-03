@@ -1,5 +1,14 @@
 import { HomePage } from "@/components/home/home-page";
 
-export default function Page() {
-  return <HomePage />;
+type PageProps = {
+  searchParams?: {
+    q?: string;
+    tag?: string;
+    category?: string;
+    page?: string;
+  };
+};
+
+export default function Page({ searchParams }: PageProps) {
+  return <HomePage searchParams={searchParams} />;
 }
