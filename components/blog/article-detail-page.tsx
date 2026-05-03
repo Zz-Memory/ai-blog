@@ -88,8 +88,6 @@ export function ArticleDetailPage() {
       }
     : null;
 
-  const canComment = Boolean(currentUser);
-
   const readingStats = useMemo(
     () => ({
       likes: 12,
@@ -200,7 +198,11 @@ export function ArticleDetailPage() {
                       帮我总结一下这篇文章的核心观点。
                     </div>
                     <div className="h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
-                      <img src={currentUser.avatarUrl} alt={currentUser.avatarLabel} className="h-full w-full object-cover" />
+                      <img
+                        src={currentUser?.avatarUrl ?? "/avatars/visitor-default.png"}
+                        alt={currentUser?.avatarLabel ?? "访客头像"}
+                        className="h-full w-full object-cover"
+                      />
                     </div>
                   </div>
                   <div className="flex justify-start gap-3">
