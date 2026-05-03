@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { useAuth } from "@/components/common/auth-context";
@@ -25,6 +25,7 @@ export function SiteHeader({
   onRegisterClick,
 }: SiteHeaderProps) {
   const router = useRouter();
+  usePathname();
   const searchParams = useSearchParams();
   const [inputValue, setInputValue] = useState(searchValue);
   const { unreadCount } = useNotificationCount();
@@ -45,6 +46,15 @@ export function SiteHeader({
     else params.delete("q");
     const query = params.toString();
     router.push(query ? `/?${query}` : "/");
+  }
+
+  function openAuth(mode: "login" | "register") {
+    onLoginClick?.();
+    onRegisterClick?.();
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
+    params.set("auth", mode);
+    router.push(`/?${params.toString()}`);
   }
 
   return (
@@ -99,10 +109,10 @@ export function SiteHeader({
             </>
           ) : (
             <>
-              <button type="button" onClick={() => onLoginClick?.()} className="rounded-xl border border-white/10 px-5 py-2.5 text-sm text-zinc-200 transition hover:border-white/20 hover:bg-white/5">
+              <button type="button" onClick={() => openAuth("login")} className="rounded-xl border border-white/10 px-5 py-2.5 text-sm text-zinc-200 transition hover:border-white/20 hover:bg-white/5">
                 登录
               </button>
-              <button type="button" onClick={() => onRegisterClick?.()} className="rounded-xl bg-[#b8c9ff] px-5 py-2.5 text-sm font-medium text-[#14161b] shadow-[0_12px_30px_rgba(112,143,255,0.25)] transition hover:bg-[#c3d2ff]">
+              <button type="button" onClick={() => openAuth("register")} className="rounded-xl bg-[#b8c9ff] px-5 py-2.5 text-sm font-medium text-[#14161b] shadow-[0_12px_30px_rgba(112,143,255,0.25)] transition hover:bg-[#c3d2ff]">
                 注册
               </button>
             </>

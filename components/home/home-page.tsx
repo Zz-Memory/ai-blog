@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/common/site-header";
 import { HomeArticleList, type FeaturedPost } from "@/components/home/home-article-list";
 import { HomePagination, type PaginationItem } from "@/components/home/home-pagination";
 import { HomeSidebar, type HomeSidebarCategory, type HomeSidebarTag } from "@/components/home/home-sidebar";
+import { HomeAuthModal } from "@/components/home/home-auth-modal";
 import { prisma } from "@/lib/prisma";
 
 type SearchParams = {
@@ -10,6 +11,7 @@ type SearchParams = {
   tag?: string;
   category?: string;
   page?: string;
+  auth?: string;
 };
 
 type HomePageProps = {
@@ -28,12 +30,13 @@ function formatCount(value: number) {
   return `${value}`;
 }
 
-function buildQueryHref(params: { q?: string; category?: string; tag?: string; page?: number }) {
+function buildQueryHref(params: { q?: string; category?: string; tag?: string; page?: number; auth?: string }) {
   const searchParams = new URLSearchParams();
   if (params.q) searchParams.set("q", params.q);
   if (params.category) searchParams.set("category", params.category);
   if (params.tag) searchParams.set("tag", params.tag);
   if (params.page && params.page > 1) searchParams.set("page", String(params.page));
+  if (params.auth) searchParams.set("auth", params.auth);
   const query = searchParams.toString();
   return query ? `/?${query}` : "/";
 }
@@ -78,7 +81,6 @@ async function getSidebarData(current: { q?: string; category?: string; tag?: st
 
 async function getHomePosts(params: { q?: string; category?: string; tag?: string; page: number }): Promise<{ posts: FeaturedPost[]; totalCount: number }> {
   const { q, category, tag, page } = params;
-
   const andConditions = [] as Record<string, unknown>[];
   if (category) andConditions.push({ category: { name: category } });
   if (tag) andConditions.push({ postTags: { some: { tag: { name: tag } } } });
@@ -126,6 +128,8 @@ export async function HomePage({ searchParams }: HomePageProps) {
   const category = params.category?.trim() || "";
   const tag = params.tag?.trim() || "";
   const currentPage = Math.max(1, Number(params.page ?? "1") || 1);
+  const showAuthModal = params.auth === "login" || params.auth === "register";
+  const initialAuthMode = params.auth === "register" ? "register" : "login";
 
   const [{ posts, totalCount }, sidebarData] = await Promise.all([
     getHomePosts({ q, category, tag, page: currentPage }),
@@ -159,6 +163,7 @@ export async function HomePage({ searchParams }: HomePageProps) {
       </main>
 
       <SiteFooter />
+      {showAuthModal ? <HomeAuthModal isOpen={showAuthModal} initialMode={initialAuthMode} /> : null}
     </div>
   );
 }
