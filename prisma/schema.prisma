@@ -78,7 +78,6 @@ model User {
   sessions         Session[]
   comments         Comment[]
   likes            Like[]
-  collectionFolders CollectionFolder[]
   bookmarks        Bookmark[]
   browseHistories  BrowseHistory[]
   notificationsSent Notification[]    @relation("NotificationSender")
@@ -217,36 +216,17 @@ model Like {
   @@index([postId])
 }
 
-// ============ 收藏夹表 ============
-model CollectionFolder {
-  id        String   @id @default(cuid())
-  userId    String
-  name      String
-  isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookmarks Bookmark[]
-
-  @@index([userId])
-  @@index([userId, isDefault])
-}
-
-// ============ 收藏记录表 ============
+// ============ 收藏表 ============
 model Bookmark {
   id        String   @id @default(cuid())
   userId    String
   postId    String
-  folderId  String
   createdAt DateTime @default(now())
 
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post      Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
-  folder    CollectionFolder  @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
-  @@index([folderId])
   @@index([postId])
 }
 

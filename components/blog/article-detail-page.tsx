@@ -25,6 +25,7 @@ type ArticleAuthor = {
 
 type ArticleDetailPageProps = {
   article: {
+    id: string;
     title: string;
     slug: string;
     summary: string | null;
@@ -38,6 +39,8 @@ type ArticleDetailPageProps = {
     likes: number;
     bookmarks: number;
     comments: number;
+    isLiked: boolean;
+    isBookmarked: boolean;
   };
   comments: CommentNode[];
 };
@@ -78,8 +81,8 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   const [chatQuestion, setChatQuestion] = useState("");
   const [likesCount, setLikesCount] = useState(engagement.likes);
   const [bookmarksCount, setBookmarksCount] = useState(engagement.bookmarks);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isLiked, setIsLiked] = useState(engagement.isLiked);
+  const [isBookmarked, setIsBookmarked] = useState(engagement.isBookmarked);
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
   const commentsRef = useRef<HTMLElement | null>(null);
@@ -102,6 +105,8 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
     }),
     [bookmarksCount, engagement.comments, likesCount]
   );
+
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const publishedLabel = article.publishedAt ? formatChinaDate(article.publishedAt) : "待发布";
 
@@ -139,24 +144,48 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
     if (!requireLogin()) return;
     const nextLiked = !isLiked;
     setIsLiked(nextLiked);
-    setLikesCount((value) => value + (nextLiked ? 1 : -1));
-    await fetch("/api/posts/like", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId: article.slug }),
-    });
+    setLikesCount((value) => Math.max(0, value + (nextLiked ? 1 : -1)));
+
+    try {
+      const response = await fetch("/api/posts/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: article.id }),
+      });
+      if (!response.ok) throw new Error("点赞失败");
+      const data = (await response.json()) as { liked: boolean; likes: number };
+      setIsLiked(data.liked);
+      setLikesCount(data.likes);
+      setActionError(null);
+    } catch {
+      setIsLiked((value) => !value);
+      setLikesCount((value) => Math.max(0, value + (nextLiked ? -1 : 1)));
+      setActionError("点赞失败，请稍后重试。");
+    }
   };
 
   const toggleBookmark = async () => {
     if (!requireLogin()) return;
     const nextBookmarked = !isBookmarked;
     setIsBookmarked(nextBookmarked);
-    setBookmarksCount((value) => value + (nextBookmarked ? 1 : -1));
-    await fetch("/api/posts/bookmark", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId: article.slug }),
-    });
+    setBookmarksCount((value) => Math.max(0, value + (nextBookmarked ? 1 : -1)));
+
+    try {
+      const response = await fetch("/api/posts/bookmark", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: article.id }),
+      });
+      if (!response.ok) throw new Error("收藏失败");
+      const data = (await response.json()) as { bookmarked: boolean; bookmarks: number };
+      setIsBookmarked(data.bookmarked);
+      setBookmarksCount(data.bookmarks);
+      setActionError(null);
+    } catch {
+      setIsBookmarked((value) => !value);
+      setBookmarksCount((value) => Math.max(0, value + (nextBookmarked ? -1 : 1)));
+      setActionError("收藏失败，请稍后重试。");
+    }
   };
 
   const toggleCommentLike = (id: string) => {
@@ -208,6 +237,8 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
           />
 
 
+
+          {actionError ? <p className="mt-6 text-sm text-rose-400">{actionError}</p> : null}
 
           <div className="mt-10 flex flex-wrap gap-3 border-t border-white/8 pt-6 max-w-[840px]">
             {articleTags.map((tag) => (

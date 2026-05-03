@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { ArticleDetailPage } from "@/components/blog/article-detail-page";
+import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 type PageProps = {
@@ -39,6 +40,12 @@ export default async function Page({ params }: PageProps) {
             },
           },
         },
+      },
+      likes: {
+        select: { userId: true },
+      },
+      bookmarks: {
+        select: { userId: true },
       },
       _count: {
         select: {
@@ -89,6 +96,8 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
+  const auth = await getAuthUser();
+
   const comments = article.comments.map((comment) => ({
     id: comment.id,
     author: comment.user.username,
@@ -112,6 +121,7 @@ export default async function Page({ params }: PageProps) {
   return (
     <ArticleDetailPage
       article={{
+        id: article.id,
         title: article.title,
         slug: article.slug,
         summary: article.summary,
@@ -129,6 +139,8 @@ export default async function Page({ params }: PageProps) {
         likes: article._count.likes,
         bookmarks: article._count.bookmarks,
         comments: article._count.comments,
+        isLiked: auth ? article.likes.some((like) => like.userId === auth.user.id) : false,
+        isBookmarked: auth ? article.bookmarks.some((bookmark) => bookmark.userId === auth.user.id) : false,
       }}
       comments={comments}
     />

@@ -63,16 +63,21 @@ export function ArticleCard({
   stats,
   href = "#",
   compact = false,
+  likesCount: initialLikes = stats.likes,
+  bookmarksCount: initialBookmarks = stats.favorites,
+  commentsCount: initialComments = stats.comments,
+  isLiked: initialIsLiked = false,
+  isBookmarked: initialIsBookmarked = false,
 }: ArticleCardProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [authEntry, setAuthEntry] = useState<"login" | "register">("login");
-  const [likesCount, setLikesCount] = useState(stats.likes);
-  const [bookmarksCount, setBookmarksCount] = useState(stats.favorites);
-  const [commentsCount] = useState(stats.comments);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [likesCount, setLikesCount] = useState(initialLikes);
+  const [bookmarksCount, setBookmarksCount] = useState(initialBookmarks);
+  const [commentsCount] = useState(initialComments);
+  const [isLiked, setIsLiked] = useState(initialIsLiked);
+  const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
 
   const openLogin = () => {
     setAuthEntry("login");
@@ -91,24 +96,44 @@ export function ArticleCard({
     if (!requireLogin(event)) return;
     const nextLiked = !isLiked;
     setIsLiked(nextLiked);
-    setLikesCount((value) => value + (nextLiked ? 1 : -1));
-    await fetch("/api/posts/like", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId }),
-    });
+    setLikesCount((value) => Math.max(0, value + (nextLiked ? 1 : -1)));
+
+    try {
+      const response = await fetch("/api/posts/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId }),
+      });
+      if (!response.ok) throw new Error("点赞失败");
+      const data = (await response.json()) as { liked: boolean; likes: number };
+      setIsLiked(data.liked);
+      setLikesCount(data.likes);
+    } catch {
+      setIsLiked((value) => !value);
+      setLikesCount((value) => Math.max(0, value + (nextLiked ? -1 : 1)));
+    }
   };
 
   const toggleBookmark = async (event: React.MouseEvent) => {
     if (!requireLogin(event)) return;
     const nextBookmarked = !isBookmarked;
     setIsBookmarked(nextBookmarked);
-    setBookmarksCount((value) => value + (nextBookmarked ? 1 : -1));
-    await fetch("/api/posts/bookmark", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId }),
-    });
+    setBookmarksCount((value) => Math.max(0, value + (nextBookmarked ? 1 : -1)));
+
+    try {
+      const response = await fetch("/api/posts/bookmark", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId }),
+      });
+      if (!response.ok) throw new Error("收藏失败");
+      const data = (await response.json()) as { bookmarked: boolean; bookmarks: number };
+      setIsBookmarked(data.bookmarked);
+      setBookmarksCount(data.bookmarks);
+    } catch {
+      setIsBookmarked((value) => !value);
+      setBookmarksCount((value) => Math.max(0, value + (nextBookmarked ? -1 : 1)));
+    }
   };
 
   const goToComments = (event: React.MouseEvent) => {

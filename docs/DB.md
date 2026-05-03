@@ -237,43 +237,23 @@
 
 ---
 
-### 11. 收藏夹表 `CollectionFolder`
+### 11. 收藏表 `Bookmark`
 
-用于访客端“我的收藏”模块的收藏夹管理。
-
-#### 主要字段
-- `id`
-- `userId`
-- `name`
-- `isDefault`
-- `createdAt`
-- `updatedAt`
-
-#### 设计要点
-- 每个用户可拥有多个收藏夹
-- 至少保留一个默认收藏夹
-- 收藏夹删除采用物理删除，删除时其内收藏文章一并取消收藏
-
----
-
-### 12. 收藏记录表 `Bookmark`
-
-用于收藏文章。
+用于保存用户对文章的收藏关系。
 
 #### 主要字段
 - `id`
 - `userId`
 - `postId`
-- `folderId`
 - `createdAt`
 
 #### 设计要点
-- `userId + postId` 可唯一约束
-- `folderId` 可为空，默认进入默认收藏夹
-
+- `userId + postId` 唯一约束，防止重复收藏
+- 收藏与用户、文章直接关联，不再区分收藏夹
+- 取消收藏采用物理删除对应记录
 ---
 
-### 13. 浏览历史表 `BrowseHistory`
+### 12. 浏览历史表 `BrowseHistory`
 
 用于记录用户浏览过的文章。
 
@@ -290,7 +270,7 @@
 
 ---
 
-### 14. 通知表 `Notification`
+### 13. 通知表 `Notification`
 
 用于站内互动提醒和系统通知。
 
@@ -321,7 +301,7 @@
 
 ---
 
-### 15. AI 问答会话表 `AiChatSession`
+### 14. AI 问答会话表 `AiChatSession`
 
 用于保存一次 AI 问答会话。
 
@@ -346,7 +326,7 @@
 
 ---
 
-### 16. AI 问答消息表 `AiChatMessage`
+### 15. AI 问答消息表 `AiChatMessage`
 
 用于保存对话中的每一条消息。
 
@@ -391,13 +371,10 @@
 - 一个标签可关联多篇文章
 - `Post N - N Tag`
 
-### 6. 用户与收藏夹
-- 一个用户可以有多个收藏夹
-- `User 1 - N CollectionFolder`
-
-### 6. 收藏夹与收藏记录
-- 一个收藏夹可以包含多条收藏记录
-- `CollectionFolder 1 - N Bookmark`
+### 6. 用户与收藏
+- 一个用户可以收藏多篇文章
+- 一篇文章也可以被多个用户收藏
+- `User N - N Post`（通过 `Bookmark` 实现）
 
 ### 7. 用户与浏览历史
 - 一个用户可以有多条浏览历史
@@ -424,7 +401,7 @@
 - `User.email` 唯一索引
 - `User.username` 唯一索引或普通索引
 - `Session.userId` 索引
-- `VerificationCode.email + purpose` 索引
+- `VerificationCode.email + code + purpose` 索引
 
 ### 内容相关
 - `Post.slug` 唯一索引
@@ -433,9 +410,8 @@
 - `Post.status + publishedAt` 组合索引
 - `Category.name` 唯一索引
 - `Category.slug` 唯一索引
-- `Category.status` 索引
 - `PostTag.postId + tagId` 唯一索引
-- `Tag.slug` 唯一索引
+- `Tag.name` 唯一索引
 
 ### 互动相关
 - `Comment.postId` 索引

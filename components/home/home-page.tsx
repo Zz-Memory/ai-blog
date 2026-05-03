@@ -111,6 +111,7 @@ async function getHomePosts(params: { q?: string; category?: string; tag?: strin
   return {
     totalCount,
     posts: posts.map((post) => ({
+      postId: post.id,
       title: post.title,
       date: formatDate(post.publishedAt ?? post.createdAt),
       category: post.category?.name ?? "未分类",
