@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient, PostStatus } from "@prisma/client";
+import { toPreviewHtml } from "@/lib/markdown";
 
 // 根据 docs/seed.md 中的文章清单创建文章数据。
 // 说明：
@@ -494,7 +495,7 @@ export async function seedPosts(prisma: PrismaClient, authorId: string) {
       slug: postSeed.slug,
       summary: postSeed.summary,
       contentMarkdown: postSeed.contentMarkdown,
-      contentHtml: null,
+      contentHtml: toPreviewHtml(postSeed.contentMarkdown),
       categoryId,
       status: postSeed.status,
       publishedAt: postSeed.status === "PUBLISHED" ? new Date() : null,
@@ -506,6 +507,7 @@ export async function seedPosts(prisma: PrismaClient, authorId: string) {
         title: postSeed.title,
         summary: postSeed.summary,
         contentMarkdown: postSeed.contentMarkdown,
+        contentHtml: toPreviewHtml(postSeed.contentMarkdown),
         categoryId,
         status: postSeed.status,
         publishedAt: postSeed.status === "PUBLISHED" ? new Date() : null,
