@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { useAuth } from "@/components/common/auth-context";
@@ -25,7 +25,6 @@ export function SiteHeader({
   onRegisterClick,
 }: SiteHeaderProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [inputValue, setInputValue] = useState(searchValue);
   const { unreadCount } = useNotificationCount();
@@ -45,7 +44,7 @@ export function SiteHeader({
     if (nextValue.trim()) params.set("q", nextValue.trim());
     else params.delete("q");
     const query = params.toString();
-    router.push(query ? `${pathname}?${query}` : pathname);
+    router.push(query ? `/?${query}` : "/");
   }
 
   return (

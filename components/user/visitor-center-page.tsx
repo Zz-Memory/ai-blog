@@ -82,14 +82,7 @@ export function VisitorCenterPage() {
 
   return (
     <div className="min-h-screen bg-[#111215] text-zinc-200">
-      <SiteHeader
-        searchValue={siteSearchValue}
-        onSearchChange={setSiteSearchValue}
-        // 目前站点级搜索框暂时还没有接入实际检索逻辑，因此先保留空实现。
-        onSearchSubmit={() => undefined}
-        onLoginClick={() => undefined}
-        onRegisterClick={() => undefined}
-      />
+      <SiteHeader searchValue={siteSearchValue} onSearchChange={setSiteSearchValue} />
 
       <main className="mx-auto grid min-h-[calc(100vh-64px)] max-w-[1440px] grid-cols-1 gap-8 px-4 py-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6 xl:px-8">
         <VisitorCenterSidebar
