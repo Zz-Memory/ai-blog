@@ -49,12 +49,15 @@ export function SiteHeader({
   }
 
   function openAuth(mode: "login" | "register") {
-    onLoginClick?.();
-    onRegisterClick?.();
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("page");
-    params.set("auth", mode);
-    router.push(`/?${params.toString()}`);
+    if (mode === "login") onLoginClick?.();
+    if (mode === "register") onRegisterClick?.();
+
+    if (!onLoginClick && !onRegisterClick) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("page");
+      params.set("auth", mode);
+      router.push(`/?${params.toString()}`);
+    }
   }
 
   return (
