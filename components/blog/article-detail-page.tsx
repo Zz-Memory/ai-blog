@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { AuthModal } from "@/components/auth/auth-modal";
 import { CategoryPill } from "@/components/common/category-pill";
+import { useAuth } from "@/components/common/auth-context";
 import { SiteFooter } from "@/components/common/site-footer";
 import { SiteHeader } from "@/components/common/site-header";
 import { TagPill } from "@/components/common/tag-pill";
@@ -28,11 +29,12 @@ type CommentNode = {
   }>;
 };
 
-const articleToc = [
-  { id: "intro", label: "超越 RAG：探索下一代...", level: 0 },
-  { id: "rag-issues", label: "当前 RAG 架构的困境", level: 1 },
-  { id: "graphrag", label: "基于图的上下文感知系统...", level: 1 },
-];
+type CurrentUserView = {
+  name: string;
+  role: "visitor" | "blogger";
+  avatarUrl: string;
+  avatarLabel: string;
+};
 
 const articleTags = ["人工智能", "大语言模型", "前端开发"];
 
@@ -75,26 +77,23 @@ export function ArticleDetailPage() {
   const [commentDraft, setCommentDraft] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
   const [chatQuestion, setChatQuestion] = useState("");
-  const [isAuthenticated] = useState(false);
-  const [canComment] = useState(true);
+  const { user } = useAuth();
 
-  const currentUser = isAuthenticated
+  const currentUser: CurrentUserView | null = user
     ? {
-      name: "Memory",
-      role: "blogger" as const,
-      avatarUrl: "/avatars/blogger-default.png",
-      avatarLabel: "博主头像",
-    }
-    : {
-      name: "访客",
-      role: "visitor" as const,
-      avatarUrl: "/avatars/visitor-default.png",
-      avatarLabel: "访客头像",
-    };
+        name: user.username,
+        role: user.role === "BLOGGER" ? "blogger" : "visitor",
+        avatarUrl: user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
+        avatarLabel: user.role === "BLOGGER" ? "博主头像" : "访客头像",
+      }
+    : null;
+
+  const canComment = Boolean(currentUser);
 
   const readingStats = useMemo(
     () => ({
       likes: 12,
+      bookmarks: 24,
       comments: comments.length + comments.reduce((sum, item) => sum + (item.replies?.length ?? 0), 0),
     }),
     []
@@ -118,7 +117,7 @@ export function ArticleDetailPage() {
         onSearchSubmit={() => undefined}
         onLoginClick={openLogin}
         onRegisterClick={openRegister}
-        isAuthenticated={isAuthenticated}
+        isAuthenticated={Boolean(user)}
       />
 
       <main className="relative mx-auto min-h-[calc(100vh-64px)] max-w-[1600px] px-6 py-10 lg:px-10">
@@ -296,21 +295,37 @@ print(response.synthesized_answer)`}</code></pre>
                     <img src={currentUser.avatarUrl} alt={currentUser.avatarLabel} className="h-full w-full object-cover" />
                   </div>
                   <div className="flex-1">
+                    <div className="mb-3 flex items-center gap-2 text-sm text-zinc-400">
+                      <span className="font-medium text-zinc-200">{currentUser.name}</span>
+                      <span>以{currentUser.role === "blogger" ? "博主" : "访客"}身份发表评论</span>
+                    </div>
                     <textarea
                       value={commentDraft}
                       onChange={(event) => setCommentDraft(event.target.value)}
                       rows={4}
-                      placeholder={canComment ? "分享你的想法..." : "你当前没有发言权限"}
-                      disabled={!canComment}
-                      className="w-full resize-none rounded-xl border border-white/8 bg-[#181a20] px-4 py-3 text-sm text-zinc-200 outline-none placeholder:text-zinc-500 focus:border-[#7aa2ff]/50 focus:ring-1 focus:ring-[#7aa2ff]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      placeholder="分享你的想法..."
+                      className="w-full resize-none rounded-xl border border-white/8 bg-[#181a20] px-4 py-3 text-sm text-zinc-200 outline-none placeholder:text-zinc-500 focus:border-[#7aa2ff]/50 focus:ring-1 focus:ring-[#7aa2ff]/20"
                     />
                     <div className="mt-3 flex justify-end">
-                      <button disabled={!canComment} className="rounded-lg bg-[#7aa2ff] px-4 py-2 text-sm font-medium text-[#10131a] transition hover:bg-[#8db1ff] disabled:cursor-not-allowed disabled:bg-zinc-600 disabled:text-zinc-400">发布评论</button>
+                      <button
+                        disabled={!commentDraft.trim()}
+                        className="rounded-lg bg-[#7aa2ff] px-4 py-2 text-sm font-medium text-[#10131a] transition hover:bg-[#8db1ff] disabled:cursor-not-allowed disabled:bg-zinc-600 disabled:text-zinc-400"
+                      >
+                        发布评论
+                      </button>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-white/10 bg-[#181a20] px-5 py-6 text-center text-sm text-zinc-400">登录后发表评论</div>
+                <div className="flex items-center gap-4 rounded-xl border border-dashed border-white/10 bg-[#181a20] px-5 py-6 text-sm text-zinc-400">
+                  <div className="h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                    <img src="/avatars/visitor-default.png" alt="访客头像" className="h-full w-full object-cover" />
+                  </div>
+                  <div>
+                    <p className="text-zinc-300">登录后可发表评论</p>
+                    <p className="mt-1 text-xs text-zinc-500">登录后即可使用评论发送功能，与作者和其他读者交流。</p>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -357,29 +372,18 @@ print(response.synthesized_answer)`}</code></pre>
               <span className="material-symbols-outlined text-[24px]">favorite</span>
               <span className="absolute right-0 top-0 rounded-full border border-white/10 bg-[#1e2026] px-1.5 py-0.5 text-[10px] font-semibold text-zinc-100">{readingStats.likes}</span>
             </button>
+            <button className="relative flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="收藏文章">
+              <span className="material-symbols-outlined text-[24px]">bookmark</span>
+              <span className="absolute right-0 top-0 rounded-full border border-white/10 bg-[#1e2026] px-1.5 py-0.5 text-[10px] font-semibold text-zinc-100">{readingStats.bookmarks}</span>
+            </button>
             <button className="relative flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="评论文章">
               <span className="material-symbols-outlined text-[24px]">chat_bubble</span>
               <span className="absolute right-0 top-0 rounded-full border border-white/10 bg-[#1e2026] px-1.5 py-0.5 text-[10px] font-semibold text-zinc-100">{readingStats.comments}</span>
             </button>
-            <button className="flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="收藏文章"><span className="material-symbols-outlined text-[24px]">bookmark</span></button>
             <button className="flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="分享文章"><span className="material-symbols-outlined text-[24px]">share</span></button>
           </div>
         </aside>
 
-        <aside className="pointer-events-none fixed right-6 top-1/2 z-20 hidden -translate-y-1/2 lg:block xl:right-[max(24px,calc((100vw-1600px)/2+24px))]">
-          <div className="pointer-events-auto rounded-2xl border border-white/8 bg-white/3 p-5 backdrop-blur-xl">
-            <h4 className="text-center text-xl font-semibold text-zinc-100">目录</h4>
-            <nav className="mt-5 border-l border-white/8 pl-3">
-              <ul className="space-y-2 text-sm text-zinc-400">
-                {articleToc.map((item) => (
-                  <li key={item.id} className={item.level > 0 ? "pl-4 text-xs" : ""}>
-                    <a href={`#${item.id}`} className="block truncate border-l border-transparent py-1.5 transition hover:border-[#7aa2ff] hover:text-[#b8c9ff]">{item.label}</a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </div>
-        </aside>
       </main>
 
       <SiteFooter />
