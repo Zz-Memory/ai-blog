@@ -52,7 +52,9 @@ export default async function Page({ params }: PageProps) {
         select: {
           likes: true,
           bookmarks: true,
-          comments: true,
+          comments: {
+            where: { status: "APPROVED" },
+          },
         },
       },
       comments: {

@@ -108,7 +108,7 @@ async function getHomePosts(params: { q?: string; category?: string; tag?: strin
       include: {
         category: true,
         postTags: { include: { tag: true } },
-        _count: { select: { likes: true, bookmarks: true, comments: true } },
+        _count: { select: { likes: true, bookmarks: true, comments: { where: { status: "APPROVED" } } } },
         likes: userId ? { where: { userId } } : false,
         bookmarks: userId ? { where: { userId } } : false,
       },

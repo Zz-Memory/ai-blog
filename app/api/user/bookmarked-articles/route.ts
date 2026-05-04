@@ -17,7 +17,7 @@ export async function GET() {
         include: {
           category: true,
           postTags: { include: { tag: true } },
-          _count: { select: { likes: true, bookmarks: true, comments: true } },
+          _count: { select: { likes: true, bookmarks: true, comments: { where: { status: "APPROVED" } } } },
           likes: { where: { userId: auth.user.id }, select: { id: true } },
           bookmarks: { where: { userId: auth.user.id }, select: { id: true } },
         },

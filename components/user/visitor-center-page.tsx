@@ -7,7 +7,7 @@ import { useAuth } from "@/components/common/auth-context";
 import { SiteFooter } from "@/components/common/site-footer";
 import { SiteHeader } from "@/components/common/site-header";
 
-import { commentedArticles } from "./visitor-center-page/commented-articles";
+import { commentedArticles, type CommentedArticle } from "./visitor-center-page/commented-articles";
 import { historyArticles } from "./visitor-center-page/history-articles";
 import { likedArticles, type LikedArticle } from "./visitor-center-page/liked-articles";
 import { VisitorCenterAccountSettings } from "@/components/user/visitor-center-page/visitor-center-account-settings";
@@ -72,9 +72,11 @@ export function VisitorCenterPage() {
   const [bookmarkedLoading, setBookmarkedLoading] = useState(false);
   const [bookmarkedError, setBookmarkedError] = useState<string | null>(null);
 
-  // 当前用户“点赞”列表。
+  // 当前用户“评论”列表。
   // 这里会优先从接口加载真实数据，失败时再回退到本地示例。
-  const commentedList = useMemo(() => commentedArticles, []);
+  const [commentedList, setCommentedList] = useState<CommentedArticle[]>(commentedArticles);
+  const [commentedLoading, setCommentedLoading] = useState(false);
+  const [commentedError, setCommentedError] = useState<string | null>(null);
 
   useEffect(() => {
     if (searchParams.get("section") === "notifications") {
@@ -132,6 +134,28 @@ export function VisitorCenterPage() {
 
   useEffect(() => {
     window.localStorage.setItem(VISITOR_CENTER_STORAGE_KEY, activeSection);
+  }, [activeSection]);
+
+  useEffect(() => {
+    const loadCommentedArticles = async () => {
+      if (activeSection !== "comments") return;
+
+      setCommentedLoading(true);
+      setCommentedError(null);
+
+      try {
+        const response = await fetch("/api/user/comments", { cache: "no-store" });
+        if (!response.ok) throw new Error("加载评论失败");
+        const data = (await response.json()) as { comments: CommentedArticle[] };
+        setCommentedList(data.comments);
+      } catch {
+        setCommentedError("我的评论加载失败，请稍后重试。");
+      } finally {
+        setCommentedLoading(false);
+      }
+    };
+
+    void loadCommentedArticles();
   }, [activeSection]);
 
   useEffect(() => {
@@ -259,7 +283,12 @@ export function VisitorCenterPage() {
             </div>
           ) : null}
 
-          {activeSection === "comments" ? <VisitorCenterComments articles={commentedList} /> : null}
+          {activeSection === "comments" ? (
+            <div className="space-y-4">
+              {commentedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{commentedError}</div> : null}
+              {commentedLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的评论...</div> : <VisitorCenterComments articles={commentedList} />}
+            </div>
+          ) : null}
 
           {activeSection === "notifications" ? <VisitorCenterNotifications onUnreadCountChange={setUnreadCount} /> : null}
 
