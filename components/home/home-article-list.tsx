@@ -1,6 +1,7 @@
 import { ArticleCard } from "@/components/common/article-card";
 
 export type FeaturedPost = {
+  postId: string;
   title: string;
   date: string;
   category: string;
@@ -8,6 +9,8 @@ export type FeaturedPost = {
   tags: string[];
   stats: { views: string; likes: number; favorites: number; comments: number };
   href?: string;
+  isLiked?: boolean;
+  isBookmarked?: boolean;
 };
 
 // 右侧文章流区域，负责承载首页主内容。

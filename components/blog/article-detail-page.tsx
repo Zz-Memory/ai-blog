@@ -105,11 +105,14 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
     }
     : null;
 
+  const countCommentTree = (items: CommentNode[]): number =>
+    items.reduce((sum, item) => sum + 1 + countCommentTree(item.replies ?? []), 0);
+
   const readingStats = useMemo(
     () => ({
       likes: likesCount,
       bookmarks: bookmarksCount,
-      comments: commentItems.reduce((sum, item) => sum + 1 + (item.replies?.length ?? 0), 0),
+      comments: countCommentTree(commentItems),
     }),
     [bookmarksCount, commentItems, likesCount]
   );
@@ -488,8 +491,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
             <button
               type="button"
               onClick={toggleLike}
-              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${isLiked ? "border border-[#7aa2ff]/40 bg-[#7aa2ff]/15 text-[#b8c9ff] shadow-[0_0_18px_rgba(122,162,255,0.22)]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"
-                }`}
+              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${isLiked ? "text-[#b8c9ff]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"}`}
               aria-label={isLiked ? "取消点赞" : "点赞文章"}
             >
               <span className="material-symbols-outlined text-[24px]">{isLiked ? "favorite" : "favorite_border"}</span>
@@ -500,8 +502,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
             <button
               type="button"
               onClick={toggleBookmark}
-              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${isBookmarked ? "border border-[#7aa2ff]/40 bg-[#7aa2ff]/15 text-[#b8c9ff] shadow-[0_0_18px_rgba(122,162,255,0.22)]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"
-                }`}
+              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${isBookmarked ? "text-[#b8c9ff]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"}`}
               aria-label={isBookmarked ? "取消收藏" : "收藏文章"}
             >
               <span className="material-symbols-outlined text-[24px]">{isBookmarked ? "bookmark" : "bookmark_border"}</span>

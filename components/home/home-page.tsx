@@ -4,6 +4,7 @@ import { HomeArticleList, type FeaturedPost } from "@/components/home/home-artic
 import { HomePagination, type PaginationItem } from "@/components/home/home-pagination";
 import { HomeSidebar, type HomeSidebarCategory, type HomeSidebarTag } from "@/components/home/home-sidebar";
 import { HomeAuthModal } from "@/components/home/home-auth-modal";
+import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 type SearchParams = {
@@ -79,8 +80,8 @@ async function getSidebarData(current: { q?: string; category?: string; tag?: st
   return { categories: categoryItems, hotTags: tagItems };
 }
 
-async function getHomePosts(params: { q?: string; category?: string; tag?: string; page: number }): Promise<{ posts: FeaturedPost[]; totalCount: number }> {
-  const { q, category, tag, page } = params;
+async function getHomePosts(params: { q?: string; category?: string; tag?: string; page: number; userId?: string | null }): Promise<{ posts: FeaturedPost[]; totalCount: number }> {
+  const { q, category, tag, page, userId } = params;
   const andConditions = [] as Record<string, unknown>[];
   if (category) andConditions.push({ category: { name: category } });
   if (tag) andConditions.push({ postTags: { some: { tag: { name: tag } } } });
@@ -104,7 +105,13 @@ async function getHomePosts(params: { q?: string; category?: string; tag?: strin
       orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
       take: PAGE_SIZE,
       skip: (page - 1) * PAGE_SIZE,
-      include: { category: true, postTags: { include: { tag: true } }, _count: { select: { likes: true, bookmarks: true, comments: true } } },
+      include: {
+        category: true,
+        postTags: { include: { tag: true } },
+        _count: { select: { likes: true, bookmarks: true, comments: true } },
+        likes: userId ? { where: { userId } } : false,
+        bookmarks: userId ? { where: { userId } } : false,
+      },
     }),
   ]);
 
@@ -119,6 +126,8 @@ async function getHomePosts(params: { q?: string; category?: string; tag?: strin
       tags: post.postTags.map((item) => item.tag.name).slice(0, 4),
       stats: { views: formatCount(post._count.likes * 18 + post._count.comments * 12 + post._count.bookmarks * 8 + 360), likes: post._count.likes, favorites: post._count.bookmarks, comments: post._count.comments },
       href: `/article/${post.slug}`,
+      isLiked: userId ? post.likes.length > 0 : false,
+      isBookmarked: userId ? post.bookmarks.length > 0 : false,
     })),
   };
 }
@@ -132,8 +141,11 @@ export async function HomePage({ searchParams }: HomePageProps) {
   const showAuthModal = params.auth === "login" || params.auth === "register";
   const initialAuthMode = params.auth === "register" ? "register" : "login";
 
+  const auth = await getAuthUser();
+  const userId = auth?.user.id ?? null;
+
   const [{ posts, totalCount }, sidebarData] = await Promise.all([
-    getHomePosts({ q, category, tag, page: currentPage }),
+    getHomePosts({ q, category, tag, page: currentPage, userId }),
     getSidebarData({ q, category, tag }),
   ]);
 

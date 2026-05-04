@@ -81,30 +81,32 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
-  const topLevelComments = article.comments.filter((comment) => !comment.parentId);
-  const comments = topLevelComments.map((comment) => ({
-    id: comment.id,
-    parentId: comment.parentId,
-    author: comment.user.username,
-    avatarText: comment.user.username.charAt(0).toUpperCase(),
-    avatarUrl: comment.user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
-    time: comment.createdAt.toISOString(),
-    content: comment.content,
-    likes: comment.likeCount,
-    replies: article.comments
-      .filter((reply) => reply.parentId === comment.id)
-      .map((reply) => ({
-        id: reply.id,
-        parentId: reply.parentId,
-        author: reply.user.username,
-        avatarText: reply.user.username.charAt(0).toUpperCase(),
-        avatarUrl: reply.user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
-        time: reply.createdAt.toISOString(),
-        content: reply.content,
-        likes: reply.likeCount,
+  const commentsByParent = article.comments.reduce<Record<string, typeof article.comments>>((acc, comment) => {
+    const key = comment.parentId ?? "root";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(comment);
+    return acc;
+  }, {});
+
+  const buildCommentTree = (parentId: string | null): Array<{ id: string; parentId: string | null; author: string; avatarText: string; avatarUrl: string; time: string; content: string; likes: number; replies?: Array<{ id: string; parentId: string | null; author: string; avatarText: string; avatarUrl: string; time: string; content: string; likes: number; replyTo: string; replies?: unknown[] }> }> => {
+    const currentComments = commentsByParent[parentId ?? "root"] ?? [];
+    return currentComments.map((comment) => ({
+      id: comment.id,
+      parentId: comment.parentId,
+      author: comment.user.username,
+      avatarText: comment.user.username.charAt(0).toUpperCase(),
+      avatarUrl: comment.user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
+      time: comment.createdAt.toISOString(),
+      content: comment.content,
+      likes: comment.likeCount,
+      replies: buildCommentTree(comment.id).map((reply) => ({
+        ...reply,
         replyTo: comment.user.username,
       })),
-  }));
+    }));
+  };
+
+  const comments = buildCommentTree(null);
 
   if (auth) {
     const recentVisit = await prisma.browseHistory.findFirst({
