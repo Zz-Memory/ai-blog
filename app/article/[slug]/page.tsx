@@ -57,11 +57,11 @@ export default async function Page({ params }: PageProps) {
       comments: {
         where: {
           status: "APPROVED",
-          parentId: null,
         },
         orderBy: { createdAt: "asc" },
         select: {
           id: true,
+          parentId: true,
           content: true,
           createdAt: true,
           likeCount: true,
@@ -69,22 +69,6 @@ export default async function Page({ params }: PageProps) {
             select: {
               username: true,
               role: true,
-            },
-          },
-          replies: {
-            where: { status: "APPROVED" },
-            orderBy: { createdAt: "asc" },
-            select: {
-              id: true,
-              content: true,
-              createdAt: true,
-              likeCount: true,
-              user: {
-                select: {
-                  username: true,
-                  role: true,
-                },
-              },
             },
           },
         },
@@ -98,24 +82,29 @@ export default async function Page({ params }: PageProps) {
 
   const auth = await getAuthUser();
 
-  const comments = article.comments.map((comment) => ({
+  const topLevelComments = article.comments.filter((comment) => !comment.parentId);
+  const comments = topLevelComments.map((comment) => ({
     id: comment.id,
+    parentId: comment.parentId,
     author: comment.user.username,
     avatarText: comment.user.username.charAt(0).toUpperCase(),
     avatarUrl: comment.user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
     time: comment.createdAt.toISOString(),
     content: comment.content,
     likes: comment.likeCount,
-    replies: comment.replies.map((reply) => ({
-      id: reply.id,
-      author: reply.user.username,
-      avatarText: reply.user.username.charAt(0).toUpperCase(),
-      avatarUrl: reply.user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
-      time: reply.createdAt.toISOString(),
-      content: reply.content,
-      likes: reply.likeCount,
-      replyTo: comment.user.username,
-    })),
+    replies: article.comments
+      .filter((reply) => reply.parentId === comment.id)
+      .map((reply) => ({
+        id: reply.id,
+        parentId: reply.parentId,
+        author: reply.user.username,
+        avatarText: reply.user.username.charAt(0).toUpperCase(),
+        avatarUrl: reply.user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
+        time: reply.createdAt.toISOString(),
+        content: reply.content,
+        likes: reply.likeCount,
+        replyTo: comment.user.username,
+      })),
   }));
 
   return (

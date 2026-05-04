@@ -45,24 +45,28 @@ type ArticleDetailPageProps = {
   comments: CommentNode[];
 };
 
-type CommentNode = {
+type CommentReply = {
   id: string;
+  parentId: string | null;
   author: string;
   avatarText: string;
   avatarUrl: string;
   time: string;
   content: string;
   likes: number;
-  replies?: Array<{
-    id: string;
-    author: string;
-    avatarText: string;
-    avatarUrl: string;
-    time: string;
-    content: string;
-    likes: number;
-    replyTo: string;
-  }>;
+  replyTo: string;
+};
+
+type CommentNode = {
+  id: string;
+  parentId: string | null;
+  author: string;
+  avatarText: string;
+  avatarUrl: string;
+  time: string;
+  content: string;
+  likes: number;
+  replies?: CommentReply[];
 };
 
 type CurrentUserView = {
@@ -77,6 +81,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   const [authOpen, setAuthOpen] = useState(false);
   const [authEntry, setAuthEntry] = useState<AuthEntry>("login");
   const [commentDraft, setCommentDraft] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; author: string } | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatQuestion, setChatQuestion] = useState("");
   const [likesCount, setLikesCount] = useState(engagement.likes);
@@ -85,6 +90,9 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   const [isBookmarked, setIsBookmarked] = useState(engagement.isBookmarked);
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
+  const [commentNotice, setCommentNotice] = useState<string | null>(null);
+  const [commentItems, setCommentItems] = useState<CommentNode[]>(comments);
+  const [commentSortOrder, setCommentSortOrder] = useState<"asc" | "desc">("asc");
   const commentsRef = useRef<HTMLElement | null>(null);
   const { user } = useAuth();
 
@@ -101,9 +109,62 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
     () => ({
       likes: likesCount,
       bookmarks: bookmarksCount,
-      comments: engagement.comments,
+      comments: commentItems.reduce((sum, item) => sum + 1 + (item.replies?.length ?? 0), 0),
     }),
-    [bookmarksCount, engagement.comments, likesCount]
+    [bookmarksCount, commentItems, likesCount]
+  );
+
+  const sortByTimeAsc = <T extends { time: string }>(items: T[]) =>
+    [...items].sort((left, right) => new Date(left.time).getTime() - new Date(right.time).getTime());
+
+  const sortComments = (items: CommentNode[]) =>
+    [...items]
+      .sort((left, right) => {
+        const diff = new Date(left.time).getTime() - new Date(right.time).getTime();
+        return commentSortOrder === "asc" ? diff : -diff;
+      })
+      .map((item) => ({
+        ...item,
+        replies: sortByTimeAsc(item.replies ?? []),
+      }));
+
+  const findRootCommentId = (commentId: string) => {
+    for (const item of commentItems) {
+      if (item.id === commentId) return item.id;
+      const foundInReplies = item.replies?.some((reply) => reply.id === commentId);
+      if (foundInReplies) return item.id;
+    }
+    return commentId;
+  };
+
+  const renderCommentReplies = (replies: CommentReply[] | undefined) => (
+    replies?.length ? (
+      <div className="ml-14 space-y-4 border-l border-white/8 pl-4">
+        {sortByTimeAsc(replies).map((reply) => (
+          <div key={reply.id} className="flex gap-4 rounded-xl bg-white/3 p-4">
+            <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+              <img src={reply.avatarUrl} alt={reply.author} className="h-full w-full object-cover" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{reply.author}</span><span className="text-xs text-zinc-500">回复 {reply.replyTo}</span><span className="text-xs text-zinc-500">{formatChinaDateTime(reply.time)}</span></div>
+              <p className="mt-2 text-sm leading-7 text-zinc-400">{reply.content}</p>
+              <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
+                <button
+                  type="button"
+                  onClick={() => toggleCommentLike(reply.id)}
+                  className={`flex items-center gap-1 transition ${likedComments[reply.id] ? "text-[#b8c9ff]" : "hover:text-[#b8c9ff]"}`}
+                  aria-label={likedComments[reply.id] ? "取消点赞回复" : "点赞回复"}
+                >
+                  <span className="material-symbols-outlined text-[16px]">{likedComments[reply.id] ? "thumb_up" : "thumb_up_off_alt"}</span>
+                  {reply.likes + (likedComments[reply.id] ? 1 : 0)}
+                </button>
+                <button type="button" onClick={() => handleReplyClick(reply.id, reply.author)} className="flex items-center gap-1 transition hover:text-zinc-300" aria-label="回复回复"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : null
   );
 
   const [actionError, setActionError] = useState<string | null>(null);
@@ -193,8 +254,70 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
     setLikedComments((current) => ({ ...current, [id]: !current[id] }));
   };
 
-  const handleReplyClick = () => {
+  const stripReplyPrefix = (value: string) => value.replace(/^回复\s+@[^：:\n]+[:：]\s*/u, "");
+
+  const buildReplyPrefix = (author: string) => `回复 @${author}：`;
+
+  const handleReplyClick = (id: string, author: string) => {
     if (!requireLogin()) return;
+    const nextPrefix = buildReplyPrefix(author);
+    setReplyTo({ id, author });
+    setCommentDraft((value) => `${nextPrefix}${stripReplyPrefix(value).trimStart()}`);
+    setCommentNotice(null);
+    commentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const submitComment = async () => {
+    if (!requireLogin()) return;
+    const content = stripReplyPrefix(commentDraft).trim();
+    if (!content) return;
+
+    try {
+      const response = await fetch("/api/posts/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId: article.id,
+          content,
+          parentId: replyTo?.id ?? null,
+        }),
+      });
+
+      if (!response.ok) throw new Error("评论提交失败");
+
+      const data = (await response.json()) as { comment: { id: string; status: "PENDING" | "APPROVED"; createdAt: string; message: string } };
+      const authorAvatarUrl = currentUser?.role === "blogger" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png";
+      const nextComment = {
+        id: data.comment.id,
+        parentId: replyTo ? findRootCommentId(replyTo.id) : null,
+        author: currentUser?.name ?? "我",
+        avatarText: (currentUser?.name ?? "我").charAt(0).toUpperCase(),
+        avatarUrl: authorAvatarUrl,
+        time: data.comment.createdAt,
+        content,
+        likes: 0,
+        replies: [],
+      } satisfies CommentNode;
+
+      if (data.comment.status === "APPROVED") {
+        setCommentItems((current) => {
+          if (!replyTo) return sortByTimeAsc([nextComment, ...current]);
+
+          const rootId = findRootCommentId(replyTo.id);
+          return current.map((item) =>
+            item.id === rootId
+              ? { ...item, replies: sortByTimeAsc([...(item.replies ?? []), { ...nextComment, parentId: rootId, replyTo: item.author }]) }
+              : item
+          );
+        });
+      }
+
+      setCommentDraft("");
+      setReplyTo(null);
+      setCommentNotice(data.comment.message);
+    } catch {
+      setCommentNotice("评论提交失败，请稍后重试。");
+    }
   };
 
   return (
@@ -247,7 +370,17 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
           </div>
 
           <section ref={commentsRef} id="comments" className="mt-12 max-w-[840px] scroll-mt-24">
-            <h3 className="text-2xl font-semibold text-zinc-50">评论 ({readingStats.comments})</h3>
+            <div className="flex items-center justify-between gap-4">
+              <h3 className="text-2xl font-semibold text-zinc-50">评论 ({readingStats.comments})</h3>
+              <button
+                type="button"
+                onClick={() => setCommentSortOrder((value) => (value === "asc" ? "desc" : "asc"))}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-[#7aa2ff]/40 hover:bg-[#7aa2ff]/10 hover:text-[#b8c9ff]"
+              >
+                {commentSortOrder === "asc" ? "最早优先" : "最新优先"}
+              </button>
+            </div>
+            {commentNotice ? <div className="mt-4 rounded-xl border border-white/8 bg-white/5 px-4 py-3 text-sm text-zinc-300">{commentNotice}</div> : null}
             <div className="mt-6 rounded-2xl border border-white/8 bg-white/3 p-5 backdrop-blur-xl">
               {currentUser ? (
                 <div className="flex gap-4">
@@ -261,19 +394,49 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                     </div>
                     <textarea
                       value={commentDraft}
-                      onChange={(event) => setCommentDraft(event.target.value)}
+                      onChange={(event) => {
+                        const rawValue = event.target.value;
+                        if (!replyTo) {
+                          setCommentDraft(stripReplyPrefix(rawValue));
+                          return;
+                        }
+
+                        const prefix = buildReplyPrefix(replyTo.author);
+                        const valueWithoutPrefix = rawValue.startsWith(prefix) ? rawValue.slice(prefix.length) : stripReplyPrefix(rawValue);
+                        setCommentDraft(`${prefix}${valueWithoutPrefix}`);
+                      }}
                       rows={4}
-                      placeholder="分享你的想法..."
+                      placeholder={replyTo ? `回复 @${replyTo.author}...` : "分享你的想法..."}
                       className="w-full resize-none rounded-xl border border-white/8 bg-[#181a20] px-4 py-3 text-sm text-zinc-200 outline-none placeholder:text-zinc-500 focus:border-[#7aa2ff]/50 focus:ring-1 focus:ring-[#7aa2ff]/20"
                     />
-                    <div className="mt-3 flex justify-end">
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <div className="text-xs text-zinc-500">
+                        {replyTo ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const prefix = buildReplyPrefix(replyTo.author);
+                              setCommentDraft((value) => value.startsWith(prefix) ? value.slice(prefix.length) : stripReplyPrefix(value));
+                              setReplyTo(null);
+                            }}
+                            className="text-[#8db1ff] hover:text-[#b8c9ff]"
+                          >
+                            回复到：@{replyTo.author}
+                          </button>
+                        ) : (
+                          <span>访客评论将进入待审核，博主评论将直接发布。</span>
+                        )}
+                      </div>
                       <button
+                        type="button"
+                        onClick={submitComment}
                         disabled={!commentDraft.trim()}
                         className="rounded-lg bg-[#7aa2ff] px-4 py-2 text-sm font-medium text-[#10131a] transition hover:bg-[#8db1ff] disabled:cursor-not-allowed disabled:bg-zinc-600 disabled:text-zinc-400"
                       >
-                        发布评论
+                        {replyTo ? "回复评论" : "发布评论"}
                       </button>
                     </div>
+                    {commentNotice ? <p className="mt-3 text-sm text-zinc-400">{commentNotice}</p> : null}
                   </div>
                 </div>
               ) : (
@@ -290,7 +453,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
             </div>
 
             <div className="mt-8 space-y-6">
-              {comments.map((comment) => (
+              {sortComments(commentItems).map((comment) => (
                 <div key={comment.id} className="space-y-4">
                   <div className="flex gap-4">
                     <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
@@ -309,37 +472,11 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                           <span className="material-symbols-outlined text-[16px]">{likedComments[comment.id] ? "thumb_up" : "thumb_up_off_alt"}</span>
                           {comment.likes + (likedComments[comment.id] ? 1 : 0)}
                         </button>
-                        <button type="button" onClick={handleReplyClick} className="flex items-center gap-1 transition hover:text-zinc-300" aria-label="回复评论"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
+                        <button type="button" onClick={() => handleReplyClick(comment.id, comment.author)} className="flex items-center gap-1 transition hover:text-zinc-300" aria-label="回复评论"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
                       </div>
                     </div>
                   </div>
-                  {comment.replies?.length ? (
-                    <div className="ml-14 space-y-4 border-l border-white/8 pl-4">
-                      {comment.replies.map((reply) => (
-                        <div key={reply.id} className="flex gap-4 rounded-xl bg-white/3 p-4">
-                          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
-                            <img src={reply.avatarUrl} alt={reply.author} className="h-full w-full object-cover" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{reply.author}</span><span className="text-xs text-zinc-500">回复 {reply.replyTo}</span><span className="text-xs text-zinc-500">{formatChinaDateTime(reply.time)}</span></div>
-                            <p className="mt-2 text-sm leading-7 text-zinc-400">{reply.content}</p>
-                            <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
-                              <button
-                                type="button"
-                                onClick={() => toggleCommentLike(reply.id)}
-                                className={`flex items-center gap-1 transition ${likedComments[reply.id] ? "text-[#b8c9ff]" : "hover:text-[#b8c9ff]"}`}
-                                aria-label={likedComments[reply.id] ? "取消点赞回复" : "点赞回复"}
-                              >
-                                <span className="material-symbols-outlined text-[16px]">{likedComments[reply.id] ? "thumb_up" : "thumb_up_off_alt"}</span>
-                                {reply.likes + (likedComments[reply.id] ? 1 : 0)}
-                              </button>
-                              <button type="button" onClick={handleReplyClick} className="flex items-center gap-1 transition hover:text-zinc-300" aria-label="回复回复"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
+                  {renderCommentReplies(comment.replies)}
                 </div>
               ))}
             </div>
