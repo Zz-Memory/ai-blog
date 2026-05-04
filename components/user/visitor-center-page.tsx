@@ -21,6 +21,8 @@ import { VisitorCenterSidebar } from "@/components/user/visitor-center-page/visi
 import { VisitorCenterToolbar } from "@/components/user/visitor-center-page/visitor-center-toolbar";
 import { useNotificationCount } from "@/components/common/notification-context";
 
+const VISITOR_CENTER_STORAGE_KEY = "ai-blog.visitor-center.active-section";
+
 export function VisitorCenterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,6 +58,13 @@ export function VisitorCenterPage() {
   // 通过左侧悬浮菜单切换这个值，右侧区域会据此渲染不同模块。
   const [activeSection, setActiveSection] = useState("history");
 
+  useEffect(() => {
+    const savedSection = window.localStorage.getItem(VISITOR_CENTER_STORAGE_KEY);
+    if (savedSection === "history" || savedSection === "liked" || savedSection === "favorites" || savedSection === "comments" || savedSection === "notifications" || savedSection === "settings") {
+      setActiveSection(savedSection);
+    }
+  }, []);
+
   // 当前用户“点赞”列表。
   // 这里先使用静态数据，后续可以替换为接口返回值或用户态缓存。
   const likedList = useMemo(() => likedArticles, []);
@@ -68,6 +77,10 @@ export function VisitorCenterPage() {
       setActiveSection("notifications");
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    window.localStorage.setItem(VISITOR_CENTER_STORAGE_KEY, activeSection);
+  }, [activeSection]);
 
   useEffect(() => {
     if (activeSection !== "history") return;
@@ -132,7 +145,7 @@ export function VisitorCenterPage() {
         <VisitorCenterSidebar
           activeId={activeSection}
           // 左侧栏只负责触发全局动作，真正的确认交给弹窗处理。
-          onSelect={setActiveSection}
+          onSelect={(section) => setActiveSection(section)}
           onLogoutClick={() => setShowLogoutConfirm(true)}
           onSettingsClick={() => setActiveSection("settings")}
           notificationBadgeCount={unreadCount}

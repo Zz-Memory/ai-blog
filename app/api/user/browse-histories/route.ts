@@ -18,6 +18,8 @@ export async function GET() {
           category: true,
           postTags: { include: { tag: true } },
           _count: { select: { likes: true, bookmarks: true, comments: true } },
+          likes: { where: { userId: auth.user.id }, select: { id: true } },
+          bookmarks: { where: { userId: auth.user.id }, select: { id: true } },
         },
       },
     },
@@ -28,6 +30,7 @@ export async function GET() {
       .filter((item) => item.post.status === "PUBLISHED")
       .map((item) => ({
         id: item.id,
+        postId: item.post.id,
         title: item.post.title,
         visitedAt: item.visitedAt.toISOString(),
         href: `/article/${item.post.slug}`,
@@ -39,6 +42,8 @@ export async function GET() {
           favorites: item.post._count.bookmarks,
           comments: item.post._count.comments,
         },
+        isLiked: item.post.likes.length > 0,
+        isBookmarked: item.post.bookmarks.length > 0,
       })),
   });
 }

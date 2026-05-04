@@ -103,6 +103,8 @@ const initialMessages: MessageItem[] = [
   { title: "（草稿）七月技术分享会报名", audience: "未设置", updatedAt: "2024-05-19 15:45", status: "draft" },
 ];
 
+const BLOGGER_CENTER_STORAGE_KEY = "ai-blog.blogger-center.active-section";
+
 export function BloggerCenterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -120,6 +122,18 @@ export function BloggerCenterPage() {
   const [activeTab, setActiveTab] = useState<"compose" | "manage">("compose");
   const [specificAudience, setSpecificAudience] = useState(false);
   const [scheduledSend, setScheduledSend] = useState(false);
+
+  useEffect(() => {
+    const savedSection = window.localStorage.getItem(BLOGGER_CENTER_STORAGE_KEY);
+    if (savedSection === "new-article") {
+      router.push("/editor");
+      return;
+    }
+
+    if (savedSection === "articles" || savedSection === "comments-review" || savedSection === "send-message" || savedSection === "users" || savedSection === "history" || savedSection === "liked" || savedSection === "favorites" || savedSection === "comments" || savedSection === "notifications" || savedSection === "settings") {
+      setActiveSection(savedSection);
+    }
+  }, [router]);
 
   const [activeArticleTab, setActiveArticleTab] = useState<ArticleStatus>("published");
   const [articlePage, setArticlePage] = useState(1);
@@ -190,10 +204,15 @@ export function BloggerCenterPage() {
   const visibleReviews = filteredReviews.slice((reviewPage - 1) * reviewsPerPage, reviewPage * reviewsPerPage);
 
   useEffect(() => {
-    if (searchParams.get("section") === "notifications") {
+    const section = searchParams.get("section");
+    if (section === "notifications") {
       setActiveSection("notifications");
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    window.localStorage.setItem(BLOGGER_CENTER_STORAGE_KEY, activeSection);
+  }, [activeSection]);
 
   useEffect(() => {
     if (activeSection !== "history") return;
@@ -323,14 +342,21 @@ export function BloggerCenterPage() {
       <main className="mx-auto grid min-h-[calc(100vh-64px)] max-w-[1440px] grid-cols-1 gap-8 px-4 py-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6 xl:px-8">
         <BloggerCenterSidebar
           activeId={activeSection}
-          onSelect={setActiveSection}
+          onSelect={(section) => {
+            window.localStorage.setItem(BLOGGER_CENTER_STORAGE_KEY, section);
+            setActiveSection(section);
+          }}
+          onNewArticleClick={() => {
+            window.localStorage.removeItem(BLOGGER_CENTER_STORAGE_KEY);
+            router.push("/editor");
+          }}
           onLogoutClick={() => setShowLogoutConfirm(true)}
           onSettingsClick={() => setActiveSection("settings")}
           notificationBadgeCount={unreadCount}
         />
 
         <section className="space-y-6 pb-10">
-          {activeSection === "articles" ? (
+          {activeSection === "new-article" ? null : activeSection === "articles" ? (
             <BloggerCenterArticles
               activeTab={activeArticleTab}
               onTabChange={setActiveArticleTab}

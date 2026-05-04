@@ -8,6 +8,7 @@ type BloggerCenterSidebarItem = {
 type BloggerCenterSidebarProps = {
   activeId: string;
   onSelect: (id: string) => void;
+  onNewArticleClick: () => void;
   onLogoutClick: () => void;
   onSettingsClick: () => void;
   notificationBadgeCount?: number;
@@ -31,17 +32,31 @@ const visitorItems: BloggerCenterSidebarItem[] = [
   { id: "logout", label: "退出登录", icon: "logout" },
 ];
 
-export function BloggerCenterSidebar({ activeId, onSelect, onLogoutClick, onSettingsClick, notificationBadgeCount = 0 }: BloggerCenterSidebarProps) {
+export function BloggerCenterSidebar({ activeId, onSelect, onNewArticleClick, onLogoutClick, onSettingsClick, notificationBadgeCount = 0 }: BloggerCenterSidebarProps) {
   return (
     <aside className="hidden lg:flex lg:flex-col">
       <div className="sticky top-24 rounded-3xl border border-white/8 bg-[#14161b] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
         <div className="text-xs tracking-[0.28em] text-zinc-500">博主专栏</div>
         <nav className="mt-6 space-y-2">
           {bloggerItems.map((item) => {
+            const isNewArticle = item.id === "new-article";
             const isActive = item.id === activeId;
+
             return (
-              <button key={item.id} type="button" onClick={() => onSelect(item.id)} className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${isActive ? "border-[#6e8cff]/40 bg-[#182033] text-blue-100 shadow-[inset_0_0_0_1px_rgba(110,140,255,0.12)]" : "border-transparent bg-transparent text-zinc-500 hover:border-white/8 hover:bg-white/5 hover:text-zinc-200"}`}>
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  if (isNewArticle) {
+                    onNewArticleClick();
+                    return;
+                  }
+                  onSelect(item.id);
+                }}
+                className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${isNewArticle ? "border-[#8ea2ff]/25 bg-gradient-to-r from-[#1a2340] to-[#17202f] text-blue-50 shadow-[0_16px_30px_rgba(17,24,39,0.35)] hover:border-[#8ea2ff]/45 hover:from-[#1d2948] hover:to-[#1a2435] hover:text-white" : isActive ? "border-[#6e8cff]/40 bg-[#182033] text-blue-100 shadow-[inset_0_0_0_1px_rgba(110,140,255,0.12)]" : "border-transparent bg-transparent text-zinc-500 hover:border-white/8 hover:bg-white/5 hover:text-zinc-200"}`}
+              >
                 <span className="flex items-center gap-3 text-sm font-medium"><span className="material-symbols-outlined text-[18px] leading-none">{item.icon}</span>{item.label}</span>
+                {isNewArticle ? <span className="material-symbols-outlined text-[18px] leading-none text-blue-200/80">arrow_forward</span> : null}
               </button>
             );
           })}

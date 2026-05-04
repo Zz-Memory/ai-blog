@@ -7,6 +7,7 @@ import { ArticleCard } from "@/components/common/article-card";
 
 export type HistoryArticle = {
   id: string;
+  postId: string;
   title: string;
   visitedAt: string;
   href: string;
@@ -14,6 +15,8 @@ export type HistoryArticle = {
   excerpt: string;
   tags: string[];
   stats: { likes: number; favorites: number; comments: number };
+  isLiked?: boolean;
+  isBookmarked?: boolean;
 };
 
 type VisitorCenterHistoryProps = {
@@ -40,7 +43,7 @@ export function VisitorCenterHistory({ articles, visibleCount }: VisitorCenterHi
               {displayedArticles.map((article) => (
                 <ArticleCard
                   key={article.id}
-                  postId={article.id}
+                  postId={article.postId}
                   title={article.title}
                   date={article.visitedAt}
                   category={article.category}
@@ -49,6 +52,8 @@ export function VisitorCenterHistory({ articles, visibleCount }: VisitorCenterHi
                   stats={article.stats}
                   href={article.href}
                   compact={false}
+                  isLiked={article.isLiked}
+                  isBookmarked={article.isBookmarked}
                   categorySuffix={
                     <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-[#101215]/90 px-2.5 py-1 text-[11px] text-zinc-400 backdrop-blur">
                       <span className="material-symbols-outlined text-[14px]">schedule</span>
