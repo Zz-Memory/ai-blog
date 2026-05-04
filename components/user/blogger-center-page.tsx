@@ -15,7 +15,6 @@ import { VisitorCenterLiked } from "@/components/user/visitor-center-page/visito
 import { VisitorCenterNotifications } from "@/components/user/visitor-center-page/visitor-center-notifications";
 import { VisitorCenterToolbar } from "@/components/user/visitor-center-page/visitor-center-toolbar";
 
-import { commentedArticles } from "./visitor-center-page/commented-articles";
 import { historyArticles } from "./visitor-center-page/history-articles";
 import { likedArticles } from "./visitor-center-page/liked-articles";
 import { BloggerCenterArticles } from "./blogger-center-page/blogger-center-articles";
@@ -119,6 +118,9 @@ export function BloggerCenterPage() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [activeSection, setActiveSection] = useState("articles");
+  const [likedList, setLikedList] = useState(likedArticles);
+  const [likedLoading, setLikedLoading] = useState(false);
+  const [likedError, setLikedError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"compose" | "manage">("compose");
   const [specificAudience, setSpecificAudience] = useState(false);
   const [scheduledSend, setScheduledSend] = useState(false);
@@ -160,8 +162,27 @@ export function BloggerCenterPage() {
 
   const { unreadCount, setUnreadCount } = useNotificationCount();
 
-  const likedList = useMemo(() => likedArticles, []);
-  const commentedList = useMemo(() => commentedArticles, []);
+  useEffect(() => {
+    if (activeSection !== "liked") return;
+
+    const loadLikedArticles = async () => {
+      setLikedLoading(true);
+      setLikedError(null);
+
+      try {
+        const response = await fetch("/api/user/liked-articles", { cache: "no-store" });
+        if (!response.ok) throw new Error("加载我的点赞失败");
+        const data = (await response.json()) as { likedArticles: typeof likedArticles };
+        setLikedList(data.likedArticles);
+      } catch {
+        setLikedError("我的点赞加载失败，请稍后重试。");
+      } finally {
+        setLikedLoading(false);
+      }
+    };
+
+    void loadLikedArticles();
+  }, [activeSection]);
 
   const articleRows: ArticleRow[] = useMemo(
     () => [
@@ -486,7 +507,16 @@ export function BloggerCenterPage() {
             </div>
           ) : null}
 
-          {activeSection === "liked" ? <VisitorCenterLiked articles={likedList} /> : null}
+          {activeSection === "liked" ? (
+            <div className="space-y-4">
+              {likedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{likedError}</div> : null}
+              {likedLoading ? (
+                <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的点赞...</div>
+              ) : (
+                <VisitorCenterLiked articles={likedList} />
+              )}
+            </div>
+          ) : null}
           {activeSection === "favorites" ? <VisitorCenterFavorites articles={likedList} /> : null}
           {activeSection === "comments" ? (
             <BloggerCenterComments

@@ -9,7 +9,7 @@ import { SiteHeader } from "@/components/common/site-header";
 
 import { commentedArticles } from "./visitor-center-page/commented-articles";
 import { historyArticles } from "./visitor-center-page/history-articles";
-import { likedArticles } from "./visitor-center-page/liked-articles";
+import { likedArticles, type LikedArticle } from "./visitor-center-page/liked-articles";
 import { VisitorCenterAccountSettings } from "@/components/user/visitor-center-page/visitor-center-account-settings";
 import { VisitorCenterComments } from "@/components/user/visitor-center-page/visitor-center-comments";
 import { VisitorCenterConfirmModal } from "@/components/user/visitor-center-page/visitor-center-confirm-modal";
@@ -65,11 +65,12 @@ export function VisitorCenterPage() {
     }
   }, []);
 
-  // 当前用户“点赞”列表。
-  // 这里先使用静态数据，后续可以替换为接口返回值或用户态缓存。
-  const likedList = useMemo(() => likedArticles, []);
+  const [likedList, setLikedList] = useState<LikedArticle[]>(likedArticles);
+  const [likedLoading, setLikedLoading] = useState(false);
+  const [likedError, setLikedError] = useState<string | null>(null);
 
-  // 当前用户评论过的文章列表。
+  // 当前用户“点赞”列表。
+  // 这里会优先从接口加载真实数据，失败时再回退到本地示例。
   const commentedList = useMemo(() => commentedArticles, []);
 
   useEffect(() => {
@@ -77,6 +78,28 @@ export function VisitorCenterPage() {
       setActiveSection("notifications");
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const loadLikedArticles = async () => {
+      if (activeSection !== "liked") return;
+
+      setLikedLoading(true);
+      setLikedError(null);
+
+      try {
+        const response = await fetch("/api/user/liked-articles", { cache: "no-store" });
+        if (!response.ok) throw new Error("加载点赞文章失败");
+        const data = (await response.json()) as { likedArticles: LikedArticle[] };
+        setLikedList(data.likedArticles);
+      } catch {
+        setLikedError("我的点赞加载失败，请稍后重试。");
+      } finally {
+        setLikedLoading(false);
+      }
+    };
+
+    void loadLikedArticles();
+  }, [activeSection]);
 
   useEffect(() => {
     window.localStorage.setItem(VISITOR_CENTER_STORAGE_KEY, activeSection);
@@ -185,7 +208,16 @@ export function VisitorCenterPage() {
             </>
           ) : null}
 
-          {activeSection === "liked" ? <VisitorCenterLiked articles={likedList} /> : null}
+          {activeSection === "liked" ? (
+            <div className="space-y-4">
+              {likedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{likedError}</div> : null}
+              {likedLoading ? (
+                <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的点赞...</div>
+              ) : (
+                <VisitorCenterLiked articles={likedList} />
+              )}
+            </div>
+          ) : null}
 
           {activeSection === "favorites" ? <VisitorCenterFavorites articles={likedList} /> : null}
 

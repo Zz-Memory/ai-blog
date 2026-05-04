@@ -33,16 +33,19 @@ export function VisitorCenterLiked({ articles }: VisitorCenterLikedProps) {
       <div className="space-y-4">
         {visibleArticles.length ? (
           visibleArticles.map((article) => (
-            <div key={article.title} className="rounded-[24px] border border-white/8 bg-[#17181d] p-0">
+            <div key={article.postId} className="rounded-[24px] border border-white/8 bg-[#17181d] p-0">
               <ArticleCard
-                href="#"
+                href={article.href}
                 compact
+                postId={article.postId}
                 title={article.title}
                 date={article.date}
                 category={article.category}
                 excerpt={article.excerpt}
                 tags={article.tags}
                 stats={article.stats}
+                isLiked={article.isLiked}
+                isBookmarked={article.isBookmarked}
               />
             </div>
           ))
