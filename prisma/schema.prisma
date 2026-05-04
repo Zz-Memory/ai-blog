@@ -50,12 +50,6 @@ enum NotificationType {
   NEW_USER
 }
 
-// 消息通知状态：草稿、已发布
-enum NotificationStatus {
-  DRAFT
-  PUBLISHED
-}
-
 // AI 消息角色：用户、助手
 enum AiChatRole {
   USER
@@ -251,7 +245,6 @@ model Notification {
   recipientId String
   senderId    String?
   type        NotificationType
-  status      NotificationStatus @default(DRAFT)
   title       String
   content     String
   linkUrl     String?
@@ -265,7 +258,6 @@ model Notification {
   @@index([recipientId, createdAt])
   @@index([senderId])
   @@index([type])
-  @@index([status])
 }
 
 // ============ AI 问答会话表 ============

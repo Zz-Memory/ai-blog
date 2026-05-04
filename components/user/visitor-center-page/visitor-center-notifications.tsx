@@ -31,8 +31,6 @@ function NotificationAvatar({ item }: { item: NotificationItem }) {
   );
 }
 
-// “消息通知”功能模块。
-// 按照设计稿实现顶部分类筛选、消息列表、未读高亮与底部加载更多。
 export function VisitorCenterNotifications({ items = notificationItems, onUnreadCountChange }: VisitorCenterNotificationsProps) {
   const [activeTab, setActiveTab] = useState<NotificationType>("all");
   const [visibleCount, setVisibleCount] = useState(6);
@@ -40,6 +38,10 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
   const [deleteTarget, setDeleteTarget] = useState<NotificationItem | null>(null);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [notifications, setNotifications] = useState(items);
+
+  useEffect(() => {
+    setNotifications(items);
+  }, [items]);
 
   const filteredItems = useMemo(() => {
     if (activeTab === "all") return notifications;
@@ -65,18 +67,26 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
     setDeleteTarget(null);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
+    await fetch(`/api/user/notifications?id=${deleteTarget.id}`, { method: "DELETE" });
     setNotifications((current) => current.filter((item) => item.id !== deleteTarget.id));
     closeDeleteConfirm();
   };
 
-  const clearAllNotifications = () => {
+  const clearAllNotifications = async () => {
+    await fetch("/api/user/notifications", { method: "DELETE" });
     setNotifications([]);
     setVisibleCount(6);
+    setClearConfirmOpen(false);
   };
 
-  const markAllRead = () => {
+  const markAllRead = async () => {
+    await fetch("/api/user/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "mark-all-read" }),
+    });
     setNotifications((current) => current.map((item) => ({ ...item, unread: false })));
   };
 
@@ -112,7 +122,7 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={clearAllNotifications}
+            onClick={() => setClearConfirmOpen(true)}
             className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
           >
             清空

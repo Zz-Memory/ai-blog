@@ -33,7 +33,7 @@ type UserStatus = "active" | "muted";
 type UserItem = { id: string; nickname: string; email: string; joinedAt: string; status: UserStatus };
 type ArticleItem = { title: string; excerpt: string; tags: string[]; updatedAt: string; status: ArticleStatus };
 type ArticleRow = ArticleItem & { category: string };
-type MessageItem = { title: string; audience: string; updatedAt: string; status: MessageStatus };
+type MessageItem = { id: string; title: string; audience: string; updatedAt: string; status: MessageStatus };
 type ReviewItem = { id: string; articleTitle: string; author: string; content: string; createdAt: string; likes: number; replies: number; status: ReviewStatus };
 
 const articleTabs: Array<{ id: ArticleStatus; label: string; count: number }> = [
@@ -63,15 +63,6 @@ const initialUsers: UserItem[] = [
   { id: "u-6", nickname: "Luna", email: "luna@example.com", joinedAt: "2024-04-21", status: "muted" },
 ];
 
-const initialMessages: MessageItem[] = [
-  { title: "2024 年度技术回顾报告", audience: "所有访客", updatedAt: "2024-05-20 14:30", status: "published" },
-  { title: "（草稿）关于社区维护的通知", audience: "未设置", updatedAt: "2024-05-22 11:30", status: "draft" },
-  { title: "新功能上线预告：AI 自动摘要", audience: "AlexChen", updatedAt: "2024-05-22 09:00", status: "published" },
-  { title: "（草稿）五一假期活动预告", audience: "未设置", updatedAt: "2024-05-21 09:00", status: "draft" },
-  { title: "系统升级通知", audience: "所有访客", updatedAt: "2024-05-18 10:00", status: "published" },
-  { title: "欢迎加入我们的 Discord 社区", audience: "JohnDoe", updatedAt: "2024-05-15 16:20", status: "published" },
-  { title: "（草稿）七月技术分享会报名", audience: "未设置", updatedAt: "2024-05-19 15:45", status: "draft" },
-];
 
 const BLOGGER_CENTER_STORAGE_KEY = "ai-blog.blogger-center.active-section";
 
@@ -95,9 +86,7 @@ export function BloggerCenterPage() {
   const [likedError, setLikedError] = useState<string | null>(null);
   const [bookmarkedLoading, setBookmarkedLoading] = useState(false);
   const [bookmarkedError, setBookmarkedError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"compose" | "manage">("compose");
-  const [specificAudience, setSpecificAudience] = useState(false);
-  const [scheduledSend, setScheduledSend] = useState(false);
+  const [messageError, setMessageError] = useState<string | null>(null);
   const [activeArticleTab, setActiveArticleTab] = useState<ArticleStatus>("published");
   const [articlePage, setArticlePage] = useState(1);
   const [activeArticleMenu, setActiveArticleMenu] = useState<string | null>(null);
@@ -178,6 +167,11 @@ export function BloggerCenterPage() {
   useEffect(() => { setArticlePage(1); }, [activeArticleTab]);
   useEffect(() => { setUserPage(1); }, [userSearchValue]);
 
+  useEffect(() => {
+    if (activeSection !== "send-message") return;
+    setMessageError(null);
+  }, [activeSection]);
+
   const articleRows: ArticleRow[] = useMemo(() => [
     { title: "AI 原生极简主义：界面即智能容器", category: "设计", excerpt: "探讨在人工智能时代，如何通过大量留白和精准排版重塑阅读体验...", tags: ["UI/UX", "AI"], updatedAt: "2024-05-20 14:30", status: "published" },
     { title: "2024 个人年度数字足迹图鉴", category: "随笔", excerpt: "整理过去一年使用过的 SaaS 工具、阅读过的好书及开源贡献...", tags: ["年度回顾"], updatedAt: "2024-05-10 09:15", status: "published" },
@@ -226,6 +220,7 @@ export function BloggerCenterPage() {
   const handleToggleUserStatus = (userId: string) => setUsers((current) => current.map((u) => (u.id === userId ? { ...u, status: u.status === "active" ? "muted" : "active" } : u)));
   const handleConfirmDeleteUser = () => { if (!userDeleteTarget) return; setUsers((current) => current.filter((u) => u.id !== userDeleteTarget.id)); setUserDeleteTarget(null); };
   const handleConfirmDeleteArticle = () => setArticleDeleteTarget(null);
+  const handleRefreshMessages = async () => undefined;
 
   return (
     <div className="min-h-screen bg-[#111215] text-zinc-200">
@@ -236,7 +231,7 @@ export function BloggerCenterPage() {
           {activeSection === "articles" ? <BloggerCenterArticles activeTab={activeArticleTab} onTabChange={setActiveArticleTab} articleTabs={articleTabs} visibleArticles={visibleArticles} activeArticleMenu={activeArticleMenu} activeArticleMenuPosition={activeArticleMenuPosition} onMenuOpen={(title, top, left) => { setActiveArticleMenu(title); setActiveArticleMenuPosition({ top, left }); }} onMenuClose={() => { setActiveArticleMenu(null); setActiveArticleMenuPosition(null); }} onRequestDelete={(article) => setArticleDeleteTarget(article)} publishedArticlesLength={publishedArticles.length} draftArticlesLength={draftArticles.length} articlePage={articlePage} articlesPerPage={articlesPerPage} totalArticlePages={totalArticlePages} onPrevPage={() => setArticlePage((page) => Math.max(1, page - 1))} onNextPage={() => setArticlePage((page) => Math.min(totalArticlePages, page + 1))} onPageChange={setArticlePage} /> : null}
           {activeSection === "comments-review" ? <BloggerCenterComments reviewItems={filteredReviews} reviewFilter="all" onFilterChange={() => undefined} visibleReviews={visibleReviews} reviewPage={reviewPage} totalReviewPages={totalReviewPages} onPrevPage={() => undefined} onNextPage={() => undefined} onPageChange={() => undefined} activeMenuTitle={activeReviewMenu} activeMenuPosition={activeReviewMenuPosition} onMenuOpen={(id, top, left) => { setActiveReviewMenu(id); setActiveReviewMenuPosition({ top, left }); }} onMenuClose={() => { setActiveReviewMenu(null); setActiveReviewMenuPosition(null); }} onRequestDelete={(reviewId) => setReviewDeleteTarget(reviewItems.find((review) => review.id === reviewId) ?? null)} reviewStatusMeta={reviewStatusMeta} reviewActionMap={reviewActionMap} /> : null}
           {activeSection === "comments" ? <div className="space-y-4">{commentedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{commentedError}</div> : null}{commentedLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的评论...</div> : <VisitorCenterComments articles={commentedList} />}</div> : null}
-          {activeSection === "send-message" ? <BloggerCenterMessages messages={initialMessages} activeTab={activeTab} onTabChange={setActiveTab} specificAudience={specificAudience} onSpecificAudienceChange={setSpecificAudience} scheduledSend={scheduledSend} onScheduledSendChange={setScheduledSend} activeMenuTitle={activeMessageMenu} activeMenuPosition={activeMessageMenuPosition} onMenuOpen={(title, top, left) => { setActiveMessageMenu(title); setActiveMessageMenuPosition({ top, left }); }} onMenuClose={() => { setActiveMessageMenu(null); setActiveMessageMenuPosition(null); }} onRequestDelete={(messageTitle) => setMessageDeleteTarget(initialMessages.find((message) => message.title === messageTitle) ?? null)} /> : null}
+          {activeSection === "send-message" ? <BloggerCenterMessages /> : null}
           {activeSection === "users" ? <BloggerCenterUsers users={visibleUsers} activeMenuId={activeUserMenu} activeMenuPosition={activeUserMenuPosition} onToggleStatus={handleToggleUserStatus} onRequestDelete={(userId) => setUserDeleteTarget(users.find((user) => user.id === userId) ?? null)} onMenuOpen={(userId, top, left) => { setActiveUserMenu(userId); setActiveUserMenuPosition({ top, left }); }} onMenuClose={() => { setActiveUserMenu(null); setActiveUserMenuPosition(null); }} searchValue={userSearchValue} onSearchChange={setUserSearchValue} page={userPage} pageSize={usersPerPage} totalPages={totalUserPages} onPrevPage={() => setUserPage((page) => Math.max(1, page - 1))} onNextPage={() => setUserPage((page) => Math.min(totalUserPages, page + 1))} onPageChange={setUserPage} /> : null}
           {activeSection === "history" ? <div className="space-y-4"><VisitorCenterToolbar searchValue={historySearchValue} onSearchChange={setHistorySearchValue} onSearchSubmit={setHistorySearchKeyword} onClearHistoryClick={() => setShowClearConfirm(true)} />{historyError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{historyError}</div> : null}{historyLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载浏览记录...</div> : <VisitorCenterHistory articles={visibleHistory} visibleCount={visibleHistory.length} />}{hasMoreHistory ? <div className="flex justify-center pt-4"><button type="button" onClick={() => setHistoryVisibleCount((count) => Math.min(count + 4, filteredHistory.length))} className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10">加载更多浏览历史</button></div> : null}</div> : null}
           {activeSection === "liked" ? <div className="space-y-4">{likedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{likedError}</div> : null}{likedLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的点赞...</div> : <VisitorCenterLiked articles={likedList} />}</div> : null}

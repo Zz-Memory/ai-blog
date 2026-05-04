@@ -78,6 +78,10 @@ export function VisitorCenterPage() {
   const [commentedLoading, setCommentedLoading] = useState(false);
   const [commentedError, setCommentedError] = useState<string | null>(null);
 
+  const [notificationItems, setNotificationItems] = useState<import("./visitor-center-page/notification-items").NotificationItem[]>([]);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+  const [notificationError, setNotificationError] = useState<string | null>(null);
+
   useEffect(() => {
     if (searchParams.get("section") === "notifications") {
       setActiveSection("notifications");
@@ -178,7 +182,30 @@ export function VisitorCenterPage() {
     };
 
     void loadHistory();
-  }, [activeSection, searchParams]);
+  }, [activeSection]);
+
+  useEffect(() => {
+    if (activeSection !== "notifications") return;
+
+    const loadNotifications = async () => {
+      setNotificationLoading(true);
+      setNotificationError(null);
+
+      try {
+        const response = await fetch("/api/user/notifications", { cache: "no-store" });
+        if (!response.ok) throw new Error("加载通知失败");
+        const data = (await response.json()) as { notifications: import("./visitor-center-page/notification-items").NotificationItem[]; unreadCount: number };
+        setNotificationItems(data.notifications);
+        setUnreadCount(data.unreadCount);
+      } catch {
+        setNotificationError("消息通知加载失败，请稍后重试。");
+      } finally {
+        setNotificationLoading(false);
+      }
+    };
+
+    void loadNotifications();
+  }, [activeSection, setUnreadCount]);
 
   useEffect(() => {
     setHistoryVisibleCount(4);
@@ -290,7 +317,16 @@ export function VisitorCenterPage() {
             </div>
           ) : null}
 
-          {activeSection === "notifications" ? <VisitorCenterNotifications onUnreadCountChange={setUnreadCount} /> : null}
+          {activeSection === "notifications" ? (
+            <div className="space-y-4">
+              {notificationError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{notificationError}</div> : null}
+              {notificationLoading ? (
+                <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载消息通知...</div>
+              ) : (
+                <VisitorCenterNotifications items={notificationItems} onUnreadCountChange={setUnreadCount} />
+              )}
+            </div>
+          ) : null}
 
           {activeSection === "settings" ? <VisitorCenterAccountSettings /> : null}
         </section>
