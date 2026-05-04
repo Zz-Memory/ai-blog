@@ -119,8 +119,11 @@ export function BloggerCenterPage() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [activeSection, setActiveSection] = useState("articles");
   const [likedList, setLikedList] = useState(likedArticles);
+  const [bookmarkedList, setBookmarkedList] = useState(likedArticles);
   const [likedLoading, setLikedLoading] = useState(false);
   const [likedError, setLikedError] = useState<string | null>(null);
+  const [bookmarkedLoading, setBookmarkedLoading] = useState(false);
+  const [bookmarkedError, setBookmarkedError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"compose" | "manage">("compose");
   const [specificAudience, setSpecificAudience] = useState(false);
   const [scheduledSend, setScheduledSend] = useState(false);
@@ -182,6 +185,28 @@ export function BloggerCenterPage() {
     };
 
     void loadLikedArticles();
+  }, [activeSection]);
+
+  useEffect(() => {
+    if (activeSection !== "favorites") return;
+
+    const loadBookmarkedArticles = async () => {
+      setBookmarkedLoading(true);
+      setBookmarkedError(null);
+
+      try {
+        const response = await fetch("/api/user/bookmarked-articles", { cache: "no-store" });
+        if (!response.ok) throw new Error("加载我的收藏失败");
+        const data = (await response.json()) as { bookmarkedArticles: typeof likedArticles };
+        setBookmarkedList(data.bookmarkedArticles);
+      } catch {
+        setBookmarkedError("我的收藏加载失败，请稍后重试。");
+      } finally {
+        setBookmarkedLoading(false);
+      }
+    };
+
+    void loadBookmarkedArticles();
   }, [activeSection]);
 
   const articleRows: ArticleRow[] = useMemo(
@@ -517,7 +542,16 @@ export function BloggerCenterPage() {
               )}
             </div>
           ) : null}
-          {activeSection === "favorites" ? <VisitorCenterFavorites articles={likedList} /> : null}
+          {activeSection === "favorites" ? (
+            <div className="space-y-4">
+              {bookmarkedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{bookmarkedError}</div> : null}
+              {bookmarkedLoading ? (
+                <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的收藏...</div>
+              ) : (
+                <VisitorCenterFavorites articles={bookmarkedList} />
+              )}
+            </div>
+          ) : null}
           {activeSection === "comments" ? (
             <BloggerCenterComments
               reviewItems={filteredReviews}

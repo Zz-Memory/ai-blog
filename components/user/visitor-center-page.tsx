@@ -66,8 +66,11 @@ export function VisitorCenterPage() {
   }, []);
 
   const [likedList, setLikedList] = useState<LikedArticle[]>(likedArticles);
+  const [bookmarkedList, setBookmarkedList] = useState<LikedArticle[]>([]);
   const [likedLoading, setLikedLoading] = useState(false);
   const [likedError, setLikedError] = useState<string | null>(null);
+  const [bookmarkedLoading, setBookmarkedLoading] = useState(false);
+  const [bookmarkedError, setBookmarkedError] = useState<string | null>(null);
 
   // 当前用户“点赞”列表。
   // 这里会优先从接口加载真实数据，失败时再回退到本地示例。
@@ -99,6 +102,32 @@ export function VisitorCenterPage() {
     };
 
     void loadLikedArticles();
+  }, [activeSection]);
+
+  useEffect(() => {
+    const loadBookmarkedArticles = async () => {
+      if (activeSection !== "favorites") return;
+
+      setBookmarkedLoading(true);
+      setBookmarkedError(null);
+
+      try {
+        const response = await fetch("/api/user/bookmarked-articles", { cache: "no-store" });
+        if (!response.ok) throw new Error("加载收藏文章失败");
+        const data = (await response.json()) as { bookmarkedArticles: LikedArticle[] };
+        setBookmarkedList(data.bookmarkedArticles);
+      } catch {
+        setBookmarkedError("我的收藏加载失败，请稍后重试。");
+      } finally {
+        setBookmarkedLoading(false);
+      }
+    };
+
+    if (activeSection !== "favorites") {
+      setBookmarkedError(null);
+    }
+
+    void loadBookmarkedArticles();
   }, [activeSection]);
 
   useEffect(() => {
@@ -219,7 +248,16 @@ export function VisitorCenterPage() {
             </div>
           ) : null}
 
-          {activeSection === "favorites" ? <VisitorCenterFavorites articles={likedList} /> : null}
+          {activeSection === "favorites" ? (
+            <div className="space-y-4">
+              {bookmarkedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{bookmarkedError}</div> : null}
+              {bookmarkedLoading ? (
+                <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的收藏...</div>
+              ) : (
+                <VisitorCenterFavorites articles={bookmarkedList} />
+              )}
+            </div>
+          ) : null}
 
           {activeSection === "comments" ? <VisitorCenterComments articles={commentedList} /> : null}
 
