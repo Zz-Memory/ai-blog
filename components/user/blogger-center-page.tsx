@@ -13,6 +13,7 @@ import { VisitorCenterFavorites } from "@/components/user/visitor-center-page/vi
 import { VisitorCenterHistory } from "@/components/user/visitor-center-page/visitor-center-history";
 import { VisitorCenterLiked } from "@/components/user/visitor-center-page/visitor-center-liked";
 import { VisitorCenterNotifications } from "@/components/user/visitor-center-page/visitor-center-notifications";
+import { VisitorCenterToolbar } from "@/components/user/visitor-center-page/visitor-center-toolbar";
 
 import { commentedArticles } from "./visitor-center-page/commented-articles";
 import { historyArticles } from "./visitor-center-page/history-articles";
@@ -109,7 +110,10 @@ export function BloggerCenterPage() {
   const [siteSearchValue, setSiteSearchValue] = useState("");
   const [historySearchValue, setHistorySearchValue] = useState("");
   const [historySearchKeyword, setHistorySearchKeyword] = useState("");
+  const [historyVisibleCount, setHistoryVisibleCount] = useState(4);
   const [history, setHistory] = useState(historyArticles);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [activeSection, setActiveSection] = useState("articles");
@@ -192,6 +196,32 @@ export function BloggerCenterPage() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (activeSection !== "history") return;
+
+    const loadHistory = async () => {
+      setHistoryLoading(true);
+      setHistoryError(null);
+
+      try {
+        const response = await fetch("/api/user/browse-histories", { cache: "no-store" });
+        if (!response.ok) throw new Error("加载浏览记录失败");
+        const data = (await response.json()) as { histories: typeof historyArticles };
+        setHistory(data.histories);
+      } catch {
+        setHistoryError("浏览记录加载失败，请稍后重试。");
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    void loadHistory();
+  }, [activeSection]);
+
+  useEffect(() => {
+    setHistoryVisibleCount(4);
+  }, [historySearchKeyword, history]);
+
+  useEffect(() => {
     if (activeSection === "send-message") {
       setActiveTab("compose");
     } else {
@@ -227,6 +257,23 @@ export function BloggerCenterPage() {
     if (!q) return history;
     return history.filter((item) => [item.title, item.excerpt, item.category, ...item.tags].join(" ").toLowerCase().includes(q));
   }, [history, historySearchKeyword]);
+
+  const visibleHistory = useMemo(() => filteredHistory.slice(0, historyVisibleCount), [filteredHistory, historyVisibleCount]);
+  const hasMoreHistory = historyVisibleCount < filteredHistory.length;
+
+  const handleClearHistory = async () => {
+    setShowClearConfirm(false);
+    try {
+      const response = await fetch("/api/user/browse-histories", { method: "DELETE" });
+      if (!response.ok) throw new Error("清空失败");
+      setHistory([]);
+      setHistorySearchKeyword("");
+      setHistorySearchValue("");
+      setHistoryVisibleCount(4);
+    } catch {
+      setHistoryError("清空浏览记录失败，请稍后重试。");
+    }
+  };
 
   const filteredUsers = useMemo(() => {
     const q = userSearchValue.trim().toLowerCase();
@@ -389,18 +436,27 @@ export function BloggerCenterPage() {
 
           {activeSection === "history" ? (
             <div className="space-y-4">
-              <div className="rounded-[28px] border border-white/8 bg-[#14161b] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-zinc-100">浏览记录</h2>
-                    <p className="mt-2 text-sm leading-7 text-zinc-400">延续访客中心的浏览记录模块，方便您查看自己的内容浏览轨迹。</p>
-                  </div>
-                  <button type="button" onClick={() => setShowClearConfirm(true)} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-200 transition hover:bg-white/10">
-                    清空记录
+              <VisitorCenterToolbar
+                searchValue={historySearchValue}
+                onSearchChange={setHistorySearchValue}
+                onSearchSubmit={setHistorySearchKeyword}
+                onClearHistoryClick={() => setShowClearConfirm(true)}
+              />
+
+              {historyError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{historyError}</div> : null}
+              {historyLoading ? (
+                <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载浏览记录...</div>
+              ) : (
+                <VisitorCenterHistory articles={visibleHistory} visibleCount={visibleHistory.length} />
+              )}
+
+              {hasMoreHistory ? (
+                <div className="flex justify-center pt-4">
+                  <button type="button" onClick={() => setHistoryVisibleCount((count) => Math.min(count + 4, filteredHistory.length))} className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10">
+                    加载更多浏览历史
                   </button>
                 </div>
-              </div>
-              <VisitorCenterHistory articles={filteredHistory} />
+              ) : null}
             </div>
           ) : null}
 
@@ -445,10 +501,7 @@ export function BloggerCenterPage() {
         confirmLabel="确认清空"
         confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400"
         onClose={() => setShowClearConfirm(false)}
-        onConfirm={() => {
-          setHistory([]);
-          setShowClearConfirm(false);
-        }}
+        onConfirm={handleClearHistory}
       />
 
       <VisitorCenterConfirmModal

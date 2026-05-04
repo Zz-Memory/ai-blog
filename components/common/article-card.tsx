@@ -33,6 +33,7 @@ export type ArticleCardProps = {
   commentsCount?: number;
   isLiked?: boolean;
   isBookmarked?: boolean;
+  categorySuffix?: React.ReactNode;
 };
 
 // 统计项小组件。
@@ -65,6 +66,7 @@ export function ArticleCard({
   compact = false,
   likesCount: initialLikes = stats.likes,
   bookmarksCount: initialBookmarks = stats.favorites,
+  categorySuffix,
   commentsCount: initialComments = stats.comments,
   isLiked: initialIsLiked = false,
   isBookmarked: initialIsBookmarked = false,
@@ -147,7 +149,10 @@ export function ArticleCard({
       <article className="group rounded-2xl border border-white/8 bg-[#17181d] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition duration-300 hover:border-blue-400/20 hover:bg-[#1a1b21]">
         <div className={`flex items-start justify-between gap-6 ${compact ? "gap-4" : ""}`}>
           <div className="min-w-0">
-            {category ? <CategoryPill label={category} /> : null}
+            <div className="flex flex-wrap items-center gap-2">
+              {category ? <CategoryPill label={category} /> : null}
+              {categorySuffix}
+            </div>
             <Link href={href} aria-label={`查看文章：${title}`} className={`${compact ? "mt-2 text-2xl" : "mt-3 text-[28px]"} block font-medium tracking-tight text-zinc-100 transition-colors duration-300 group-hover:text-blue-100`}>
               {title}
             </Link>

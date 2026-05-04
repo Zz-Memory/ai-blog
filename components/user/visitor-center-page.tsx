@@ -36,10 +36,13 @@ export function VisitorCenterPage() {
   // 浏览记录筛选关键字。
   // 只有当用户提交搜索时，才会把当前输入同步到这里，从而触发列表过滤。
   const [historySearchKeyword, setHistorySearchKeyword] = useState("");
+  const [historyVisibleCount, setHistoryVisibleCount] = useState(4);
 
   // 当前展示的历史记录数据。
   // 之所以保存在 state 中，是为了后续支持“清空记录”等交互后直接更新列表。
   const [history, setHistory] = useState(historyArticles);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   // 以下三个 state 分别控制三个独立弹窗是否可见。
   // 这样做的好处是：每个操作的确认语义都清晰，不会互相串状态。
@@ -66,6 +69,32 @@ export function VisitorCenterPage() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (activeSection !== "history") return;
+
+    const loadHistory = async () => {
+      setHistoryLoading(true);
+      setHistoryError(null);
+
+      try {
+        const response = await fetch("/api/user/browse-histories", { cache: "no-store" });
+        if (!response.ok) throw new Error("加载浏览记录失败");
+        const data = (await response.json()) as { histories: typeof historyArticles };
+        setHistory(data.histories);
+      } catch {
+        setHistoryError("浏览记录加载失败，请稍后重试。");
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    void loadHistory();
+  }, [activeSection, searchParams]);
+
+  useEffect(() => {
+    setHistoryVisibleCount(4);
+  }, [historySearchKeyword, history]);
+
   // 根据浏览记录搜索关键字过滤列表。
   // 这里使用 `useMemo` 只是为了避免在无关状态变化时重复计算，数据量变大后更有意义。
   const filteredArticles = useMemo(() => {
@@ -73,12 +102,27 @@ export function VisitorCenterPage() {
     if (!q) return history;
 
     return history.filter((item) => {
-      // 把一条记录里可能被搜索到的字段统一拼接，再做包含判断。
-      // 这样可以同时命中标题、摘要、分类和标签。
       const haystack = [item.title, item.excerpt, item.category, ...item.tags].join(" ").toLowerCase();
       return haystack.includes(q);
     });
   }, [history, historySearchKeyword]);
+
+  const visibleHistory = useMemo(() => filteredArticles.slice(0, historyVisibleCount), [filteredArticles, historyVisibleCount]);
+  const hasMoreHistory = historyVisibleCount < filteredArticles.length;
+
+  const handleClearHistory = async () => {
+    setShowClearConfirm(false);
+    try {
+      const response = await fetch("/api/user/browse-histories", { method: "DELETE" });
+      if (!response.ok) throw new Error("清空失败");
+      setHistory([]);
+      setHistorySearchKeyword("");
+      setHistorySearchValue("");
+      setHistoryVisibleCount(4);
+    } catch {
+      setHistoryError("清空浏览记录失败，请稍后重试。");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#111215] text-zinc-200">
@@ -105,16 +149,26 @@ export function VisitorCenterPage() {
                 onClearHistoryClick={() => setShowClearConfirm(true)}
               />
 
-              <VisitorCenterHistory articles={filteredArticles} />
+              {historyError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{historyError}</div> : null}
+              {historyLoading ? (
+                <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">
+                  正在加载浏览记录...
+                </div>
+              ) : (
+                <VisitorCenterHistory articles={visibleHistory} visibleCount={visibleHistory.length} />
+              )}
 
-              <div className="flex justify-center pt-4">
-                <button
-                  type="button"
-                  className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
-                >
-                  加载更早的记录
-                </button>
-              </div>
+              {hasMoreHistory ? (
+                <div className="flex justify-center pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setHistoryVisibleCount((count) => Math.min(count + 4, filteredArticles.length))}
+                    className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
+                  >
+                    加载更多浏览历史
+                  </button>
+                </div>
+              ) : null}
             </>
           ) : null}
 
@@ -139,10 +193,7 @@ export function VisitorCenterPage() {
         confirmLabel="确认清空"
         confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400"
         onClose={() => setShowClearConfirm(false)}
-        onConfirm={() => {
-          setHistory([]);
-          setShowClearConfirm(false);
-        }}
+        onConfirm={handleClearHistory}
       />
 
       {/* 退出登录确认弹窗：这里只做关闭演示，不接入真实退出逻辑。 */}

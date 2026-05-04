@@ -12,6 +12,7 @@ type PageProps = {
 
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
+  const auth = await getAuthUser();
 
   const article = await prisma.post.findUnique({
     where: { slug },
@@ -80,8 +81,6 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
-  const auth = await getAuthUser();
-
   const topLevelComments = article.comments.filter((comment) => !comment.parentId);
   const comments = topLevelComments.map((comment) => ({
     id: comment.id,
@@ -106,6 +105,36 @@ export default async function Page({ params }: PageProps) {
         replyTo: comment.user.username,
       })),
   }));
+
+  if (auth) {
+    const recentVisit = await prisma.browseHistory.findFirst({
+      where: {
+        userId: auth.user.id,
+        postId: article.id,
+        visitedAt: {
+          gte: new Date(Date.now() - 5 * 60 * 1000),
+        },
+      },
+      select: { id: true },
+      orderBy: { visitedAt: "desc" },
+    });
+
+    if (!recentVisit) {
+      await prisma.browseHistory.deleteMany({
+        where: {
+          userId: auth.user.id,
+          postId: article.id,
+        },
+      });
+
+      await prisma.browseHistory.create({
+        data: {
+          userId: auth.user.id,
+          postId: article.id,
+        },
+      });
+    }
+  }
 
   return (
     <ArticleDetailPage
