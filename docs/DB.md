@@ -62,12 +62,12 @@
 
 ### 2. 邮箱验证码表 `VerificationCode`
 
-用于注册、修改（找回）密码、绑定邮箱、注销账号等一次性验证场景。
+用于注册、修改（找回）密码、注销账号等一次性验证场景。
 
 #### 主要字段
 - `email`
 - `code`
-- `purpose`：`REGISTER | RESET_PASSWORD | BIND_EMAIL | DELETE_ACCOUNT`
+- `purpose`：`REGISTER | RESET_PASSWORD | DELETE_ACCOUNT`
 - `expiresAt`
 - `consumedAt`
 - `createdAt`

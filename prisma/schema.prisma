@@ -21,11 +21,10 @@ enum UserStatus {
   BANNED
 }
 
-// 验证码用途：注册、重置密码、绑定邮箱、注销账号
+// 验证码用途：注册、重置密码、注销账号
 enum VerificationPurpose {
   REGISTER
   RESET_PASSWORD
-  BIND_EMAIL
   DELETE_ACCOUNT
 }
 
