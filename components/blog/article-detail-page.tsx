@@ -271,7 +271,10 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
         }),
       });
 
-      if (!response.ok) throw new Error("评论提交失败");
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(errorData?.message || "评论提交失败");
+      }
 
       const data = (await response.json()) as { comment: { id: string; status: "PENDING" | "APPROVED"; createdAt: string; message: string } };
       const authorAvatarUrl = currentUser?.role === "blogger" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png";
@@ -303,8 +306,8 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
       setCommentDraft("");
       setReplyTo(null);
       setCommentNotice(data.comment.message);
-    } catch {
-      setCommentNotice("评论提交失败，请稍后重试。");
+    } catch (error) {
+      setCommentNotice(error instanceof Error && error.message ? error.message : "评论提交失败，请稍后重试。");
     }
   };
 

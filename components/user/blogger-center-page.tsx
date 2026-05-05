@@ -27,13 +27,11 @@ import { BloggerCenterUsers } from "./blogger-center-page/blogger-center-users";
 
 type ArticleStatus = "published" | "draft";
 type ReviewStatus = "pending" | "approved";
-type MessageStatus = "published" | "draft";
 type UserStatus = "active" | "muted";
 
 type UserItem = { id: string; nickname: string; email: string; joinedAt: string; status: UserStatus };
 type ArticleItem = { title: string; excerpt: string; tags: string[]; updatedAt: string; status: ArticleStatus };
 type ArticleRow = ArticleItem & { category: string };
-type MessageItem = { id: string; title: string; audience: string; updatedAt: string; status: MessageStatus };
 type ReviewItem = { id: string; articleTitle: string; author: string; content: string; createdAt: string; likes: number; replies: number; status: ReviewStatus; href: string };
 
 const articleTabs: Array<{ id: ArticleStatus; label: string; count: number }> = [
@@ -53,15 +51,6 @@ const reviewActionMap: Record<ReviewStatus, Array<{ label: string; className: st
   ],
   approved: [{ label: "删除", className: "text-rose-300 hover:bg-rose-500/10" }],
 };
-
-const initialUsers: UserItem[] = [
-  { id: "u-1", nickname: "AlexChen", email: "alexchen@example.com", joinedAt: "2024-04-02", status: "active" },
-  { id: "u-2", nickname: "晨曦", email: "chenxi@example.com", joinedAt: "2024-04-08", status: "active" },
-  { id: "u-3", nickname: "小蓝", email: "xiaolan@example.com", joinedAt: "2024-04-12", status: "muted" },
-  { id: "u-4", nickname: "Neo", email: "neo@example.com", joinedAt: "2024-04-18", status: "active" },
-  { id: "u-5", nickname: "momo", email: "momo@example.com", joinedAt: "2024-04-20", status: "active" },
-  { id: "u-6", nickname: "Luna", email: "luna@example.com", joinedAt: "2024-04-21", status: "muted" },
-];
 
 
 const BLOGGER_CENTER_STORAGE_KEY = "ai-blog.blogger-center.active-section";
@@ -86,7 +75,6 @@ export function BloggerCenterPage() {
   const [likedError, setLikedError] = useState<string | null>(null);
   const [bookmarkedLoading, setBookmarkedLoading] = useState(false);
   const [bookmarkedError, setBookmarkedError] = useState<string | null>(null);
-  const [messageError, setMessageError] = useState<string | null>(null);
   const [activeArticleTab, setActiveArticleTab] = useState<ArticleStatus>("published");
   const [articlePage, setArticlePage] = useState(1);
   const [activeArticleMenu, setActiveArticleMenu] = useState<string | null>(null);
@@ -103,16 +91,15 @@ export function BloggerCenterPage() {
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>([]);
   const [commentedLoading, setCommentedLoading] = useState(false);
   const [commentedError, setCommentedError] = useState<string | null>(null);
-  const [activeMessageMenu, setActiveMessageMenu] = useState<string | null>(null);
-  const [activeMessageMenuPosition, setActiveMessageMenuPosition] = useState<{ top: number; left: number } | null>(null);
-  const [messageDeleteTarget, setMessageDeleteTarget] = useState<MessageItem | null>(null);
   const [articleDeleteTarget, setArticleDeleteTarget] = useState<ArticleRow | null>(null);
-  const [users, setUsers] = useState(initialUsers);
-  const [activeUserMenu, setActiveUserMenu] = useState<string | null>(null);
-  const [activeUserMenuPosition, setActiveUserMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const [users, setUsers] = useState<UserItem[]>([]);
   const [userDeleteTarget, setUserDeleteTarget] = useState<UserItem | null>(null);
   const [userSearchValue, setUserSearchValue] = useState("");
+  const [userSearchKeyword, setUserSearchKeyword] = useState("");
   const [userPage, setUserPage] = useState(1);
+  const [userLoading, setUserLoading] = useState(false);
+  const [userError, setUserError] = useState<string | null>(null);
+  const [userActionLoading, setUserActionLoading] = useState(false);
   const { unreadCount, setUnreadCount } = useNotificationCount();
 
   useEffect(() => {
@@ -202,13 +189,27 @@ export function BloggerCenterPage() {
 
   useEffect(() => { setHistoryVisibleCount(4); }, [historySearchKeyword, history]);
   useEffect(() => { setArticlePage(1); }, [activeArticleTab]);
-  useEffect(() => { setUserPage(1); }, [userSearchValue]);
+  useEffect(() => { setUserPage(1); }, [userSearchKeyword]);
   useEffect(() => { setReviewPage(1); }, [reviewFilter]);
 
   useEffect(() => {
-    if (activeSection !== "send-message") return;
-    setMessageError(null);
-  }, [activeSection]);
+    if (activeSection !== "users") return;
+    const loadUsers = async () => {
+      setUserLoading(true);
+      setUserError(null);
+      try {
+        const response = await fetch(`/api/blogger/users?page=${userPage}&pageSize=6&search=${encodeURIComponent(userSearchKeyword.trim())}`, { cache: "no-store" });
+        if (!response.ok) throw new Error();
+        const data = (await response.json()) as { users: UserItem[] };
+        setUsers(data.users);
+      } catch {
+        setUserError("用户管理加载失败，请稍后重试。");
+      } finally {
+        setUserLoading(false);
+      }
+    };
+    void loadUsers();
+  }, [activeSection, userPage, userSearchKeyword]);
 
   const articleRows: ArticleRow[] = useMemo(() => [
     { title: "AI 原生极简主义：界面即智能容器", category: "设计", excerpt: "探讨在人工智能时代，如何通过大量留白和精准排版重塑阅读体验...", tags: ["UI/UX", "AI"], updatedAt: "2024-05-20 14:30", status: "published" },
@@ -238,14 +239,43 @@ export function BloggerCenterPage() {
   const visibleHistory = useMemo(() => filteredHistory.slice(0, historyVisibleCount), [filteredHistory, historyVisibleCount]);
   const hasMoreHistory = historyVisibleCount < filteredHistory.length;
 
-  const filteredUsers = useMemo(() => { const q = userSearchValue.trim().toLowerCase(); return q ? users.filter((u) => [u.nickname, u.email].join(" ").toLowerCase().includes(q)) : users; }, [userSearchValue, users]);
   const usersPerPage = 6;
-  const totalUserPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
-  const visibleUsers = filteredUsers.slice((userPage - 1) * usersPerPage, userPage * usersPerPage);
 
   const handleClearHistory = async () => { setShowClearConfirm(false); await fetch("/api/user/browse-histories", { method: "DELETE" }).then((r) => { if (!r.ok) throw new Error(); }).then(() => { setHistory([]); setHistorySearchKeyword(""); setHistorySearchValue(""); setHistoryVisibleCount(4); }).catch(() => setHistoryError("清空浏览记录失败，请稍后重试。")); };
-  const handleToggleUserStatus = (userId: string) => setUsers((current) => current.map((u) => (u.id === userId ? { ...u, status: u.status === "active" ? "muted" : "active" } : u)));
-  const handleConfirmDeleteUser = () => { if (!userDeleteTarget) return; setUsers((current) => current.filter((u) => u.id !== userDeleteTarget.id)); setUserDeleteTarget(null); };
+  const handleUserSearchSubmit = () => {
+    setUserSearchKeyword(userSearchValue.trim());
+    setUserPage(1);
+  };
+  const refreshUsers = async (page = userPage) => {
+    setUserLoading(true);
+    setUserError(null);
+    try {
+      const response = await fetch(`/api/blogger/users?page=${page}&pageSize=${usersPerPage}&search=${encodeURIComponent(userSearchKeyword.trim())}`, { cache: "no-store" });
+      if (!response.ok) throw new Error();
+      const data = (await response.json()) as { users: UserItem[]; totalPages: number; page: number };
+      setUsers(data.users);
+      if (data.page !== page) setUserPage(data.page);
+      return data;
+    } catch {
+      setUserError("用户管理加载失败，请稍后重试。");
+      return null;
+    } finally {
+      setUserLoading(false);
+    }
+  };
+  const handleToggleUserStatus = async (userId: string) => {
+    setUserActionLoading(true);
+    try {
+      const response = await fetch("/api/blogger/users", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: userId, action: "toggle-status" }) });
+      if (!response.ok) throw new Error();
+      await refreshUsers();
+    } catch {
+      setUserError("切换用户状态失败，请稍后重试。");
+    } finally {
+      setUserActionLoading(false);
+    }
+  };
+  const handleConfirmDeleteUser = async () => { if (!userDeleteTarget) return; setUserActionLoading(true); try { const response = await fetch(`/api/blogger/users?id=${userDeleteTarget.id}`, { method: "DELETE" }); if (!response.ok) throw new Error(); setUserDeleteTarget(null); await refreshUsers(); } catch { setUserError("删除用户失败，请稍后重试。"); } finally { setUserActionLoading(false); } };
   const handleConfirmDeleteArticle = () => setArticleDeleteTarget(null);
   const handleReviewAction = async () => {
     if (!reviewActionTarget) return;
@@ -272,7 +302,6 @@ export function BloggerCenterPage() {
       setReviewActionLoading(false);
     }
   };
-  const handleRefreshMessages = async () => undefined;
 
   return (
     <div className="min-h-screen bg-[#111215] text-zinc-200">
@@ -284,7 +313,7 @@ export function BloggerCenterPage() {
           {activeSection === "comments-review" ? <div className="space-y-4">{reviewError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{reviewError}</div> : null}{reviewLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载评论管理...</div> : <BloggerCenterComments reviewItems={filteredReviews} reviewFilter={reviewFilter} onFilterChange={setReviewFilter} visibleReviews={visibleReviews} reviewPage={safeReviewPage} totalReviewPages={totalReviewPages} onPrevPage={() => setReviewPage((page) => Math.max(1, page - 1))} onNextPage={() => setReviewPage((page) => Math.min(totalReviewPages, page + 1))} onPageChange={setReviewPage} activeMenuTitle={activeReviewMenu} activeMenuPosition={activeReviewMenuPosition} onMenuOpen={(id, top, left) => { setActiveReviewMenu(id); setActiveReviewMenuPosition({ top, left }); }} onMenuClose={() => { setActiveReviewMenu(null); setActiveReviewMenuPosition(null); }} onRequestAction={(reviewId, action) => { const review = reviewItems.find((item) => item.id === reviewId) ?? filteredReviews.find((item) => item.id === reviewId); if (!review) return; setReviewActionTarget({ review, action }); }} reviewStatusMeta={reviewStatusMeta} reviewActionMap={reviewActionMap} />}{reviewActionLoading ? <div className="text-sm text-zinc-500">正在执行操作...</div> : null}</div> : null}
           {activeSection === "comments" ? <div className="space-y-4">{commentedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{commentedError}</div> : null}{commentedLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的评论...</div> : <VisitorCenterComments articles={commentedList} />}</div> : null}
           {activeSection === "send-message" ? <BloggerCenterMessages /> : null}
-          {activeSection === "users" ? <BloggerCenterUsers users={visibleUsers} activeMenuId={activeUserMenu} activeMenuPosition={activeUserMenuPosition} onToggleStatus={handleToggleUserStatus} onRequestDelete={(userId) => setUserDeleteTarget(users.find((user) => user.id === userId) ?? null)} onMenuOpen={(userId, top, left) => { setActiveUserMenu(userId); setActiveUserMenuPosition({ top, left }); }} onMenuClose={() => { setActiveUserMenu(null); setActiveUserMenuPosition(null); }} searchValue={userSearchValue} onSearchChange={setUserSearchValue} page={userPage} pageSize={usersPerPage} totalPages={totalUserPages} onPrevPage={() => setUserPage((page) => Math.max(1, page - 1))} onNextPage={() => setUserPage((page) => Math.min(totalUserPages, page + 1))} onPageChange={setUserPage} /> : null}
+          {activeSection === "users" ? <div className="space-y-4">{userError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{userError}</div> : null}{userLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载用户管理...</div> : <BloggerCenterUsers users={users} onToggleStatus={handleToggleUserStatus} onRequestDelete={(userId) => setUserDeleteTarget(users.find((user) => user.id === userId) ?? null)} searchValue={userSearchValue} onSearchChange={setUserSearchValue} onSearchSubmit={handleUserSearchSubmit} page={userPage} pageSize={6} totalPages={Math.max(1, Math.ceil(users.length / 6))} onPrevPage={() => setUserPage((page) => Math.max(1, page - 1))} onNextPage={() => setUserPage((page) => Math.min(Math.max(1, Math.ceil(users.length / 6)), page + 1))} onPageChange={setUserPage} />}{userActionLoading ? <div className="text-sm text-zinc-500">正在执行用户操作...</div> : null}</div> : null}
           {activeSection === "history" ? <div className="space-y-4"><VisitorCenterToolbar searchValue={historySearchValue} onSearchChange={setHistorySearchValue} onSearchSubmit={setHistorySearchKeyword} onClearHistoryClick={() => setShowClearConfirm(true)} />{historyError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{historyError}</div> : null}{historyLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载浏览记录...</div> : <VisitorCenterHistory articles={visibleHistory} visibleCount={visibleHistory.length} />}{hasMoreHistory ? <div className="flex justify-center pt-4"><button type="button" onClick={() => setHistoryVisibleCount((count) => Math.min(count + 4, filteredHistory.length))} className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10">加载更多浏览历史</button></div> : null}</div> : null}
           {activeSection === "liked" ? <div className="space-y-4">{likedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{likedError}</div> : null}{likedLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的点赞...</div> : <VisitorCenterLiked articles={likedList} />}</div> : null}
           {activeSection === "favorites" ? <div className="space-y-4">{bookmarkedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{bookmarkedError}</div> : null}{bookmarkedLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的收藏...</div> : <VisitorCenterFavorites articles={bookmarkedList} />}</div> : null}
@@ -296,7 +325,6 @@ export function BloggerCenterPage() {
       <VisitorCenterConfirmModal open={showLogoutConfirm} title="确认退出登录？" description="退出后需要重新登录才能继续访问个人中心功能。" cancelLabel="取消" confirmLabel="确认退出" confirmButtonClassName="bg-[#adc6ff] text-[#001a41] hover:bg-[#c3d2ff]" onClose={() => setShowLogoutConfirm(false)} onConfirm={async () => { await logout(); setShowLogoutConfirm(false); router.push("/"); router.refresh(); }} />
       <VisitorCenterConfirmModal open={Boolean(userDeleteTarget)} title="确认删除用户？" description={userDeleteTarget ? `确定要删除用户「${userDeleteTarget.nickname}」吗？删除后无法恢复。` : "确定要删除该用户吗？删除后无法恢复。"} cancelLabel="取消" confirmLabel="确认删除" confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400" onClose={() => setUserDeleteTarget(null)} onConfirm={handleConfirmDeleteUser} />
       <VisitorCenterConfirmModal open={Boolean(articleDeleteTarget)} title="确认删除文章？" description={articleDeleteTarget ? `确定要删除文章「${articleDeleteTarget.title}」吗？删除后无法恢复。` : "确定要删除该文章吗？删除后无法恢复。"} cancelLabel="取消" confirmLabel="确认删除" confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400" onClose={() => setArticleDeleteTarget(null)} onConfirm={handleConfirmDeleteArticle} />
-      <VisitorCenterConfirmModal open={Boolean(messageDeleteTarget)} title="确认删除消息？" description={messageDeleteTarget ? `确定要删除消息「${messageDeleteTarget.title}」吗？删除后无法恢复。` : "确定要删除该消息吗？删除后无法恢复。"} cancelLabel="取消" confirmLabel="确认删除" confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400" onClose={() => setMessageDeleteTarget(null)} onConfirm={() => setMessageDeleteTarget(null)} />
       <VisitorCenterConfirmModal open={Boolean(reviewActionTarget)} title={reviewActionTarget?.action === "approve" ? "确认通过评论？" : "确认删除评论？"} description={reviewActionTarget ? reviewActionTarget.action === "approve" ? `确定要通过评论「${reviewActionTarget.review.articleTitle} / ${reviewActionTarget.review.author}」吗？` : `确定要删除评论「${reviewActionTarget.review.articleTitle} / ${reviewActionTarget.review.author}」吗？删除后无法恢复。` : "确定要执行该操作吗？"} cancelLabel="取消" confirmLabel={reviewActionTarget?.action === "approve" ? "确认通过" : "确认删除"} confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400" onClose={() => setReviewActionTarget(null)} onConfirm={handleReviewAction} />
       <SiteFooter />
     </div>

@@ -49,6 +49,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "缺少必要参数。" }, { status: 400 });
   }
 
+  if (auth.user.status === "BANNED") {
+    return NextResponse.json({ message: "你当前处于禁言状态，无法发表评论。" }, { status: 403 });
+  }
+
   const post = await prisma.post.findUnique({
     where: { id: postId },
     select: { id: true, title: true, authorId: true, slug: true },

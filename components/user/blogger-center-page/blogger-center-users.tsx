@@ -12,14 +12,11 @@ type UserItem = {
 
 type Props = {
   users: UserItem[];
-  activeMenuId: string | null;
-  activeMenuPosition: { top: number; left: number } | null;
   onToggleStatus: (userId: string) => void;
   onRequestDelete: (userId: string) => void;
-  onMenuOpen: (userId: string, top: number, left: number) => void;
-  onMenuClose: () => void;
   searchValue: string;
   onSearchChange: (value: string) => void;
+  onSearchSubmit: () => void;
   page: number;
   pageSize: number;
   totalPages: number;
@@ -30,14 +27,11 @@ type Props = {
 
 export function BloggerCenterUsers({
   users,
-  activeMenuId,
-  activeMenuPosition,
   onToggleStatus,
   onRequestDelete,
-  onMenuOpen,
-  onMenuClose,
   searchValue,
   onSearchChange,
+  onSearchSubmit,
   page,
   pageSize,
   totalPages,
@@ -58,6 +52,12 @@ export function BloggerCenterUsers({
           <input
             value={searchValue}
             onChange={(event) => onSearchChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                onSearchSubmit();
+              }
+            }}
             className="w-full rounded-xl border border-white/10 bg-[#101215] py-2.5 pl-10 pr-4 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-[#adc6ff]/50"
             placeholder="搜索昵称或邮箱..."
             type="text"
@@ -96,40 +96,13 @@ export function BloggerCenterUsers({
                       <span className="ml-3 text-xs font-medium text-zinc-400">{user.status === "active" ? "活跃" : "禁言"}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="relative inline-flex">
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            const rect = event.currentTarget.getBoundingClientRect();
-                            const menuHeight = 64;
-                            const menuWidth = 160;
-                            const gap = 8;
-                            const pad = 12;
-                            const openUp = window.innerHeight - rect.bottom < menuHeight + gap;
-                            const top = openUp ? Math.max(pad, rect.top - menuHeight - gap) : Math.min(window.innerHeight - menuHeight - pad, rect.bottom + gap);
-                            const left = Math.min(window.innerWidth - menuWidth - pad, Math.max(pad, rect.right - menuWidth));
-                            onMenuOpen(user.id, top, left);
-                          }}
-                          className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/8 hover:text-zinc-100"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">more_vert</span>
-                        </button>
-
-                        {activeMenuId === user.id && activeMenuPosition ? (
-                          <div className="fixed z-50 w-40 overflow-hidden rounded-xl border border-white/10 bg-[#161922] shadow-2xl" style={{ top: activeMenuPosition.top, left: activeMenuPosition.left }}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onRequestDelete(user.id);
-                                onMenuClose();
-                              }}
-                              className="block w-full px-4 py-2 text-left text-sm text-rose-300 transition hover:bg-rose-500/10"
-                            >
-                              删除
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onRequestDelete(user.id)}
+                        className="rounded-lg px-3 py-1.5 text-sm text-rose-300 transition hover:bg-rose-500/10"
+                      >
+                        删除
+                      </button>
                     </td>
                   </tr>
                 ))
