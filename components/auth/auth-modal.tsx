@@ -101,12 +101,21 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
   const [loginAccount, setLoginAccount] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [isSendingCode, setIsSendingCode] = useState(false);
+  const [sendCodeCooldown, setSendCodeCooldown] = useState(0);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
   const [errors, setErrors] = useState<ValidationState>({});
 
   useEffect(() => { const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); }; if (isOpen) window.addEventListener("keydown", onKeyDown); return () => window.removeEventListener("keydown", onKeyDown); }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (!sendCodeCooldown) return;
+    const timer = window.setInterval(() => {
+      setSendCodeCooldown((current) => (current <= 1 ? 0 : current - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [sendCodeCooldown]);
 
   const isLogin = mode === "login";
   const isRegister = mode === "register";
@@ -127,6 +136,7 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
     setLoginAccount("");
     setLoginPassword("");
     setIsSendingCode(false);
+    setSendCodeCooldown(0);
     setIsLoggingIn(false);
     setSubmitMessage("");
     setErrors({});
@@ -142,7 +152,9 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
     setSubmitMessage(""); setIsSendingCode(true);
     try {
       const response = await fetch("/api/auth/verification", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, purpose: purpose === "reset" ? "RESET_PASSWORD" : "REGISTER" }) });
-      setSubmitMessage(await readApiMessage(response));
+      const message = await readApiMessage(response);
+      setSubmitMessage(message);
+      if (response.ok) setSendCodeCooldown(60);
     } catch { setSubmitMessage("验证码发送失败，请稍后重试。"); } finally { setIsSendingCode(false); }
   };
 
@@ -277,7 +289,7 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
             <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void handleRegisterSubmit(); }}>
               <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">昵称</label><InputShell icon="badge" placeholder="设置您的昵称" value={registerNickname} onChange={setRegisterNickname} />{errors.nickname ? <p className="mt-2 text-[12px] text-rose-300">{errors.nickname}</p> : null}</div>
               <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">电子邮箱</label><InputShell icon="mail" placeholder="输入您的电子邮箱" type="email" value={registerEmail} onChange={setRegisterEmail} />{errors.email ? <p className="mt-2 text-[12px] text-rose-300">{errors.email}</p> : null}</div>
-              <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">验证码</label><div className="flex gap-3"><div className="flex-1"><InputShell icon="security" placeholder="输入验证码" value={registerVerification} onChange={setRegisterVerification} /></div><button type="button" disabled={isSendingCode} className="whitespace-nowrap rounded-lg border border-white/10 bg-white/5 px-4 text-[13px] font-medium text-zinc-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60" onClick={() => void handleSendVerificationCode(registerEmail.trim(), "register")}>{isSendingCode ? "发送中..." : "获取验证码"}</button></div>{errors.verification ? <p className="mt-2 text-[12px] text-rose-300">{errors.verification}</p> : null}</div>
+              <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">验证码</label><div className="flex gap-3"><div className="flex-1"><InputShell icon="security" placeholder="输入验证码" value={registerVerification} onChange={setRegisterVerification} /></div><button type="button" disabled={isSendingCode || sendCodeCooldown > 0} className="whitespace-nowrap rounded-lg border border-white/10 bg-white/5 px-4 text-[13px] font-medium text-zinc-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60" onClick={() => void handleSendVerificationCode(registerEmail.trim(), "register")}>{isSendingCode ? "发送中..." : sendCodeCooldown > 0 ? `${sendCodeCooldown}s 后重试` : "获取验证码"}</button></div>{errors.verification ? <p className="mt-2 text-[12px] text-rose-300">{errors.verification}</p> : null}</div>
               <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">设置密码</label><InputShell icon="lock" placeholder="设置您的密码" type="password" canToggleVisibility value={registerPassword.value} onChange={(value) => setRegisterPassword({ value, touched: true })} /><p className="mt-2 text-[12px] leading-5 text-zinc-400">{registerMessage}</p>{errors.password ? <p className="mt-2 text-[12px] text-rose-300">{errors.password}</p> : null}</div>
               <div><label className="mb-2 block text-[13px] font-medium text-zinc-300">确认密码</label><InputShell icon="lock_reset" placeholder="再次输入密码" type="password" canToggleVisibility value={registerConfirmPassword} onChange={setRegisterConfirmPassword} />{errors.confirmPassword ? <p className="mt-2 text-[12px] text-rose-300">{errors.confirmPassword}</p> : null}</div>
               <button type="submit" disabled={isRegistering} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#adc6ff] py-3.5 text-[15px] font-medium text-[#001a41] shadow-[0_0_15px_rgba(173,198,255,0.2)] transition hover:bg-[#c3d2ff] disabled:cursor-not-allowed disabled:opacity-70"><span>{isRegistering ? "注册中..." : "注册"}</span><FieldIcon icon="arrow_forward" /></button>
@@ -294,7 +306,7 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
                 <label className="mb-2 block text-[13px] font-medium text-zinc-300">验证码</label>
                 <div className="flex gap-3">
                   <div className="flex-1"><InputShell icon="security" placeholder="输入验证码" value={resetVerification} onChange={setResetVerification} /></div>
-                  <button type="button" disabled={isSendingCode} className="whitespace-nowrap rounded-lg border border-white/10 bg-white/5 px-4 text-[13px] font-medium text-zinc-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60" onClick={() => void handleSendVerificationCode(resetEmail.trim(), "reset")}>{isSendingCode ? "发送中..." : "获取验证码"}</button>
+                  <button type="button" disabled={isSendingCode || sendCodeCooldown > 0} className="whitespace-nowrap rounded-lg border border-white/10 bg-white/5 px-4 text-[13px] font-medium text-zinc-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60" onClick={() => void handleSendVerificationCode(resetEmail.trim(), "reset")}>{isSendingCode ? "发送中..." : sendCodeCooldown > 0 ? `${sendCodeCooldown}s 后重试` : "获取验证码"}</button>
                 </div>
                 {errors.verification ? <p className="mt-2 text-[12px] text-rose-300">{errors.verification}</p> : null}
               </div>

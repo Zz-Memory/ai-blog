@@ -1,6 +1,7 @@
 "use client";
 
 type ReviewStatus = "pending" | "approved";
+type ReviewAction = "approve" | "delete";
 
 type ReviewItem = {
   id: string;
@@ -27,12 +28,12 @@ type Props = {
   activeMenuPosition: { top: number; left: number } | null;
   onMenuOpen: (id: string, top: number, left: number) => void;
   onMenuClose: () => void;
-  onRequestDelete: (reviewId: string) => void;
+  onRequestAction: (reviewId: string, action: ReviewAction) => void;
   reviewStatusMeta: Record<ReviewStatus, { label: string; className: string }>;
   reviewActionMap: Record<ReviewStatus, Array<{ label: string; className: string }>>;
 };
 
-export function BloggerCenterComments({ reviewItems, reviewFilter, onFilterChange, visibleReviews, reviewPage, totalReviewPages, onPrevPage, onNextPage, onPageChange, activeMenuTitle, activeMenuPosition, onMenuOpen, onMenuClose, onRequestDelete, reviewStatusMeta, reviewActionMap }: Props) {
+export function BloggerCenterComments({ reviewItems, reviewFilter, onFilterChange, visibleReviews, reviewPage, totalReviewPages, onPrevPage, onNextPage, onPageChange, activeMenuTitle, activeMenuPosition, onMenuOpen, onMenuClose, onRequestAction, reviewStatusMeta, reviewActionMap }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 border-b border-white/5 pb-4">
@@ -68,7 +69,7 @@ export function BloggerCenterComments({ reviewItems, reviewFilter, onFilterChang
                   <td className="px-6 py-4 text-sm text-zinc-300">{review.author}</td>
                   <td className="px-6 py-4"><div className="max-h-24 max-w-[420px] overflow-y-auto break-words text-sm leading-7 text-zinc-300">{review.content}</div></td>
                   <td className="px-6 py-4"><span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${reviewStatusMeta[review.status].className}`}>{reviewStatusMeta[review.status].label}</span></td>
-                  <td className="px-6 py-4 text-right"><div className="relative inline-flex"><button type="button" onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const menuHeight = review.status === "approved" ? 96 : 132; const menuWidth = 160; const gap = 8; const pad = 12; const openUp = window.innerHeight - rect.bottom < menuHeight + gap; const top = openUp ? Math.max(pad, rect.top - menuHeight - gap) : Math.min(window.innerHeight - menuHeight - pad, rect.bottom + gap); const left = Math.min(window.innerWidth - menuWidth - pad, Math.max(pad, rect.right - menuWidth)); onMenuOpen(review.id, top, left); }} className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/8 hover:text-zinc-100"><span className="material-symbols-outlined text-[20px]">more_vert</span></button>{activeMenuTitle === review.id && activeMenuPosition ? (<div className="fixed z-50 w-40 overflow-hidden rounded-xl border border-white/10 bg-[#161922] shadow-2xl" style={{ top: activeMenuPosition.top, left: activeMenuPosition.left }}>{reviewActionMap[review.status].map((action) => (<button key={action.label} type="button" onClick={() => { if (action.label === "删除") onRequestDelete(review.id); onMenuClose(); }} className={`block w-full px-4 py-2 text-left text-sm transition ${action.className}`}>{action.label}</button>))}</div>) : null}</div></td>
+                  <td className="px-6 py-4 text-right"><div className="relative inline-flex" data-review-menu><button type="button" onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); if (activeMenuTitle === review.id) { onMenuClose(); return; } const menuHeight = review.status === "approved" ? 96 : 132; const menuWidth = 160; const gap = 8; const pad = 12; const openUp = window.innerHeight - rect.bottom < menuHeight + gap; const top = openUp ? Math.max(pad, rect.top - menuHeight - gap) : Math.min(window.innerHeight - menuHeight - pad, rect.bottom + gap); const left = Math.min(window.innerWidth - menuWidth - pad, Math.max(pad, rect.right - menuWidth)); onMenuOpen(review.id, top, left); }} className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/8 hover:text-zinc-100"><span className="material-symbols-outlined text-[20px]">more_vert</span></button>{activeMenuTitle === review.id && activeMenuPosition ? (<div className="fixed z-50 w-40 overflow-hidden rounded-xl border border-white/10 bg-[#161922] shadow-2xl" style={{ top: activeMenuPosition.top, left: activeMenuPosition.left }}>{reviewActionMap[review.status].map((action) => (<button key={action.label} type="button" onClick={() => { onRequestAction(review.id, action.label === "通过" ? "approve" : "delete"); onMenuClose(); }} className={`block w-full px-4 py-2 text-left text-sm transition ${action.className}`}>{action.label}</button>))}</div>) : null}</div></td>
                 </tr>
               )) : <tr className="h-[220px]"><td colSpan={5} className="px-6 py-10 text-center text-sm text-zinc-500">当前筛选条件下没有评论</td></tr>}
             </tbody>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { VisitorCenterConfirmModal } from "./visitor-center-confirm-modal";
-import type { NotificationItem, NotificationType } from "./notification-items";
+import type { NotificationItem } from "./notification-items";
 import { notificationItems } from "./notification-items";
 
 type VisitorCenterNotificationsProps = {
@@ -11,20 +11,16 @@ type VisitorCenterNotificationsProps = {
   onUnreadCountChange?: (count: number) => void;
 };
 
-const tabs: Array<{ id: NotificationType; label: string }> = [
-  { id: "all", label: "全部" },
-  { id: "likes", label: "点赞和收藏" },
-  { id: "comments", label: "评论" },
-  { id: "newUsers", label: "新增用户" },
-  { id: "system", label: "系统通知" },
-];
-
 function NotificationAvatar({ item }: { item: NotificationItem }) {
   const base = item.type === "system" ? "bg-white/5 text-zinc-300" : "bg-[#101215] text-zinc-100";
+  const avatarUrl = item.userAvatarUrl ?? (item.type === "system" ? null : "/avatars/visitor-default.png");
   return (
-    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/8 ${base}`}>
+    <div className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/8 ${base}`}>
       {item.type === "system" ? (
         <span className="material-symbols-outlined text-[20px]">notifications</span>
+      ) : avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={avatarUrl} alt={item.userName} className="h-full w-full object-cover" />
       ) : (
         <span className="text-sm font-semibold">{item.userAvatarText}</span>
       )}
@@ -33,7 +29,6 @@ function NotificationAvatar({ item }: { item: NotificationItem }) {
 }
 
 export function VisitorCenterNotifications({ items = notificationItems, onUnreadCountChange }: VisitorCenterNotificationsProps) {
-  const [activeTab, setActiveTab] = useState<NotificationType>("all");
   const [visibleCount, setVisibleCount] = useState(6);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<NotificationItem | null>(null);
@@ -44,19 +39,14 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
     setNotifications(items);
   }, [items]);
 
-  const filteredItems = useMemo(() => {
-    if (activeTab === "all") return notifications;
-    return notifications.filter((item) => item.type === activeTab);
-  }, [activeTab, notifications]);
-
   const unreadCount = useMemo(() => notifications.filter((item) => item.unread).length, [notifications]);
 
   useEffect(() => {
     onUnreadCountChange?.(unreadCount);
   }, [onUnreadCountChange, unreadCount]);
 
-  const visibleItems = filteredItems.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredItems.length;
+  const visibleItems = notifications.slice(0, visibleCount);
+  const hasMore = visibleCount < notifications.length;
 
   const openDeleteConfirm = (item: NotificationItem) => {
     setDeleteTarget(item);
@@ -91,9 +81,19 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
     setNotifications((current) => current.map((item) => ({ ...item, unread: false })));
   };
 
-  const handleTabChange = (tab: NotificationType) => {
-    setActiveTab(tab);
-    setVisibleCount(6);
+  const markNotificationRead = async (notificationId: string) => {
+    const target = notifications.find((item) => item.id === notificationId);
+    if (!target || !target.unread) return;
+
+    await fetch("/api/user/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "mark-read", id: notificationId }),
+    });
+
+    setNotifications((current) =>
+      current.map((item) => (item.id === notificationId ? { ...item, unread: false } : item))
+    );
   };
 
   return (
@@ -103,39 +103,21 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
         <p className="max-w-2xl text-[17px] leading-8 text-zinc-400">管理您收到的消息。</p>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/8 pb-4">
-        <div className="flex flex-wrap gap-6 text-sm">
-          {tabs.map((tab) => {
-            const isActive = tab.id === activeTab;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleTabChange(tab.id)}
-                className={`pb-3 transition ${isActive ? "border-b-2 border-[#adc6ff] text-[#adc6ff]" : "text-zinc-500 hover:text-zinc-200"}`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setClearConfirmOpen(true)}
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
-          >
-            清空
-          </button>
-          <button
-            type="button"
-            onClick={markAllRead}
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
-          >
-            全部标为已读
-          </button>
-        </div>
+      <div className="flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={() => setClearConfirmOpen(true)}
+          className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
+        >
+          清空
+        </button>
+        <button
+          type="button"
+          onClick={markAllRead}
+          className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
+        >
+          全部标为已读
+        </button>
       </div>
 
       <div className="space-y-4">
@@ -145,11 +127,7 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
               key={item.id}
               className={`group rounded-2xl border px-5 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition ${item.unread ? "border-[#adc6ff]/20 bg-[#171a23]" : "border-white/8 bg-[#15171c]"}`}
               onMouseEnter={() => {
-                if (item.unread) {
-                  setNotifications((current) =>
-                    current.map((currentItem) => (currentItem.id === item.id ? { ...currentItem, unread: false } : currentItem))
-                  );
-                }
+                void markNotificationRead(item.id);
               }}
             >
               <div className="flex items-start gap-4">
@@ -187,7 +165,7 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
           ))
         ) : (
           <div className="rounded-[24px] border border-dashed border-white/10 bg-white/3 px-6 py-12 text-center text-sm text-zinc-500">
-            当前没有符合条件的通知。
+            当前没有消息通知。
           </div>
         )}
       </div>

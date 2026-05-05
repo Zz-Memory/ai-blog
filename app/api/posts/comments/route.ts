@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { CommentStatus, UserRole } from "@prisma/client";
+import { CommentStatus, Prisma, UserRole } from "@prisma/client";
 
 function getStringField(body: unknown, key: string) {
   if (!body || typeof body !== "object") return null;
@@ -14,12 +14,12 @@ function buildArticleLink(slug: string) {
   return `/article/${slug}`;
 }
 
-async function createCommentNotification(tx: typeof prisma, params: { recipientId: string; senderId: string; title: string; content: string; slug: string; type: "COMMENT" | "REPLY" }) {
+async function createCommentNotification(tx: Prisma.TransactionClient, params: { recipientId: string; senderId: string; title: string; content: string; slug: string }) {
   await tx.notification.create({
     data: {
       senderId: params.senderId,
       recipientId: params.recipientId,
-      type: params.type,
+      type: "COMMENT",
       title: params.title,
       content: params.content,
       linkUrl: buildArticleLink(params.slug),
@@ -91,7 +91,6 @@ export async function POST(request: Request) {
         await createCommentNotification(tx, {
           recipientId: parentComment.userId,
           senderId: auth.user.id,
-          type: "REPLY",
           title: "有人回复了你的评论",
           content: `${auth.user.username} 回复了你的评论：${getReplyPreview(content)}`,
           slug: post.slug,
@@ -100,7 +99,6 @@ export async function POST(request: Request) {
         await createCommentNotification(tx, {
           recipientId: post.authorId,
           senderId: auth.user.id,
-          type: "COMMENT",
           title: "你的文章有了新评论",
           content: `${auth.user.username} 评论了你的文章《${post.title}》`,
           slug: post.slug,

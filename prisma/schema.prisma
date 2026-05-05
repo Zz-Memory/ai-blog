@@ -42,11 +42,7 @@ enum CommentStatus {
 }
 
 enum NotificationType {
-  LIKE
-  BOOKMARK
   COMMENT
-  REPLY
-  NEW_USER
   SYSTEM
 }
 

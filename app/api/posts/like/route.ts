@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { NotificationType } from "@prisma/client";
-
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -11,9 +9,6 @@ function getPostId(body: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function buildArticleLink(slug: string) {
-  return `/article/${slug}`;
-}
 
 export async function POST(request: Request) {
   const auth = await getAuthUser();
@@ -49,28 +44,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ liked: false, likes });
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.like.create({
-      data: {
-        userId: auth.user.id,
-        postId,
-      },
-    });
-
-    if (post.authorId !== auth.user.id) {
-      await tx.notification.create({
-        data: {
-          senderId: auth.user.id,
-          recipientId: post.authorId,
-          type: NotificationType.LIKE,
-          title: "你的文章收到了新的点赞",
-          content: `${auth.user.username} 点赞了你的文章《${post.title}》`,
-          linkUrl: buildArticleLink(post.slug),
-          isRead: false,
-          readAt: null,
-        },
-      });
-    }
+  await prisma.like.create({
+    data: {
+      userId: auth.user.id,
+      postId,
+    },
   });
 
   const likes = await prisma.like.count({ where: { postId } });

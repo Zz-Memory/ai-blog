@@ -13,7 +13,7 @@ type NotificationRow = {
   linkUrl: string | null;
   isRead: boolean;
   createdAt: Date;
-  sender: { username: string } | null;
+  sender: { username: string; role: string } | null;
 };
 
 function formatTime(createdAt: Date) {
@@ -37,7 +37,7 @@ export async function GET() {
       recipientId: auth.user.id,
     },
     orderBy: [{ createdAt: "desc" }],
-    include: { sender: { select: { username: true } } },
+    include: { sender: { select: { username: true, role: true } } },
   });
 
   return NextResponse.json({
@@ -46,6 +46,7 @@ export async function GET() {
       type: item.type,
       userName: item.sender?.username ?? "系统通知",
       userAvatarText: (item.sender?.username ?? "S").slice(0, 1).toUpperCase(),
+      userAvatarUrl: item.sender?.role === "BLOGGER" ? "/avatars/blogger-default.png" : item.sender ? "/avatars/visitor-default.png" : "/avatars/visitor-default.png",
       time: formatTime(item.createdAt),
       title: item.title,
       message: item.content,

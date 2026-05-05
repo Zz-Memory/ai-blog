@@ -1,10 +1,11 @@
-export type NotificationType = "all" | "likes" | "comments" | "newUsers" | "system";
+export type NotificationType = "all" | "comments" | "system";
 
 export type NotificationItem = {
   id: string;
   type: Exclude<NotificationType, "all">;
   userName: string;
   userAvatarText: string;
+  userAvatarUrl?: string;
   time: string;
   title: string;
   message: string;

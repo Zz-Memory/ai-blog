@@ -34,7 +34,7 @@ type UserItem = { id: string; nickname: string; email: string; joinedAt: string;
 type ArticleItem = { title: string; excerpt: string; tags: string[]; updatedAt: string; status: ArticleStatus };
 type ArticleRow = ArticleItem & { category: string };
 type MessageItem = { id: string; title: string; audience: string; updatedAt: string; status: MessageStatus };
-type ReviewItem = { id: string; articleTitle: string; author: string; content: string; createdAt: string; likes: number; replies: number; status: ReviewStatus };
+type ReviewItem = { id: string; articleTitle: string; author: string; content: string; createdAt: string; likes: number; replies: number; status: ReviewStatus; href: string };
 
 const articleTabs: Array<{ id: ArticleStatus; label: string; count: number }> = [
   { id: "published", label: "已发布", count: 124 },
@@ -93,8 +93,14 @@ export function BloggerCenterPage() {
   const [activeArticleMenuPosition, setActiveArticleMenuPosition] = useState<{ top: number; left: number } | null>(null);
   const [activeReviewMenu, setActiveReviewMenu] = useState<string | null>(null);
   const [activeReviewMenuPosition, setActiveReviewMenuPosition] = useState<{ top: number; left: number } | null>(null);
-  const [reviewDeleteTarget, setReviewDeleteTarget] = useState<ReviewItem | null>(null);
+  const [reviewActionTarget, setReviewActionTarget] = useState<{ review: ReviewItem; action: "approve" | "delete" } | null>(null);
+  const [reviewActionLoading, setReviewActionLoading] = useState(false);
+  const [reviewFilter, setReviewFilter] = useState<ReviewStatus | "all">("all");
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
   const [commentedList, setCommentedList] = useState<CommentedArticle[]>(commentedArticles);
+  const [reviewItems, setReviewItems] = useState<ReviewItem[]>([]);
   const [commentedLoading, setCommentedLoading] = useState(false);
   const [commentedError, setCommentedError] = useState<string | null>(null);
   const [activeMessageMenu, setActiveMessageMenu] = useState<string | null>(null);
@@ -155,6 +161,37 @@ export function BloggerCenterPage() {
   }, [activeSection]);
 
   useEffect(() => {
+    if (activeSection !== "comments-review") return;
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("[data-review-menu]")) return;
+      setActiveReviewMenu(null);
+      setActiveReviewMenuPosition(null);
+    };
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, [activeSection]);
+
+  useEffect(() => {
+    if (activeSection !== "comments-review") return;
+    const loadReviewComments = async () => {
+      setReviewLoading(true);
+      setReviewError(null);
+      try {
+        const response = await fetch("/api/blogger/comments", { cache: "no-store" });
+        if (!response.ok) throw new Error();
+        const data = (await response.json()) as { comments: ReviewItem[] };
+        setReviewItems(data.comments);
+      } catch {
+        setReviewError("评论管理加载失败，请稍后重试。");
+      } finally {
+        setReviewLoading(false);
+      }
+    };
+    void loadReviewComments();
+  }, [activeSection]);
+
+  useEffect(() => {
     if (activeSection !== "history") return;
     const loadHistory = async () => {
       setHistoryLoading(true); setHistoryError(null);
@@ -166,6 +203,7 @@ export function BloggerCenterPage() {
   useEffect(() => { setHistoryVisibleCount(4); }, [historySearchKeyword, history]);
   useEffect(() => { setArticlePage(1); }, [activeArticleTab]);
   useEffect(() => { setUserPage(1); }, [userSearchValue]);
+  useEffect(() => { setReviewPage(1); }, [reviewFilter]);
 
   useEffect(() => {
     if (activeSection !== "send-message") return;
@@ -183,17 +221,6 @@ export function BloggerCenterPage() {
     { title: "（草稿）WebGPU 开启前端渲染的新篇章", category: "图形学", excerpt: "脱离 WebGL 的限制，直接在浏览器中进行大规模通用计算和图形渲染...", tags: ["图形学", "WebGPU"], updatedAt: "2024-05-18 10:00", status: "draft" },
   ], []);
 
-  const reviewItems: ReviewItem[] = useMemo(() => [
-    { id: "r-1", articleTitle: "AI 原生极简主义：界面即智能容器", author: "晨曦", content: "这篇文章把 AI 与极简风格结合得很自然，尤其是留白处理非常舒服。", createdAt: "2024-05-22 09:10", likes: 18, replies: 2, status: "pending" },
-    { id: "r-2", articleTitle: "前端工程化的下一个十年", author: "小蓝", content: "关于云端 IDE 的那段分析很有启发，期待后续补充更多实践案例。", createdAt: "2024-05-21 21:45", likes: 26, replies: 4, status: "pending" },
-    { id: "r-3", articleTitle: "2024 个人年度数字足迹图鉴", author: "Neo", content: "内容很完整，建议可以增加一个数据来源说明，会更有说服力。", createdAt: "2024-05-21 16:20", likes: 8, replies: 1, status: "approved" },
-    { id: "r-4", articleTitle: "构建响应式设计系统的新范式", author: "阿橙", content: "这部分的案例很实用，不过某些段落可以再压缩一点，提升阅读效率。", createdAt: "2024-05-20 18:05", likes: 3, replies: 0, status: "pending" },
-    { id: "r-5", articleTitle: "（草稿）LLM 推理优化指南：KV Cache 深度解析", author: "小马", content: "如果后面能补一张 KV Cache 流程图就更好了。", createdAt: "2024-05-20 10:30", likes: 2, replies: 0, status: "pending" },
-    { id: "r-6", articleTitle: "（草稿）Framer Motion 进阶：复杂序列动画编排", author: "风铃", content: "动效展示很不错，建议加一个动图演示。", createdAt: "2024-05-19 19:50", likes: 6, replies: 1, status: "approved" },
-    { id: "r-7", articleTitle: "（草稿）个人工作站自动化：从 Raycast 到 Hammerspoon", author: "momo", content: "这类工具链文章很受欢迎，读完后我也想整理自己的工作流。", createdAt: "2024-05-19 12:10", likes: 11, replies: 3, status: "pending" },
-    { id: "r-8", articleTitle: "（草稿）WebGPU 开启前端渲染的新篇章", author: "Luna", content: "很期待你后续补充 WebGPU 的兼容性方案。", createdAt: "2024-05-18 20:15", likes: 4, replies: 0, status: "pending" },
-  ], []);
-
   const publishedArticles = articleRows.filter((article) => article.status === "published");
   const draftArticles = articleRows.filter((article) => article.status === "draft");
   const activeArticles = activeArticleTab === "published" ? publishedArticles : draftArticles;
@@ -201,11 +228,11 @@ export function BloggerCenterPage() {
   const totalArticlePages = Math.max(1, Math.ceil(activeArticles.length / articlesPerPage));
   const visibleArticles = activeArticles.slice((articlePage - 1) * articlesPerPage, articlePage * articlesPerPage);
 
-  const reviewPage = 1;
-  const filteredReviews = reviewItems.filter((review) => review.status === "pending" || review.status === "approved");
+  const filteredReviews = reviewItems.filter((review) => (reviewFilter === "all" ? true : review.status === reviewFilter));
   const reviewsPerPage = 6;
   const totalReviewPages = Math.max(1, Math.ceil(filteredReviews.length / reviewsPerPage));
-  const visibleReviews = filteredReviews.slice((reviewPage - 1) * reviewsPerPage, reviewPage * reviewsPerPage);
+  const safeReviewPage = Math.min(reviewPage, totalReviewPages);
+  const visibleReviews = filteredReviews.slice((safeReviewPage - 1) * reviewsPerPage, safeReviewPage * reviewsPerPage);
 
   const filteredHistory = useMemo(() => { const q = historySearchKeyword.trim().toLowerCase(); return q ? history.filter((item) => [item.title, item.excerpt, item.category, ...item.tags].join(" ").toLowerCase().includes(q)) : history; }, [history, historySearchKeyword]);
   const visibleHistory = useMemo(() => filteredHistory.slice(0, historyVisibleCount), [filteredHistory, historyVisibleCount]);
@@ -220,6 +247,31 @@ export function BloggerCenterPage() {
   const handleToggleUserStatus = (userId: string) => setUsers((current) => current.map((u) => (u.id === userId ? { ...u, status: u.status === "active" ? "muted" : "active" } : u)));
   const handleConfirmDeleteUser = () => { if (!userDeleteTarget) return; setUsers((current) => current.filter((u) => u.id !== userDeleteTarget.id)); setUserDeleteTarget(null); };
   const handleConfirmDeleteArticle = () => setArticleDeleteTarget(null);
+  const handleReviewAction = async () => {
+    if (!reviewActionTarget) return;
+    setReviewActionLoading(true);
+    try {
+      const response = reviewActionTarget.action === "approve"
+        ? await fetch("/api/blogger/comments", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: reviewActionTarget.review.id, action: "approve" }),
+          })
+        : await fetch(`/api/blogger/comments?id=${reviewActionTarget.review.id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error();
+      const refreshed = await fetch("/api/blogger/comments", { cache: "no-store" });
+      if (refreshed.ok) {
+        const data = (await refreshed.json()) as { comments: ReviewItem[] };
+        setReviewItems(data.comments);
+      }
+      setReviewActionTarget(null);
+      setReviewPage(1);
+    } catch {
+      setReviewError(reviewActionTarget.action === "approve" ? "通过评论失败，请稍后重试。" : "删除评论失败，请稍后重试。");
+    } finally {
+      setReviewActionLoading(false);
+    }
+  };
   const handleRefreshMessages = async () => undefined;
 
   return (
@@ -229,7 +281,7 @@ export function BloggerCenterPage() {
         <BloggerCenterSidebar activeId={activeSection} onSelect={(section) => { window.localStorage.setItem(BLOGGER_CENTER_STORAGE_KEY, section); setActiveSection(section); }} onNewArticleClick={() => { window.localStorage.removeItem(BLOGGER_CENTER_STORAGE_KEY); router.push("/editor"); }} onLogoutClick={() => setShowLogoutConfirm(true)} onSettingsClick={() => setActiveSection("settings")} notificationBadgeCount={unreadCount} />
         <section className="space-y-6 pb-10">
           {activeSection === "articles" ? <BloggerCenterArticles activeTab={activeArticleTab} onTabChange={setActiveArticleTab} articleTabs={articleTabs} visibleArticles={visibleArticles} activeArticleMenu={activeArticleMenu} activeArticleMenuPosition={activeArticleMenuPosition} onMenuOpen={(title, top, left) => { setActiveArticleMenu(title); setActiveArticleMenuPosition({ top, left }); }} onMenuClose={() => { setActiveArticleMenu(null); setActiveArticleMenuPosition(null); }} onRequestDelete={(article) => setArticleDeleteTarget(article)} publishedArticlesLength={publishedArticles.length} draftArticlesLength={draftArticles.length} articlePage={articlePage} articlesPerPage={articlesPerPage} totalArticlePages={totalArticlePages} onPrevPage={() => setArticlePage((page) => Math.max(1, page - 1))} onNextPage={() => setArticlePage((page) => Math.min(totalArticlePages, page + 1))} onPageChange={setArticlePage} /> : null}
-          {activeSection === "comments-review" ? <BloggerCenterComments reviewItems={filteredReviews} reviewFilter="all" onFilterChange={() => undefined} visibleReviews={visibleReviews} reviewPage={reviewPage} totalReviewPages={totalReviewPages} onPrevPage={() => undefined} onNextPage={() => undefined} onPageChange={() => undefined} activeMenuTitle={activeReviewMenu} activeMenuPosition={activeReviewMenuPosition} onMenuOpen={(id, top, left) => { setActiveReviewMenu(id); setActiveReviewMenuPosition({ top, left }); }} onMenuClose={() => { setActiveReviewMenu(null); setActiveReviewMenuPosition(null); }} onRequestDelete={(reviewId) => setReviewDeleteTarget(reviewItems.find((review) => review.id === reviewId) ?? null)} reviewStatusMeta={reviewStatusMeta} reviewActionMap={reviewActionMap} /> : null}
+          {activeSection === "comments-review" ? <div className="space-y-4">{reviewError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{reviewError}</div> : null}{reviewLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载评论管理...</div> : <BloggerCenterComments reviewItems={filteredReviews} reviewFilter={reviewFilter} onFilterChange={setReviewFilter} visibleReviews={visibleReviews} reviewPage={safeReviewPage} totalReviewPages={totalReviewPages} onPrevPage={() => setReviewPage((page) => Math.max(1, page - 1))} onNextPage={() => setReviewPage((page) => Math.min(totalReviewPages, page + 1))} onPageChange={setReviewPage} activeMenuTitle={activeReviewMenu} activeMenuPosition={activeReviewMenuPosition} onMenuOpen={(id, top, left) => { setActiveReviewMenu(id); setActiveReviewMenuPosition({ top, left }); }} onMenuClose={() => { setActiveReviewMenu(null); setActiveReviewMenuPosition(null); }} onRequestAction={(reviewId, action) => { const review = reviewItems.find((item) => item.id === reviewId) ?? filteredReviews.find((item) => item.id === reviewId); if (!review) return; setReviewActionTarget({ review, action }); }} reviewStatusMeta={reviewStatusMeta} reviewActionMap={reviewActionMap} />}{reviewActionLoading ? <div className="text-sm text-zinc-500">正在执行操作...</div> : null}</div> : null}
           {activeSection === "comments" ? <div className="space-y-4">{commentedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{commentedError}</div> : null}{commentedLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的评论...</div> : <VisitorCenterComments articles={commentedList} />}</div> : null}
           {activeSection === "send-message" ? <BloggerCenterMessages /> : null}
           {activeSection === "users" ? <BloggerCenterUsers users={visibleUsers} activeMenuId={activeUserMenu} activeMenuPosition={activeUserMenuPosition} onToggleStatus={handleToggleUserStatus} onRequestDelete={(userId) => setUserDeleteTarget(users.find((user) => user.id === userId) ?? null)} onMenuOpen={(userId, top, left) => { setActiveUserMenu(userId); setActiveUserMenuPosition({ top, left }); }} onMenuClose={() => { setActiveUserMenu(null); setActiveUserMenuPosition(null); }} searchValue={userSearchValue} onSearchChange={setUserSearchValue} page={userPage} pageSize={usersPerPage} totalPages={totalUserPages} onPrevPage={() => setUserPage((page) => Math.max(1, page - 1))} onNextPage={() => setUserPage((page) => Math.min(totalUserPages, page + 1))} onPageChange={setUserPage} /> : null}
@@ -245,7 +297,7 @@ export function BloggerCenterPage() {
       <VisitorCenterConfirmModal open={Boolean(userDeleteTarget)} title="确认删除用户？" description={userDeleteTarget ? `确定要删除用户「${userDeleteTarget.nickname}」吗？删除后无法恢复。` : "确定要删除该用户吗？删除后无法恢复。"} cancelLabel="取消" confirmLabel="确认删除" confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400" onClose={() => setUserDeleteTarget(null)} onConfirm={handleConfirmDeleteUser} />
       <VisitorCenterConfirmModal open={Boolean(articleDeleteTarget)} title="确认删除文章？" description={articleDeleteTarget ? `确定要删除文章「${articleDeleteTarget.title}」吗？删除后无法恢复。` : "确定要删除该文章吗？删除后无法恢复。"} cancelLabel="取消" confirmLabel="确认删除" confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400" onClose={() => setArticleDeleteTarget(null)} onConfirm={handleConfirmDeleteArticle} />
       <VisitorCenterConfirmModal open={Boolean(messageDeleteTarget)} title="确认删除消息？" description={messageDeleteTarget ? `确定要删除消息「${messageDeleteTarget.title}」吗？删除后无法恢复。` : "确定要删除该消息吗？删除后无法恢复。"} cancelLabel="取消" confirmLabel="确认删除" confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400" onClose={() => setMessageDeleteTarget(null)} onConfirm={() => setMessageDeleteTarget(null)} />
-      <VisitorCenterConfirmModal open={Boolean(reviewDeleteTarget)} title="确认删除评论？" description={reviewDeleteTarget ? `确定要删除评论「${reviewDeleteTarget.articleTitle} / ${reviewDeleteTarget.author}」吗？删除后无法恢复。` : "确定要删除该评论吗？删除后无法恢复。"} cancelLabel="取消" confirmLabel="确认删除" confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400" onClose={() => setReviewDeleteTarget(null)} onConfirm={() => setReviewDeleteTarget(null)} />
+      <VisitorCenterConfirmModal open={Boolean(reviewActionTarget)} title={reviewActionTarget?.action === "approve" ? "确认通过评论？" : "确认删除评论？"} description={reviewActionTarget ? reviewActionTarget.action === "approve" ? `确定要通过评论「${reviewActionTarget.review.articleTitle} / ${reviewActionTarget.review.author}」吗？` : `确定要删除评论「${reviewActionTarget.review.articleTitle} / ${reviewActionTarget.review.author}」吗？删除后无法恢复。` : "确定要执行该操作吗？"} cancelLabel="取消" confirmLabel={reviewActionTarget?.action === "approve" ? "确认通过" : "确认删除"} confirmButtonClassName="bg-rose-500 text-white hover:bg-rose-400" onClose={() => setReviewActionTarget(null)} onConfirm={handleReviewAction} />
       <SiteFooter />
     </div>
   );

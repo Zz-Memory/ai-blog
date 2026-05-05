@@ -1,26 +1,11 @@
 import { NextResponse } from "next/server";
-import { PrismaClient, UserRole, VerificationPurpose } from "@prisma/client";
+import { PrismaClient, VerificationPurpose } from "@prisma/client";
 import { hashPassword, isStrongPassword } from "@/lib/password";
 
 const prisma = new PrismaClient();
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-async function createNewUserNotification(senderId: string, recipientId: string) {
-  await prisma.notification.create({
-    data: {
-      senderId,
-      recipientId,
-      type: "NEW_USER",
-      title: "有新用户注册啦",
-      content: "平台有一位新用户加入了我们。",
-      linkUrl: null,
-      isRead: false,
-      readAt: null,
-    },
-  });
 }
 
 export async function POST(request: Request) {
@@ -70,12 +55,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "验证码错误或已过期。" }, { status: 400 });
     }
 
-    const blogger = await prisma.user.findFirst({
-      where: { role: UserRole.BLOGGER },
-      select: { id: true },
-      orderBy: { createdAt: "asc" },
-    });
-
     const user = await prisma.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
         data: {
@@ -89,21 +68,6 @@ export async function POST(request: Request) {
         where: { id: codeRecord.id },
         data: { consumedAt: new Date() },
       });
-
-      if (blogger && blogger.id !== createdUser.id) {
-        await tx.notification.create({
-          data: {
-            senderId: createdUser.id,
-            recipientId: blogger.id,
-            type: "NEW_USER",
-            title: "有新用户注册啦",
-            content: "平台有一位新用户加入了我们。",
-            linkUrl: null,
-            isRead: false,
-            readAt: null,
-          },
-        });
-      }
 
       return createdUser;
     });
