@@ -121,8 +121,6 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
                       <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
                         <span>评论于 {formatChinaDateTime(article.comment.time)}</span>
                         <span className="h-1 w-1 rounded-full bg-zinc-700" />
-                        <span>{article.comment.likes} 人点赞</span>
-                        <span className="h-1 w-1 rounded-full bg-zinc-700" />
                         <span>{article.comment.replies} 条回复</span>
                       </div>
                       <CommentContent content={article.comment.content} expanded={expanded} onToggle={() => toggleExpanded(article.comment.id)} />

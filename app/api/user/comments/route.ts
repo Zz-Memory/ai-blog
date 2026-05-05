@@ -55,7 +55,6 @@ export async function GET() {
           id: item.id,
           content: item.content,
           time: item.createdAt.toISOString(),
-          likes: item.likeCount,
           replies: item.replies.length,
         },
       })),

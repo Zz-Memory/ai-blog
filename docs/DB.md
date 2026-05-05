@@ -209,7 +209,6 @@
 - `parentId`
 - `content`
 - `status`：`PENDING | APPROVED`
-- `likeCount`
 - `createdAt`
 - `updatedAt`
 
@@ -275,7 +274,7 @@
 用于站内互动提醒和系统通知。
 
 #### 业务说明
-- 点赞、收藏、评论、回复、审核结果、新用户注册提醒、系统公告等均可形成通知。
+- 点赞、收藏、评论、回复、新用户注册提醒、系统公告等均可形成通知。
 - 访客与博主均可接收通知。
 - 系统类通知的 `senderId` 统一指向博主账号。
 - `NEW_USER` 类型用于“新用户注册提醒”，当有新访客注册成功时自动向博主发送一条通知，`senderId` 指向该新注册用户。
@@ -284,7 +283,7 @@
 - `id`
 - `recipientId`
 - `senderId`
-- `type`：`LIKE | COMMENT | REPLY | SYSTEM | REVIEW | NEW_USER`
+- `type`：`LIKE | BOOKMARK | COMMENT | REPLY | NEW_USER | SYSTEM`
 - `title`
 - `content`
 - `linkUrl`
@@ -453,11 +452,11 @@ CommentStatus
 
 NotificationType
 - LIKE
+- BOOKMARK
 - COMMENT
 - REPLY
-- SYSTEM
-- REVIEW
 - NEW_USER
+- SYSTEM
 
 AiChatMode
 - POST_CONTEXT

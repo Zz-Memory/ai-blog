@@ -89,7 +89,6 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   const [isLiked, setIsLiked] = useState(engagement.isLiked);
   const [isBookmarked, setIsBookmarked] = useState(engagement.isBookmarked);
   const [copiedUrl, setCopiedUrl] = useState(false);
-  const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
   const [commentNotice, setCommentNotice] = useState<string | null>(null);
   const [commentItems, setCommentItems] = useState<CommentNode[]>(comments);
   const [commentSortOrder, setCommentSortOrder] = useState<"asc" | "desc">("asc");
@@ -152,15 +151,6 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               <div className="flex flex-wrap items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{reply.author}</span><span className="text-xs text-zinc-500">回复 {reply.replyTo}</span><span className="text-xs text-zinc-500">{formatChinaDateTime(reply.time)}</span></div>
               <p className="mt-2 text-sm leading-7 text-zinc-400">{reply.content}</p>
               <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
-                <button
-                  type="button"
-                  onClick={() => toggleCommentLike(reply.id)}
-                  className={`flex items-center gap-1 transition ${likedComments[reply.id] ? "text-[#b8c9ff]" : "hover:text-[#b8c9ff]"}`}
-                  aria-label={likedComments[reply.id] ? "取消点赞回复" : "点赞回复"}
-                >
-                  <span className="material-symbols-outlined text-[16px]">{likedComments[reply.id] ? "thumb_up" : "thumb_up_off_alt"}</span>
-                  {reply.likes + (likedComments[reply.id] ? 1 : 0)}
-                </button>
                 <button type="button" onClick={() => handleReplyClick(reply.id, reply.author)} className="flex items-center gap-1 transition hover:text-zinc-300" aria-label="回复回复"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
               </div>
             </div>
@@ -250,11 +240,6 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
       setBookmarksCount((value) => Math.max(0, value + (nextBookmarked ? -1 : 1)));
       setActionError("收藏失败，请稍后重试。");
     }
-  };
-
-  const toggleCommentLike = (id: string) => {
-    if (!requireLogin()) return;
-    setLikedComments((current) => ({ ...current, [id]: !current[id] }));
   };
 
   const stripReplyPrefix = (value: string) => value.replace(/^回复\s+@[^：:\n]+[:：]\s*/u, "");
@@ -466,15 +451,6 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                       <div className="flex items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{comment.author}</span><span className="text-xs text-zinc-500">{formatChinaDateTime(comment.time)}</span></div>
                       <p className="mt-2 text-sm leading-7 text-zinc-400">{comment.content}</p>
                       <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
-                        <button
-                          type="button"
-                          onClick={() => toggleCommentLike(comment.id)}
-                          className={`flex items-center gap-1 transition ${likedComments[comment.id] ? "text-[#b8c9ff]" : "hover:text-[#b8c9ff]"}`}
-                          aria-label={likedComments[comment.id] ? "取消点赞评论" : "点赞评论"}
-                        >
-                          <span className="material-symbols-outlined text-[16px]">{likedComments[comment.id] ? "thumb_up" : "thumb_up_off_alt"}</span>
-                          {comment.likes + (likedComments[comment.id] ? 1 : 0)}
-                        </button>
                         <button type="button" onClick={() => handleReplyClick(comment.id, comment.author)} className="flex items-center gap-1 transition hover:text-zinc-300" aria-label="回复评论"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
                       </div>
                     </div>

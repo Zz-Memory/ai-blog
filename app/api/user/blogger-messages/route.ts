@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
-import { NotificationStatus, NotificationType, UserRole } from "@prisma/client";
+import { NotificationType, UserRole } from "@prisma/client";
 
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 function shouldStoreLinkUrl(type: NotificationType) {
-  return type === "LIKE" || type === "COMMENT" || type === "REPLY" || type === "REVIEW";
+  return type === "LIKE" || type === "BOOKMARK" || type === "COMMENT" || type === "REPLY";
+}
+
+function isPublicRecipient(userRole: string, status: string) {
+  return userRole === "VISITOR" && status === "ACTIVE";
 }
 
 export async function GET() {
@@ -24,7 +28,6 @@ export async function GET() {
       title: item.title,
       senderNickname: item.sender?.username ?? "",
       updatedAt: item.createdAt.toISOString().slice(0, 16).replace("T", " "),
-      status: item.status === NotificationStatus.PUBLISHED ? "published" : "draft",
       type: item.type,
       content: item.content,
       linkUrl: item.linkUrl,
@@ -40,9 +43,6 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as {
     title?: string;
     content?: string;
-    audience?: string;
-    scheduledSend?: boolean;
-    status?: "draft" | "published";
     recipientUsername?: string | null;
     type?: NotificationType;
     linkUrl?: string | null;
@@ -54,7 +54,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "标题和内容不能为空。" }, { status: 400 });
   }
 
-  const status = body.status === "published" ? NotificationStatus.PUBLISHED : NotificationStatus.DRAFT;
   const targetType = body.type ?? "SYSTEM";
 
   let recipientIds: string[] = [];
@@ -65,8 +64,8 @@ export async function POST(request: Request) {
     }
     recipientIds = [recipient.id];
   } else {
-    const visitors = await prisma.user.findMany({ where: { role: UserRole.VISITOR, status: "ACTIVE" }, select: { id: true } });
-    recipientIds = visitors.map((row) => row.id);
+    const visitors = await prisma.user.findMany({ where: { role: UserRole.VISITOR, status: "ACTIVE" }, select: { id: true, role: true, status: true } });
+    recipientIds = visitors.filter((user) => isPublicRecipient(user.role, user.status)).map((row) => row.id);
   }
 
   const created = await prisma.$transaction(
@@ -76,7 +75,6 @@ export async function POST(request: Request) {
           recipientId,
           senderId: auth.user.id,
           type: targetType,
-          status,
           title,
           content,
           linkUrl: shouldStoreLinkUrl(targetType) ? body.linkUrl?.trim() ?? null : null,
@@ -88,17 +86,6 @@ export async function POST(request: Request) {
   );
 
   return NextResponse.json({ ok: true, count: created.length });
-}
-
-export async function PATCH(request: Request) {
-  const auth = await getAuthUser();
-  if (!auth) return NextResponse.json({ message: "请先登录。" }, { status: 401 });
-  const body = (await request.json().catch(() => ({}))) as { id?: string; action?: "publish" | "retract" };
-  if (!body.id || !body.action) return NextResponse.json({ message: "参数错误。" }, { status: 400 });
-
-  const status = body.action === "publish" ? NotificationStatus.PUBLISHED : NotificationStatus.DRAFT;
-  await prisma.notification.updateMany({ where: { id: body.id, senderId: auth.user.id }, data: { status } });
-  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(request: Request) {

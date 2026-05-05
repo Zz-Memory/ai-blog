@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { NotificationStatus, NotificationType } from "@prisma/client";
+import { NotificationType } from "@prisma/client";
 
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -15,12 +15,6 @@ type NotificationRow = {
   createdAt: Date;
   sender: { username: string } | null;
 };
-
-function mapType(type: NotificationType) {
-  if (type === "LIKE") return "likes";
-  if (type === "COMMENT" || type === "REPLY") return "comments";
-  return "system";
-}
 
 function formatTime(createdAt: Date) {
   return createdAt.toLocaleString("zh-CN", {
@@ -41,7 +35,6 @@ export async function GET() {
   const notifications = await prisma.notification.findMany({
     where: {
       recipientId: auth.user.id,
-      status: NotificationStatus.PUBLISHED,
     },
     orderBy: [{ createdAt: "desc" }],
     include: { sender: { select: { username: true } } },
@@ -50,13 +43,14 @@ export async function GET() {
   return NextResponse.json({
     notifications: notifications.map((item: NotificationRow) => ({
       id: item.id,
-      type: mapType(item.type),
+      type: item.type,
       userName: item.sender?.username ?? "系统通知",
       userAvatarText: (item.sender?.username ?? "S").slice(0, 1).toUpperCase(),
       time: formatTime(item.createdAt),
       title: item.title,
       message: item.content,
       targetArticle: item.linkUrl ?? item.title,
+      linkUrl: item.linkUrl,
       unread: !item.isRead,
     })),
     unreadCount: notifications.filter((item: NotificationRow) => !item.isRead).length,

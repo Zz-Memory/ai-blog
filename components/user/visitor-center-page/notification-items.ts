@@ -1,4 +1,4 @@
-export type NotificationType = "all" | "likes" | "comments" | "system";
+export type NotificationType = "all" | "likes" | "comments" | "newUsers" | "system";
 
 export type NotificationItem = {
   id: string;
@@ -8,7 +8,8 @@ export type NotificationItem = {
   time: string;
   title: string;
   message: string;
-  targetArticle: string;
+  targetArticle?: string;
+  linkUrl?: string | null;
   unread?: boolean;
 };
 

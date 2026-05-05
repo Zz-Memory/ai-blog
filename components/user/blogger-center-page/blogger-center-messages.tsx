@@ -77,14 +77,6 @@ export function BloggerCenterMessages() {
           <button
             type="button"
             disabled={saving}
-            onClick={() => void handleSubmit("draft")}
-            className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            存为草稿
-          </button>
-          <button
-            type="button"
-            disabled={saving}
             onClick={() => void handleSubmit("published")}
             className="flex items-center gap-2 rounded-xl bg-[#adc6ff] px-5 py-3 text-sm font-medium text-[#001a41] transition hover:bg-[#c3d2ff] disabled:cursor-not-allowed disabled:opacity-60"
           >

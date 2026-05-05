@@ -67,7 +67,6 @@ export default async function Page({ params }: PageProps) {
           parentId: true,
           content: true,
           createdAt: true,
-          likeCount: true,
           user: {
             select: {
               username: true,
@@ -100,7 +99,7 @@ export default async function Page({ params }: PageProps) {
       avatarUrl: comment.user.role === "BLOGGER" ? "/avatars/blogger-default.png" : "/avatars/visitor-default.png",
       time: comment.createdAt.toISOString(),
       content: comment.content,
-      likes: comment.likeCount,
+      likes: 0,
       replies: buildCommentTree(comment.id).map((reply) => ({
         ...reply,
         replyTo: comment.user.username,

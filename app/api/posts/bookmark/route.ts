@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { NotificationType } from "@prisma/client";
+
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -7,6 +9,10 @@ function getPostId(body: unknown) {
   if (!body || typeof body !== "object") return null;
   const value = (body as { postId?: unknown }).postId;
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function buildArticleLink(slug: string) {
+  return `/article/${slug}`;
 }
 
 export async function POST(request: Request) {
@@ -23,7 +29,7 @@ export async function POST(request: Request) {
 
   const post = await prisma.post.findUnique({
     where: { id: postId },
-    select: { id: true },
+    select: { id: true, title: true, authorId: true, slug: true },
   });
   if (!post) {
     return NextResponse.json({ message: "文章不存在。" }, { status: 404 });
@@ -43,11 +49,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ bookmarked: false, bookmarks });
   }
 
-  await prisma.bookmark.create({
-    data: {
-      userId: auth.user.id,
-      postId,
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.bookmark.create({
+      data: {
+        userId: auth.user.id,
+        postId,
+      },
+    });
+
+    if (post.authorId !== auth.user.id) {
+      await tx.notification.create({
+        data: {
+          senderId: auth.user.id,
+          recipientId: post.authorId,
+          type: NotificationType.BOOKMARK,
+          title: "你的文章被收藏了",
+          content: `${auth.user.username} 收藏了你的文章《${post.title}》`,
+          linkUrl: buildArticleLink(post.slug),
+          isRead: false,
+          readAt: null,
+        },
+      });
+    }
   });
 
   const bookmarks = await prisma.bookmark.count({ where: { postId } });

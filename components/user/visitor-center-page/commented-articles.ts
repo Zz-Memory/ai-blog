@@ -15,7 +15,6 @@ export type CommentedArticle = {
     id: string;
     content: string;
     time: string;
-    likes: number;
     replies: number;
   };
 };

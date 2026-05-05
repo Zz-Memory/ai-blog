@@ -15,6 +15,7 @@ const tabs: Array<{ id: NotificationType; label: string }> = [
   { id: "all", label: "全部" },
   { id: "likes", label: "点赞和收藏" },
   { id: "comments", label: "评论" },
+  { id: "newUsers", label: "新增用户" },
   { id: "system", label: "系统通知" },
 ];
 
@@ -167,8 +168,8 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
                   </div>
 
                   <div className="mt-4 flex flex-wrap items-center gap-3">
-                    {item.type === "system" ? null : (
-                      <a href={`/blog/article-detail#${encodeURIComponent(item.targetArticle)}`} className="text-sm font-medium text-[#adc6ff] transition hover:text-[#c3d2ff]">
+                    {item.type === "system" || !item.linkUrl ? null : (
+                      <a href={item.linkUrl} className="text-sm font-medium text-[#adc6ff] transition hover:text-[#c3d2ff]">
                         查看相关内容
                       </a>
                     )}

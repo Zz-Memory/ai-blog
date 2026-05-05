@@ -43,11 +43,11 @@ enum CommentStatus {
 
 enum NotificationType {
   LIKE
+  BOOKMARK
   COMMENT
   REPLY
-  SYSTEM
-  REVIEW
   NEW_USER
+  SYSTEM
 }
 
 // AI 消息角色：用户、助手
@@ -181,7 +181,6 @@ model Comment {
   parentId  String?
   content   String
   status    CommentStatus @default(PENDING)
-  likeCount Int           @default(0)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
