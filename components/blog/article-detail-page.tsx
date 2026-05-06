@@ -117,6 +117,8 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   const [commentItems, setCommentItems] = useState<CommentNode[]>(comments);
   const [commentSortOrder, setCommentSortOrder] = useState<"asc" | "desc">("asc");
   const commentsRef = useRef<HTMLElement | null>(null);
+  const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const { user } = useAuth();
 
   const currentUser: CurrentUserView | null = user
@@ -230,6 +232,11 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
       cancelled = true;
     };
   }, [article.id, article.title, chatOpen, currentUser?.name]);
+
+  useEffect(() => {
+    if (!chatOpen) return;
+    chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [chatMessages, chatOpen, chatLoading]);
 
   const openLogin = () => {
     setAuthEntry("login");
@@ -384,6 +391,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
 
   const clearChatSession = async () => {
     if (!requireLogin()) return;
+    setClearConfirmOpen(false);
     setChatLoading(false);
     setChatError(null);
 
@@ -691,7 +699,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => void clearChatSession()}
+                  onClick={() => setClearConfirmOpen(true)}
                   className="rounded-full p-2 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-200"
                   aria-label="清空会话"
                   title="清空会话"
@@ -710,7 +718,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               </div>
             </div>
 
-            <div className="mt-5 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 pb-2">
+            <div ref={chatScrollRef} className="mt-5 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 pb-2">
               {chatMessages.length ? chatMessages.map((message) => (
                 <div key={message.id} className={`flex gap-3 ${message.role === "USER" ? "justify-end" : "justify-start"}`}>
                   {message.role === "ASSISTANT" ? (
@@ -751,6 +759,31 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               </button>
             </div>
           </section>
+        ) : null}
+
+        {clearConfirmOpen ? (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#181a20] p-6 shadow-2xl">
+              <h5 className="text-lg font-semibold text-zinc-100">确认清空会话？</h5>
+              <p className="mt-3 text-sm leading-7 text-zinc-400">清空后，这篇文章下的 AI 对话记录会被删除，且无法恢复。是否继续？</p>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setClearConfirmOpen(false)}
+                  className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/10"
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void clearChatSession()}
+                  className="rounded-lg bg-rose-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-400"
+                >
+                  确认清空
+                </button>
+              </div>
+            </div>
+          </div>
         ) : null}
 
       </main>
