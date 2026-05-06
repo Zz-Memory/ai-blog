@@ -30,13 +30,13 @@ function buildWhere(params: { authorId: string; status: PostStatus | null; searc
     ...(params.status ? { status: params.status } : {}),
     ...(params.search
       ? {
-          OR: [
-            { title: { contains: params.search, mode: "insensitive" as const } },
-            { summary: { contains: params.search, mode: "insensitive" as const } },
-            { category: { name: { contains: params.search, mode: "insensitive" as const } } },
-            { postTags: { some: { tag: { name: { contains: params.search, mode: "insensitive" as const } } } } },
-          ],
-        }
+        OR: [
+          { title: { contains: params.search, mode: "insensitive" as const } },
+          { summary: { contains: params.search, mode: "insensitive" as const } },
+          { category: { name: { contains: params.search, mode: "insensitive" as const } } },
+          { postTags: { some: { tag: { name: { contains: params.search, mode: "insensitive" as const } } } } },
+        ],
+      }
       : {}),
   };
 
@@ -52,14 +52,16 @@ function mapArticle(post: {
   title: string;
   summary: string | null;
   contentMarkdown: string;
+  slug?: string;
   status: PostStatus;
   updatedAt: Date;
-  category: { name: string } | null;
-  postTags: Array<{ tag: { name: string } }>;
+  category: { id: string; name: string } | null;
+  postTags: Array<{ tag: { id: string; name: string } }>;
 }) {
   return {
     id: post.id,
     title: post.title,
+    slug: post.slug ?? "",
     contentMarkdown: post.contentMarkdown,
     excerpt: post.summary ?? "暂无摘要",
     tags: post.postTags.map((item) => item.tag.name),
@@ -87,11 +89,14 @@ export async function GET(request: Request) {
       select: {
         id: true,
         title: true,
+        slug: true,
         summary: true,
         contentMarkdown: true,
         contentHtml: true,
         status: true,
         updatedAt: true,
+        category: { select: { id: true, name: true } },
+        postTags: { select: { tag: { select: { id: true, name: true } } } },
       },
     });
 
@@ -101,13 +106,25 @@ export async function GET(request: Request) {
       article: {
         id: post.id,
         title: post.title,
+        slug: post.slug,
         summary: post.summary ?? "",
         contentMarkdown: post.contentMarkdown,
         contentHtml: post.contentHtml ?? "",
         status: post.status === PostStatus.PUBLISHED ? "published" : "draft",
         updatedAt: formatUpdatedAt(post.updatedAt),
+        category: post.category,
+        tags: post.postTags.map((item) => item.tag),
       },
     });
+  }
+
+  const meta = url.searchParams.get("meta") === "1";
+  if (meta) {
+    const [categories, tags] = await Promise.all([
+      prisma.category.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+      prisma.tag.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    ]);
+    return NextResponse.json({ categories, tags });
   }
 
   const page = Math.max(1, Number(url.searchParams.get("page") ?? "1") || 1);
@@ -165,7 +182,7 @@ export async function POST(request: Request) {
   if (body?.action !== "create-draft") return NextResponse.json({ message: "不支持的操作。" }, { status: 400 });
 
   const existingDraft = await prisma.post.findFirst({
-    where: { authorId: auth.user.id, status: PostStatus.DRAFT, title: "" , contentMarkdown: "" },
+    where: { authorId: auth.user.id, status: PostStatus.DRAFT, title: "", contentMarkdown: "" },
     orderBy: { updatedAt: "desc" },
     select: { id: true, title: true, contentMarkdown: true },
   });
@@ -210,6 +227,10 @@ export async function PATCH(request: Request) {
     title?: string;
     contentMarkdown?: string;
     contentHtml?: string;
+    slug?: string;
+    summary?: string;
+    categoryId?: string | null;
+    tagIds?: string[];
   } | null;
   if (!body?.id || !body.action) return NextResponse.json({ message: "缺少必要参数。" }, { status: 400 });
 
@@ -221,13 +242,50 @@ export async function PATCH(request: Request) {
       where: { id: post.id },
       data: {
         title: body.title ?? "",
-        summary: body.contentMarkdown?.slice(0, 120) ?? null,
+        slug: body.slug ?? makeDraftSlug(),
+        summary: body.summary ?? body.contentMarkdown?.slice(0, 120) ?? null,
         contentMarkdown: body.contentMarkdown ?? "",
         contentHtml: body.contentHtml ?? "",
+        ...(body.categoryId ? { categoryId: body.categoryId } : {}),
       },
       select: { updatedAt: true },
     });
+
+    if (Array.isArray(body.tagIds)) {
+      await prisma.postTag.deleteMany({ where: { postId: post.id } });
+      if (body.tagIds.length > 0) {
+        await prisma.postTag.createMany({ data: body.tagIds.map((tagId) => ({ postId: post.id, tagId })), skipDuplicates: true });
+      }
+    }
+
     return NextResponse.json({ ok: true, updatedAt: updated.updatedAt.toISOString() });
+  }
+
+  if (body.action === "publish") {
+    const slug = body.slug?.trim();
+    if (!slug) return NextResponse.json({ message: "Slug 为必填项。" }, { status: 400 });
+
+    const updated = await prisma.post.update({
+      where: { id: post.id },
+      data: {
+        title: body.title ?? "",
+        slug,
+        summary: body.summary ?? body.contentMarkdown?.slice(0, 120) ?? null,
+        contentMarkdown: body.contentMarkdown ?? "",
+        contentHtml: body.contentHtml ?? "",
+        status: PostStatus.PUBLISHED,
+        publishedAt: new Date(),
+        ...(body.categoryId ? { categoryId: body.categoryId } : {}),
+      },
+      select: { updatedAt: true },
+    });
+
+    await prisma.postTag.deleteMany({ where: { postId: post.id } });
+    if (Array.isArray(body.tagIds) && body.tagIds.length > 0) {
+      await prisma.postTag.createMany({ data: body.tagIds.map((tagId) => ({ postId: post.id, tagId })), skipDuplicates: true });
+    }
+
+    return NextResponse.json({ ok: true, updatedAt: updated.updatedAt.toISOString(), status: "published" });
   }
 
   if (body.action !== "publish" && body.action !== "retract") {

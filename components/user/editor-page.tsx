@@ -7,12 +7,18 @@ import { toPreviewHtml } from "@/lib/markdown";
 type EditorArticle = {
   id: string;
   title: string;
+  slug: string;
   summary: string;
   contentMarkdown: string;
   contentHtml: string;
   status: "published" | "draft";
   updatedAt: string;
+  category: PublishCategory | null;
+  tags: PublishTag[];
 };
+
+type PublishCategory = { id: string; name: string };
+type PublishTag = { id: string; name: string };
 
 const emptyMarkdown = "";
 
@@ -38,6 +44,16 @@ export function EditorPage() {
   const [selectionToolbarMode, setSelectionToolbarMode] = useState<"style" | "custom">("style");
   const [selectionStyle, setSelectionStyle] = useState<"formal" | "casual" | "academic" | null>(null);
   const [selectionCustomPrompt, setSelectionCustomPrompt] = useState("");
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [publishDialogLoading, setPublishDialogLoading] = useState(false);
+  const [publishCategoryId, setPublishCategoryId] = useState("");
+  const [publishTagIds, setPublishTagIds] = useState<string[]>([]);
+  const [publishSlug, setPublishSlug] = useState("");
+  const [publishSummary, setPublishSummary] = useState("");
+  const [publishCategories, setPublishCategories] = useState<PublishCategory[]>([]);
+  const [publishTags, setPublishTags] = useState<PublishTag[]>([]);
+  const [publishDialogError, setPublishDialogError] = useState<string | null>(null);
+  const [publishDialogSaving, setPublishDialogSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
@@ -158,6 +174,81 @@ export function EditorPage() {
     router.push("/blogger-center?section=articles&tab=draft");
   };
 
+  const openPublishDialog = async () => {
+    setPublishDialogOpen(true);
+    setPublishDialogLoading(true);
+    setPublishDialogError(null);
+    try {
+      const metaResponse = await fetch("/api/blogger/articles?meta=1", { cache: "no-store" });
+      if (!metaResponse.ok) throw new Error();
+      const meta = (await metaResponse.json()) as { categories: PublishCategory[]; tags: PublishTag[] };
+      setPublishCategories(meta.categories);
+      setPublishTags(meta.tags);
+
+      if (article?.id) {
+        const articleResponse = await fetch(`/api/blogger/articles?id=${encodeURIComponent(article.id)}`, { cache: "no-store" });
+        if (!articleResponse.ok) throw new Error();
+        const data = (await articleResponse.json()) as { article: EditorArticle };
+        setPublishSlug(data.article.slug ?? "");
+        setPublishCategoryId(data.article.category?.id ?? "");
+        setPublishTagIds((data.article.tags ?? []).slice(0, 3).map((tag) => tag.id));
+        setPublishSummary(data.article.summary?.trim() ? data.article.summary : markdown.replace(/\s+/g, " ").trim().slice(0, 100));
+      } else {
+        setPublishSlug(articleId ?? "");
+        setPublishCategoryId("");
+        setPublishTagIds([]);
+        setPublishSummary(markdown.replace(/\s+/g, " ").trim().slice(0, 100));
+      }
+    } catch {
+      setPublishDialogError("发布面板加载失败，请稍后重试。");
+    } finally {
+      setPublishDialogLoading(false);
+    }
+  };
+
+  const togglePublishTag = (tagId: string) => {
+    setPublishTagIds((current) => {
+      if (current.includes(tagId)) return current.filter((item) => item !== tagId);
+      if (current.length >= 3) return current;
+      return [...current, tagId];
+    });
+  };
+
+  const handlePublishArticle = async () => {
+    if (!article?.id) return;
+    const slug = publishSlug.trim();
+    if (!slug) {
+      setPublishDialogError("Slug 为必填项，请先填写。");
+      return;
+    }
+    setPublishDialogSaving(true);
+    setPublishDialogError(null);
+    try {
+      const response = await fetch("/api/blogger/articles", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: article.id,
+          action: "publish",
+          title: title.trim(),
+          contentMarkdown: markdown,
+          contentHtml: previewHtml,
+          slug,
+          summary: publishSummary.trim(),
+          categoryId: publishCategoryId || null,
+          tagIds: publishTagIds,
+        }),
+      });
+      if (!response.ok) throw new Error();
+      setPublishDialogOpen(false);
+      router.push("/blogger-center?section=articles&tab=published");
+    } catch {
+      setPublishDialogError("发布失败，请稍后重试。");
+    } finally {
+      setPublishDialogSaving(false);
+    }
+  };
+
   const updateSelectionToolbarPosition = () => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -251,7 +342,7 @@ export function EditorPage() {
           <button type="button" onClick={handleDraftBoxClick} className="rounded-full border border-[#414755] px-4 py-1.5 text-sm text-[#c1c6d7] transition hover:bg-white/5 hover:text-white">
             草稿箱
           </button>
-          <button type="button" className="rounded-full bg-[#adc6ff] px-4 py-2 text-sm font-semibold text-[#002e69] transition hover:shadow-[0_0_15px_rgba(75,142,255,0.4)]">
+          <button type="button" onClick={openPublishDialog} className="rounded-full bg-[#adc6ff] px-4 py-2 text-sm font-semibold text-[#002e69] transition hover:shadow-[0_0_15px_rgba(75,142,255,0.4)]">
             发布文章
           </button>
           <button type="button" onClick={() => router.push("/blogger-center")} className="h-10 w-10 overflow-hidden rounded-full border border-[#414755] transition hover:border-[#adc6ff]/50 hover:shadow-[0_0_0_3px_rgba(173,198,255,0.12)]">
@@ -286,6 +377,87 @@ export function EditorPage() {
           <div className="flex-1 overflow-auto p-6 text-[#e5e1e4]">
             {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{error}</div> : <div className="mx-auto max-w-[800px] prose prose-invert prose-p:mb-4 prose-h1:mb-4 prose-h2:mb-3 prose-ul:mb-4 prose-li:mb-1 prose-strong:text-white" dangerouslySetInnerHTML={{ __html: previewHtml }} />}
           </div>
+          {publishDialogOpen ? (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-sm">
+              <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-3xl border border-white/10 bg-[#14161b] shadow-2xl shadow-black/40">
+                <div className="flex items-center justify-between border-b border-white/8 px-6 py-4">
+                  <div>
+                    <div className="text-lg font-semibold text-zinc-100">发布文章</div>
+                    <div className="mt-1 text-sm text-zinc-500">分类与标签来自数据库，Slug 与摘要可编辑</div>
+                  </div>
+                  <button type="button" onClick={() => setPublishDialogOpen(false)} className="rounded-full p-2 text-zinc-400 transition hover:bg-white/5 hover:text-zinc-100">
+                    <span className="material-symbols-outlined text-[18px]">close</span>
+                  </button>
+                </div>
+
+                <div className="max-h-[calc(90vh-72px)] overflow-y-auto px-6 py-5">
+                  {publishDialogLoading ? <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-10 text-center text-sm text-zinc-500">正在加载发布配置...</div> : null}
+                  {!publishDialogLoading && publishDialogError ? <div className="mb-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{publishDialogError}</div> : null}
+
+                  {!publishDialogLoading ? (
+                    <>
+                      <div className="grid gap-5 lg:grid-cols-2">
+                        <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                          <h3 className="text-sm font-semibold text-zinc-100">分类（单选）</h3>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {publishCategories.length > 0 ? publishCategories.map((category) => {
+                              const active = publishCategoryId === category.id;
+                              return (
+                                <button key={category.id} type="button" onClick={() => setPublishCategoryId((current) => (current === category.id ? "" : category.id))} className={`rounded-full border px-4 py-2 text-sm transition ${active ? "border-[#adc6ff]/40 bg-[#adc6ff]/15 text-[#adc6ff]" : "border-white/10 bg-white/5 text-zinc-200 hover:border-[#adc6ff]/30 hover:bg-[#adc6ff]/10 hover:text-[#adc6ff]"}`}>
+                                  {category.name}
+                                </button>
+                              );
+                            }) : <div className="text-sm text-zinc-500">暂无分类数据</div>}
+                          </div>
+                        </section>
+
+                        <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                          <h3 className="text-sm font-semibold text-zinc-100">标签（最多 3 个）</h3>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {publishTags.length > 0 ? publishTags.map((tag) => {
+                              const active = publishTagIds.includes(tag.id);
+                              const disabled = !active && publishTagIds.length >= 3;
+                              return (
+                                <button key={tag.id} type="button" disabled={disabled} onClick={() => togglePublishTag(tag.id)} className={`rounded-full border px-4 py-2 text-sm transition ${active ? "border-[#adc6ff]/40 bg-[#adc6ff]/15 text-[#adc6ff]" : disabled ? "cursor-not-allowed border-white/8 bg-white/[0.02] text-zinc-500" : "border-white/10 bg-white/5 text-zinc-200 hover:border-[#adc6ff]/30 hover:bg-[#adc6ff]/10 hover:text-[#adc6ff]"}`}>
+                                  {tag.name}
+                                </button>
+                              );
+                            }) : <div className="text-sm text-zinc-500">暂无标签数据</div>}
+                          </div>
+                          <div className="mt-3 text-xs text-zinc-500">已选 {publishTagIds.length} / 3</div>
+                        </section>
+                      </div>
+
+                      <div className="mt-5 grid gap-5">
+                        <label className="block rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                          <div className="text-sm font-semibold text-zinc-100">Slug（必填）</div>
+                          <input value={publishSlug} onChange={(event) => setPublishSlug(event.target.value)} placeholder="例如：my-first-post" className="mt-3 w-full rounded-2xl border border-white/10 bg-[#0f1116] px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-[#adc6ff]/40" />
+                        </label>
+
+                        <label className="block rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-sm font-semibold text-zinc-100">摘要</div>
+                            <div className="text-xs text-zinc-500">默认取文章前 100 字符，可手动编辑</div>
+                          </div>
+                          <textarea value={publishSummary} onChange={(event) => setPublishSummary(event.target.value)} rows={5} className="mt-3 w-full resize-none rounded-2xl border border-white/10 bg-[#0f1116] px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-[#adc6ff]/40" />
+                        </label>
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+
+                <div className="flex items-center justify-between gap-3 border-t border-white/8 px-6 py-4">
+                  <div className="text-xs text-zinc-500">分类只能选一个，标签最多三个</div>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => setPublishDialogOpen(false)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/5">取消</button>
+                    <button type="button" onClick={handlePublishArticle} disabled={publishDialogSaving || publishDialogLoading} className="rounded-full bg-[#adc6ff] px-5 py-2 text-sm font-semibold text-[#001a41] transition hover:bg-[#c2d3ff] disabled:cursor-not-allowed disabled:bg-[#33415f] disabled:text-[#7e8aa5]">
+                      {publishDialogSaving ? "发布中..." : "确认发布"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
           {selectionToolbarVisible && selectionToolbarPosition ? (
             <div className="pointer-events-auto fixed z-40 w-[420px] rounded-2xl border border-white/10 bg-[#161922]/95 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl" style={selectionToolbarStyle}>
               <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-3">
