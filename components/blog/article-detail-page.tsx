@@ -191,11 +191,25 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   const articleCategory = article.category ?? "文章";
   const articleTags = article.tags.length ? article.tags : [{ id: "default-tag", label: "AI博客" }];
 
+  const loadChatSession = async () => {
+    try {
+      const response = await fetch(`/api/posts/ai-chat?postId=${article.id}`);
+      const data = (await response.json()) as { session: { messages: AiChatMessage[] } | null; message?: string };
+      if (!response.ok) throw new Error(data.message || "加载 AI 对话失败");
+      const sessionMessages = data.session?.messages ?? [];
+      const greeting = buildChatGreeting(currentUser?.name ?? "访客", article.title);
+      setChatMessages(sessionMessages.length ? [greeting, ...sessionMessages] : [greeting]);
+      setChatError(null);
+    } catch (error) {
+      setChatError(error instanceof Error ? error.message : "加载 AI 对话失败");
+    }
+  };
+
   useEffect(() => {
     if (!chatOpen) return;
     let cancelled = false;
 
-    const loadChatSession = async () => {
+    const run = async () => {
       try {
         const response = await fetch(`/api/posts/ai-chat?postId=${article.id}`);
         const data = (await response.json()) as { session: { messages: AiChatMessage[] } | null; message?: string };
@@ -204,13 +218,14 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
           const sessionMessages = data.session?.messages ?? [];
           const greeting = buildChatGreeting(currentUser?.name ?? "访客", article.title);
           setChatMessages(sessionMessages.length ? [greeting, ...sessionMessages] : [greeting]);
+          setChatError(null);
         }
       } catch (error) {
         if (!cancelled) setChatError(error instanceof Error ? error.message : "加载 AI 对话失败");
       }
     };
 
-    void loadChatSession();
+    void run();
     return () => {
       cancelled = true;
     };
@@ -357,6 +372,30 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
       setCommentNotice(data.comment.message);
     } catch (error) {
       setCommentNotice(error instanceof Error && error.message ? error.message : "评论提交失败，请稍后重试。");
+    }
+  };
+
+  const refreshChatSession = async () => {
+    if (!chatOpen) return;
+    setChatLoading(false);
+    setChatError(null);
+    await loadChatSession();
+  };
+
+  const clearChatSession = async () => {
+    if (!requireLogin()) return;
+    setChatLoading(false);
+    setChatError(null);
+
+    try {
+      const response = await fetch(`/api/posts/ai-chat/clear?postId=${article.id}`, { method: "POST" });
+      const data = (await response.json().catch(() => null)) as { message?: string } | null;
+      if (!response.ok) throw new Error(data?.message || "清空会话失败");
+      const greeting = buildChatGreeting(currentUser?.name ?? "访客", article.title);
+      setChatMessages([greeting]);
+      setChatQuestion("");
+    } catch (error) {
+      setChatError(error instanceof Error ? error.message : "清空会话失败");
     }
   };
 
@@ -652,19 +691,19 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setChatMessages([])}
+                  onClick={() => void clearChatSession()}
                   className="rounded-full p-2 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-200"
-                  aria-label="清空对话"
-                  title="清空对话"
+                  aria-label="清空会话"
+                  title="清空会话"
                 >
                   <span className="material-symbols-outlined text-[18px]">delete</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => setChatQuestion((value) => value.trim())}
+                  onClick={() => void refreshChatSession()}
                   className="rounded-full p-2 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-200"
-                  aria-label="刷新对话"
-                  title="刷新对话"
+                  aria-label="刷新会话"
+                  title="刷新会话"
                 >
                   <span className="material-symbols-outlined text-[18px]">refresh</span>
                 </button>
