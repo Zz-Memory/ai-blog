@@ -189,9 +189,9 @@ export function EditorPage() {
           <button type="button" className="rounded-full bg-[#adc6ff] px-4 py-2 text-sm font-semibold text-[#002e69] transition hover:shadow-[0_0_15px_rgba(75,142,255,0.4)]">
             发布文章
           </button>
-          <div className="h-8 w-8 overflow-hidden rounded-full border border-[#414755]">
+          <button type="button" onClick={() => router.push("/blogger-center")} className="h-10 w-10 overflow-hidden rounded-full border border-[#414755] transition hover:border-[#adc6ff]/50 hover:shadow-[0_0_0_3px_rgba(173,198,255,0.12)]">
             <img alt="博主头像" className="h-full w-full object-cover" src="/avatars/blogger-default.png" />
-          </div>
+          </button>
         </div>
       </header>
 
