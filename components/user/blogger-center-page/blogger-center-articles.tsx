@@ -5,24 +5,27 @@ import { TagPill } from "@/components/common/tag-pill";
 
 type ArticleStatus = "published" | "draft";
 
-type ArticleItem = {
+export type ArticleItem = {
+  id: string;
   title: string;
   excerpt: string;
   tags: string[];
   updatedAt: string;
   status: ArticleStatus;
+  category: string;
 };
 
 type Props = {
   activeTab: ArticleStatus;
   onTabChange: (tab: ArticleStatus) => void;
   articleTabs: Array<{ id: ArticleStatus; label: string; count: number }>;
-  visibleArticles: Array<ArticleItem & { category: string }>;
+  visibleArticles: ArticleItem[];
   activeArticleMenu: string | null;
   activeArticleMenuPosition: { top: number; left: number } | null;
-  onMenuOpen: (title: string, top: number, left: number) => void;
+  onMenuToggle: (title: string, top: number, left: number) => void;
   onMenuClose: () => void;
-  onRequestDelete: (article: ArticleItem & { category: string }) => void;
+  onRequestDelete: (article: ArticleItem) => void;
+  onRequestToggleStatus: (article: ArticleItem) => void;
   publishedArticlesLength: number;
   draftArticlesLength: number;
   articlePage: number;
@@ -31,7 +34,12 @@ type Props = {
   onPrevPage: () => void;
   onNextPage: () => void;
   onPageChange: (page: number) => void;
-};
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  onSearchSubmit: () => void;
+  loading: boolean;
+  error: string | null;
+}
 
 export function BloggerCenterArticles({
   activeTab,
@@ -40,9 +48,10 @@ export function BloggerCenterArticles({
   visibleArticles,
   activeArticleMenu,
   activeArticleMenuPosition,
-  onMenuOpen,
+  onMenuToggle,
   onMenuClose,
   onRequestDelete,
+  onRequestToggleStatus,
   publishedArticlesLength,
   draftArticlesLength,
   articlePage,
@@ -51,6 +60,11 @@ export function BloggerCenterArticles({
   onPrevPage,
   onNextPage,
   onPageChange,
+  searchValue,
+  onSearchChange,
+  onSearchSubmit,
+  loading,
+  error,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -61,9 +75,18 @@ export function BloggerCenterArticles({
         </div>
         <div className="relative w-full max-w-[320px]">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-zinc-500">search</span>
-          <input className="w-full rounded-xl border border-white/10 bg-[#101215] py-2.5 pl-10 pr-4 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-[#adc6ff]/50" placeholder="搜索标题、分类或标签..." type="text" />
+          <input
+            className="w-full rounded-xl border border-white/10 bg-[#101215] py-2.5 pl-10 pr-4 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-[#adc6ff]/50"
+            placeholder="搜索标题、分类或标签..."
+            type="text"
+            value={searchValue}
+            onChange={(event) => onSearchChange(event.target.value)}
+            onKeyDown={(event) => { if (event.key === "Enter") onSearchSubmit(); }}
+          />
         </div>
       </div>
+
+      {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{error}</div> : null}
 
       <div className="overflow-hidden rounded-[24px] border border-white/8 bg-[#14161b] shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
         <div className="border-b border-white/8 bg-white/[0.03] px-6">
@@ -88,9 +111,11 @@ export function BloggerCenterArticles({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-sm">
-              {visibleArticles.length > 0 ? (
+              {loading ? (
+                <tr className="h-[438px]"><td colSpan={5} className="px-6 py-10 text-center text-sm text-zinc-500">正在加载文章...</td></tr>
+              ) : visibleArticles.length > 0 ? (
                 visibleArticles.map((article) => (
-                  <tr key={article.title} className="group h-[73px] transition hover:bg-white/[0.02]">
+                  <tr key={article.id} className="group h-[73px] transition hover:bg-white/[0.02]">
                     <td className="px-6 py-4">
                       <div className="mb-0.5 truncate font-medium text-white">{article.title}</div>
                       <div className="truncate text-xs text-zinc-500">{article.excerpt}</div>
@@ -100,8 +125,8 @@ export function BloggerCenterArticles({
                     <td className="px-6 py-4 text-xs text-zinc-500">{article.updatedAt}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="relative inline-flex">
-                        <button type="button" onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const menuHeight = 132; const menuWidth = 160; const gap = 8; const pad = 12; const openUp = window.innerHeight - rect.bottom < menuHeight + gap; const top = openUp ? Math.max(pad, rect.top - menuHeight - gap) : Math.min(window.innerHeight - menuHeight - pad, rect.bottom + gap); const left = Math.min(window.innerWidth - menuWidth - pad, Math.max(pad, rect.right - menuWidth)); onMenuOpen(article.title, top, left); }} className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/8 hover:text-zinc-100"><span className="material-symbols-outlined text-[20px]">more_vert</span></button>
-                        {activeArticleMenu === article.title && activeArticleMenuPosition ? (<div className="fixed z-50 w-40 overflow-hidden rounded-xl border border-white/10 bg-[#161922] shadow-2xl" style={{ top: activeArticleMenuPosition.top, left: activeArticleMenuPosition.left }}>{(article.status === "published" ? ["撤回", "编辑", "删除"] : ["发布", "编辑", "删除"]).map((label) => (<button key={label} type="button" onClick={() => { if (label === "删除") onRequestDelete(article); onMenuClose(); }} className={`block w-full px-4 py-2 text-left text-sm transition ${label === "删除" ? "text-rose-300 hover:bg-rose-500/10" : label === "发布" ? "text-[#adc6ff] hover:bg-[#adc6ff]/10" : "text-zinc-100 hover:bg-white/8"}`}>{label}</button>))}</div>) : null}
+                        <button type="button" onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const menuHeight = 132; const menuWidth = 160; const gap = 8; const pad = 12; const openUp = window.innerHeight - rect.bottom < menuHeight + gap; const top = openUp ? Math.max(pad, rect.top - menuHeight - gap) : Math.min(window.innerHeight - menuHeight - pad, rect.bottom + gap); const left = Math.min(window.innerWidth - menuWidth - pad, Math.max(pad, rect.right - menuWidth)); onMenuToggle(article.id, top, left); }} className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/8 hover:text-zinc-100"><span className="material-symbols-outlined text-[20px]">more_vert</span></button>
+                        {activeArticleMenu === article.id && activeArticleMenuPosition ? (<div className="fixed z-50 w-40 overflow-hidden rounded-xl border border-white/10 bg-[#161922] shadow-2xl" style={{ top: activeArticleMenuPosition.top, left: activeArticleMenuPosition.left }}>{(article.status === "published" ? ["撤回", "编辑", "删除"] : ["发布", "编辑", "删除"]).map((label) => (<button key={label} type="button" onClick={() => { if (label === "删除") onRequestDelete(article); if (label === "发布" || label === "撤回") onRequestToggleStatus(article); onMenuClose(); }} className={`block w-full px-4 py-2 text-left text-sm transition ${label === "删除" ? "text-rose-300 hover:bg-rose-500/10" : label === "发布" ? "text-[#adc6ff] hover:bg-[#adc6ff]/10" : label === "撤回" ? "text-amber-300 hover:bg-amber-500/10" : "text-zinc-100 hover:bg-white/8"}`}>{label}</button>))}</div>) : null}
                       </div>
                     </td>
                   </tr>

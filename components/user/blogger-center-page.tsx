@@ -19,7 +19,7 @@ import { VisitorCenterToolbar } from "@/components/user/visitor-center-page/visi
 import { historyArticles } from "./visitor-center-page/history-articles";
 import { likedArticles } from "./visitor-center-page/liked-articles";
 import { commentedArticles, type CommentedArticle } from "./visitor-center-page/commented-articles";
-import { BloggerCenterArticles } from "./blogger-center-page/blogger-center-articles";
+import { BloggerCenterArticles, type ArticleItem } from "./blogger-center-page/blogger-center-articles";
 import { BloggerCenterComments } from "./blogger-center-page/blogger-center-comments";
 import { BloggerCenterMessages } from "./blogger-center-page/blogger-center-messages";
 import { BloggerCenterSidebar } from "./blogger-center-page/blogger-center-sidebar";
@@ -30,13 +30,12 @@ type ReviewStatus = "pending" | "approved";
 type UserStatus = "active" | "muted";
 
 type UserItem = { id: string; nickname: string; email: string; joinedAt: string; status: UserStatus };
-type ArticleItem = { title: string; excerpt: string; tags: string[]; updatedAt: string; status: ArticleStatus };
-type ArticleRow = ArticleItem & { category: string };
+type ArticleRow = ArticleItem;
 type ReviewItem = { id: string; articleTitle: string; author: string; content: string; createdAt: string; likes: number; replies: number; status: ReviewStatus; href: string };
 
 const articleTabs: Array<{ id: ArticleStatus; label: string; count: number }> = [
-  { id: "published", label: "已发布", count: 124 },
-  { id: "draft", label: "草稿箱", count: 8 },
+  { id: "published", label: "已发布", count: 0 },
+  { id: "draft", label: "草稿箱", count: 0 },
 ];
 
 const reviewStatusMeta: Record<ReviewStatus, { label: string; className: string }> = {
@@ -77,6 +76,14 @@ export function BloggerCenterPage() {
   const [bookmarkedError, setBookmarkedError] = useState<string | null>(null);
   const [activeArticleTab, setActiveArticleTab] = useState<ArticleStatus>("published");
   const [articlePage, setArticlePage] = useState(1);
+  const [articleSearchValue, setArticleSearchValue] = useState("");
+  const [articleSearchKeyword, setArticleSearchKeyword] = useState("");
+  const [articleItems, setArticleItems] = useState<ArticleRow[]>([]);
+  const [articleLoading, setArticleLoading] = useState(false);
+  const [articleError, setArticleError] = useState<string | null>(null);
+  const [articleActionLoading, setArticleActionLoading] = useState(false);
+  const [articleCounts, setArticleCounts] = useState({ published: 0, draft: 0 });
+  const [articleTotalPages, setArticleTotalPages] = useState(1);
   const [activeArticleMenu, setActiveArticleMenu] = useState<string | null>(null);
   const [activeArticleMenuPosition, setActiveArticleMenuPosition] = useState<{ top: number; left: number } | null>(null);
   const [activeReviewMenu, setActiveReviewMenu] = useState<string | null>(null);
@@ -188,9 +195,20 @@ export function BloggerCenterPage() {
   }, [activeSection]);
 
   useEffect(() => { setHistoryVisibleCount(4); }, [historySearchKeyword, history]);
-  useEffect(() => { setArticlePage(1); }, [activeArticleTab]);
+  useEffect(() => { setArticlePage(1); }, [activeArticleTab, articleSearchKeyword]);
   useEffect(() => { setUserPage(1); }, [userSearchKeyword]);
   useEffect(() => { setReviewPage(1); }, [reviewFilter]);
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest("[data-article-menu]")) {
+        setActiveArticleMenu(null);
+        setActiveArticleMenuPosition(null);
+      }
+    };
+    window.addEventListener("mousedown", handlePointerDown);
+    return () => window.removeEventListener("mousedown", handlePointerDown);
+  }, []);
 
   useEffect(() => {
     if (activeSection !== "users") return;
@@ -211,25 +229,34 @@ export function BloggerCenterPage() {
     void loadUsers();
   }, [activeSection, userPage, userSearchKeyword]);
 
-  const articleRows: ArticleRow[] = useMemo(() => [
-    { title: "AI 原生极简主义：界面即智能容器", category: "设计", excerpt: "探讨在人工智能时代，如何通过大量留白和精准排版重塑阅读体验...", tags: ["UI/UX", "AI"], updatedAt: "2024-05-20 14:30", status: "published" },
-    { title: "2024 个人年度数字足迹图鉴", category: "随笔", excerpt: "整理过去一年使用过的 SaaS 工具、阅读过的好书及开源贡献...", tags: ["年度回顾"], updatedAt: "2024-05-10 09:15", status: "published" },
-    { title: "前端工程化的下一个十年", category: "前端", excerpt: "从构建工具到云端 IDE，探讨开发者生产力的极限边界...", tags: ["前端", "工程化"], updatedAt: "2024-04-28 16:45", status: "published" },
-    { title: "构建响应式设计系统的新范式", category: "CSS", excerpt: "基于 Container Queries 和逻辑属性的现代布局方案实践...", tags: ["CSS", "设计系统"], updatedAt: "2024-04-15 11:20", status: "published" },
-    { title: "（草稿）LLM 推理优化指南：KV Cache 深度解析", category: "AI", excerpt: "探讨如何在有限的显存资源下，通过 KV Cache 量化和 PagedAttention 提升吞吐量...", tags: ["AI", "技术底层"], updatedAt: "2024-05-22 11:30", status: "draft" },
-    { title: "（草稿）Framer Motion 进阶：复杂序列动画编排", category: "前端", excerpt: "利用 useAnimate 和 Variants 实现极具表现力的页面入场动效...", tags: ["前端", "动效"], updatedAt: "2024-05-21 09:00", status: "draft" },
-    { title: "（草稿）个人工作站自动化：从 Raycast 到 Hammerspoon", category: "效率工具", excerpt: "如何通过 Lua 脚本接管 macOS 的每一个窗口，打造极致效率环境...", tags: ["自动化", "效率工具"], updatedAt: "2024-05-19 15:45", status: "draft" },
-    { title: "（草稿）WebGPU 开启前端渲染的新篇章", category: "图形学", excerpt: "脱离 WebGL 的限制，直接在浏览器中进行大规模通用计算和图形渲染...", tags: ["图形学", "WebGPU"], updatedAt: "2024-05-18 10:00", status: "draft" },
-  ], []);
+  useEffect(() => {
+    if (activeSection !== "articles") return;
+    const loadArticles = async () => {
+      setArticleLoading(true);
+      setArticleError(null);
+      try {
+        const response = await fetch(`/api/blogger/articles?page=${articlePage}&pageSize=6&status=${activeArticleTab}&search=${encodeURIComponent(articleSearchKeyword.trim())}`, { cache: "no-store" });
+        if (!response.ok) throw new Error();
+        const data = (await response.json()) as { articles: ArticleRow[]; total: number; page: number; totalPages: number; counts?: { published: number; draft: number } };
+        setArticleItems(data.articles);
+        setArticleTotalPages(data.totalPages);
+        if (data.counts) setArticleCounts(data.counts);
+        if (data.page !== articlePage) setArticlePage(data.page);
+      } catch {
+        setArticleError("文章管理加载失败，请稍后重试。");
+      } finally {
+        setArticleLoading(false);
+      }
+    };
+    void loadArticles();
+  }, [activeSection, activeArticleTab, articlePage, articleSearchKeyword]);
 
-  const publishedArticles = articleRows.filter((article) => article.status === "published");
-  const draftArticles = articleRows.filter((article) => article.status === "draft");
-  const activeArticles = activeArticleTab === "published" ? publishedArticles : draftArticles;
   const articlesPerPage = 6;
-  const totalArticlePages = Math.max(1, Math.ceil(activeArticles.length / articlesPerPage));
-  const visibleArticles = activeArticles.slice((articlePage - 1) * articlesPerPage, articlePage * articlesPerPage);
-
   const filteredReviews = reviewItems.filter((review) => (reviewFilter === "all" ? true : review.status === reviewFilter));
+  const totalFilteredArticlePages = Math.max(1, articleTotalPages);
+  const safeFilteredArticlePage = Math.min(articlePage, totalFilteredArticlePages);
+  const visibleFilteredArticles = articleItems;
+  const articleCountByStatus = articleCounts;
   const reviewsPerPage = 6;
   const totalReviewPages = Math.max(1, Math.ceil(filteredReviews.length / reviewsPerPage));
   const safeReviewPage = Math.min(reviewPage, totalReviewPages);
@@ -263,6 +290,25 @@ export function BloggerCenterPage() {
       setUserLoading(false);
     }
   };
+  const refreshArticles = async (page = articlePage) => {
+    setArticleLoading(true);
+    setArticleError(null);
+    try {
+      const response = await fetch(`/api/blogger/articles?page=${page}&pageSize=${articlesPerPage}&status=${activeArticleTab}&search=${encodeURIComponent(articleSearchKeyword.trim())}`, { cache: "no-store" });
+      if (!response.ok) throw new Error();
+      const data = (await response.json()) as { articles: ArticleRow[]; totalPages: number; page: number; counts?: { published: number; draft: number } };
+      setArticleItems(data.articles);
+      setArticleTotalPages(data.totalPages);
+      if (data.counts) setArticleCounts(data.counts);
+      if (data.page !== page) setArticlePage(data.page);
+      return data;
+    } catch {
+      setArticleError("文章管理加载失败，请稍后重试。");
+      return null;
+    } finally {
+      setArticleLoading(false);
+    }
+  };
   const handleToggleUserStatus = async (userId: string) => {
     setUserActionLoading(true);
     try {
@@ -276,7 +322,20 @@ export function BloggerCenterPage() {
     }
   };
   const handleConfirmDeleteUser = async () => { if (!userDeleteTarget) return; setUserActionLoading(true); try { const response = await fetch(`/api/blogger/users?id=${userDeleteTarget.id}`, { method: "DELETE" }); if (!response.ok) throw new Error(); setUserDeleteTarget(null); await refreshUsers(); } catch { setUserError("删除用户失败，请稍后重试。"); } finally { setUserActionLoading(false); } };
-  const handleConfirmDeleteArticle = () => setArticleDeleteTarget(null);
+  const handleConfirmDeleteArticle = async () => { if (!articleDeleteTarget) return; setArticleActionLoading(true); try { const response = await fetch(`/api/blogger/articles?id=${articleDeleteTarget.id}`, { method: "DELETE" }); if (!response.ok) throw new Error(); setArticleDeleteTarget(null); await refreshArticles(); } catch { setArticleError("删除文章失败，请稍后重试。"); } finally { setArticleActionLoading(false); } };
+  const handleToggleArticleStatus = async (article: ArticleRow) => { setArticleActionLoading(true); try { const response = await fetch("/api/blogger/articles", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: article.id, action: article.status === "published" ? "retract" : "publish" }) }); if (!response.ok) throw new Error(); await refreshArticles(); } catch { setArticleError(article.status === "published" ? "撤回文章失败，请稍后重试。" : "发布文章失败，请稍后重试。"); } finally { setArticleActionLoading(false); } };
+  const handleArticleMenuToggle = (id: string, top: number, left: number) => {
+    setActiveArticleMenu((currentId) => {
+      const nextId = currentId === id ? null : id;
+      if (nextId === null) {
+        setActiveArticleMenuPosition(null);
+      } else {
+        setActiveArticleMenuPosition({ top, left });
+      }
+      return nextId;
+    });
+  };
+
   const handleReviewAction = async () => {
     if (!reviewActionTarget) return;
     setReviewActionLoading(true);
@@ -309,7 +368,7 @@ export function BloggerCenterPage() {
       <main className="mx-auto grid min-h-[calc(100vh-64px)] max-w-[1440px] grid-cols-1 gap-8 px-4 py-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6 xl:px-8">
         <BloggerCenterSidebar activeId={activeSection} onSelect={(section) => { window.localStorage.setItem(BLOGGER_CENTER_STORAGE_KEY, section); setActiveSection(section); }} onNewArticleClick={() => { window.localStorage.removeItem(BLOGGER_CENTER_STORAGE_KEY); router.push("/editor"); }} onLogoutClick={() => setShowLogoutConfirm(true)} onSettingsClick={() => setActiveSection("settings")} notificationBadgeCount={unreadCount} />
         <section className="space-y-6 pb-10">
-          {activeSection === "articles" ? <BloggerCenterArticles activeTab={activeArticleTab} onTabChange={setActiveArticleTab} articleTabs={articleTabs} visibleArticles={visibleArticles} activeArticleMenu={activeArticleMenu} activeArticleMenuPosition={activeArticleMenuPosition} onMenuOpen={(title, top, left) => { setActiveArticleMenu(title); setActiveArticleMenuPosition({ top, left }); }} onMenuClose={() => { setActiveArticleMenu(null); setActiveArticleMenuPosition(null); }} onRequestDelete={(article) => setArticleDeleteTarget(article)} publishedArticlesLength={publishedArticles.length} draftArticlesLength={draftArticles.length} articlePage={articlePage} articlesPerPage={articlesPerPage} totalArticlePages={totalArticlePages} onPrevPage={() => setArticlePage((page) => Math.max(1, page - 1))} onNextPage={() => setArticlePage((page) => Math.min(totalArticlePages, page + 1))} onPageChange={setArticlePage} /> : null}
+          {activeSection === "articles" ? <div className="space-y-4"><BloggerCenterArticles activeTab={activeArticleTab} onTabChange={(tab) => { setActiveArticleTab(tab); setArticlePage(1); }} articleTabs={articleTabs.map((tab) => ({ ...tab, count: articleCountByStatus[tab.id] }))} visibleArticles={visibleFilteredArticles} activeArticleMenu={activeArticleMenu} activeArticleMenuPosition={activeArticleMenuPosition} onMenuToggle={handleArticleMenuToggle} onMenuClose={() => { setActiveArticleMenu(null); setActiveArticleMenuPosition(null); }} onRequestDelete={(article) => setArticleDeleteTarget(article)} onRequestToggleStatus={handleToggleArticleStatus} publishedArticlesLength={articleCountByStatus.published} draftArticlesLength={articleCountByStatus.draft} articlePage={safeFilteredArticlePage} articlesPerPage={articlesPerPage} totalArticlePages={totalFilteredArticlePages} onPrevPage={() => setArticlePage((page) => Math.max(1, page - 1))} onNextPage={() => setArticlePage((page) => Math.min(totalFilteredArticlePages, page + 1))} onPageChange={setArticlePage} searchValue={articleSearchValue} onSearchChange={setArticleSearchValue} onSearchSubmit={() => { setArticleSearchKeyword(articleSearchValue.trim()); setArticlePage(1); }} loading={articleLoading} error={articleError} />{articleActionLoading ? <div className="text-sm text-zinc-500">正在执行文章操作...</div> : null}</div> : null}
           {activeSection === "comments-review" ? <div className="space-y-4">{reviewError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{reviewError}</div> : null}{reviewLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载评论管理...</div> : <BloggerCenterComments reviewItems={filteredReviews} reviewFilter={reviewFilter} onFilterChange={setReviewFilter} visibleReviews={visibleReviews} reviewPage={safeReviewPage} totalReviewPages={totalReviewPages} onPrevPage={() => setReviewPage((page) => Math.max(1, page - 1))} onNextPage={() => setReviewPage((page) => Math.min(totalReviewPages, page + 1))} onPageChange={setReviewPage} activeMenuTitle={activeReviewMenu} activeMenuPosition={activeReviewMenuPosition} onMenuOpen={(id, top, left) => { setActiveReviewMenu(id); setActiveReviewMenuPosition({ top, left }); }} onMenuClose={() => { setActiveReviewMenu(null); setActiveReviewMenuPosition(null); }} onRequestAction={(reviewId, action) => { const review = reviewItems.find((item) => item.id === reviewId) ?? filteredReviews.find((item) => item.id === reviewId); if (!review) return; setReviewActionTarget({ review, action }); }} reviewStatusMeta={reviewStatusMeta} reviewActionMap={reviewActionMap} />}{reviewActionLoading ? <div className="text-sm text-zinc-500">正在执行操作...</div> : null}</div> : null}
           {activeSection === "comments" ? <div className="space-y-4">{commentedError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{commentedError}</div> : null}{commentedLoading ? <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">正在加载我的评论...</div> : <VisitorCenterComments articles={commentedList} />}</div> : null}
           {activeSection === "send-message" ? <BloggerCenterMessages /> : null}
