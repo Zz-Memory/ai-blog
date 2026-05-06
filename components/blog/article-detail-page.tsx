@@ -10,6 +10,7 @@ import { SiteFooter } from "@/components/common/site-footer";
 import { SiteHeader } from "@/components/common/site-header";
 import { TagPill } from "@/components/common/tag-pill";
 import { formatChinaDate, formatChinaDateTime } from "@/lib/date";
+import { toPreviewHtml } from "@/lib/markdown";
 
 type AuthEntry = "login" | "register";
 
@@ -79,6 +80,8 @@ type CurrentUserView = {
 
 type AiChatMessage = { id: string; role: "USER" | "ASSISTANT"; content: string; createdAt: string };
 
+const renderMarkdownPreview = (content: string) => toPreviewHtml(content).replace(/\n/g, "");
+
 const buildChatGreeting = (username: string, articleTitle: string): AiChatMessage => ({
   id: "chat-greeting",
   role: "ASSISTANT",
@@ -93,9 +96,6 @@ const createTypingMessage = (): AiChatMessage => ({
   createdAt: new Date().toISOString(),
 });
 
-function ThinkingDots() {
-  return <span className="inline-flex gap-1"><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.2s]" /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.1s]" /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400" /></span>;
-}
 
 export function ArticleDetailPage({ article, engagement, comments }: ArticleDetailPageProps) {
   const [searchInput, setSearchInput] = useState("");
@@ -679,9 +679,12 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                       <span className="material-symbols-outlined text-[18px]">smart_toy</span>
                     </div>
                   ) : null}
-                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 ${message.role === "USER" ? "rounded-tr-sm border border-white/8 bg-white/5 text-zinc-200" : "rounded-tl-sm border border-white/8 bg-[#101215] text-zinc-300"}`}>
-                    {message.content || (chatLoading && message.role === "ASSISTANT" ? <ThinkingDots /> : null)}
-                  </div>
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 ${message.role === "USER" ? "rounded-tr-sm border border-white/8 bg-white/5 text-zinc-200" : "rounded-tl-sm border border-white/8 bg-[#101215] text-zinc-300"}`}
+                    dangerouslySetInnerHTML={{
+                      __html: message.content ? renderMarkdownPreview(message.content) : chatLoading && message.role === "ASSISTANT" ? "<span class='inline-flex gap-1'><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.2s]'></span><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.1s]'></span><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400'></span></span>" : "",
+                    }}
+                  />
                   {message.role === "USER" ? (
                     <div className="h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
                       <img src={currentUser?.avatarUrl ?? "/avatars/visitor-default.png"} alt={currentUser?.avatarLabel ?? "访客头像"} className="h-full w-full object-cover" />
