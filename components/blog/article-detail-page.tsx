@@ -79,6 +79,13 @@ type CurrentUserView = {
 
 type AiChatMessage = { id: string; role: "USER" | "ASSISTANT"; content: string; createdAt: string };
 
+const buildChatGreeting = (username: string, articleTitle: string): AiChatMessage => ({
+  id: "chat-greeting",
+  role: "ASSISTANT",
+  content: `您好，${username}，请问是对《${articleTitle}》有什么疑问吗？`,
+  createdAt: new Date().toISOString(),
+});
+
 export function ArticleDetailPage({ article, engagement, comments }: ArticleDetailPageProps) {
   const [searchInput, setSearchInput] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
@@ -182,7 +189,11 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
         const response = await fetch(`/api/posts/ai-chat?postId=${article.id}`);
         const data = (await response.json()) as { session: { messages: AiChatMessage[] } | null; message?: string };
         if (!response.ok) throw new Error(data.message || "加载 AI 对话失败");
-        if (!cancelled && data.session) setChatMessages(data.session.messages);
+        if (!cancelled) {
+          const sessionMessages = data.session?.messages ?? [];
+          const greeting = buildChatGreeting(currentUser?.name ?? "访客", article.title);
+          setChatMessages(sessionMessages.length ? [greeting, ...sessionMessages] : [greeting]);
+        }
       } catch (error) {
         if (!cancelled) setChatError(error instanceof Error ? error.message : "加载 AI 对话失败");
       }
@@ -192,7 +203,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
     return () => {
       cancelled = true;
     };
-  }, [article.id, chatOpen]);
+  }, [article.id, article.title, chatOpen, currentUser?.name]);
 
   const openLogin = () => {
     setAuthEntry("login");
@@ -575,7 +586,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
         </div>
 
         {chatOpen ? (
-          <section className="fixed bottom-40 right-6 z-40 w-[760px] max-w-[92vw] rounded-2xl border border-white/8 bg-[#181a20] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.35)] xl:right-[max(24px,calc((100vw-1600px)/2+24px))]">
+          <section className="fixed bottom-40 right-6 z-40 flex h-[min(57vh,600px)] w-[760px] max-w-[92vw] flex-col rounded-2xl border border-white/8 bg-[#181a20] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.35)] xl:right-[max(24px,calc((100vw-1600px)/2+24px))]">
             <div className="flex items-center justify-between border-b border-white/8 pb-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-primary/20 text-primary">
@@ -608,7 +619,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               </div>
             </div>
 
-            <div className="mt-5 space-y-4 max-h-[420px] overflow-y-auto pr-1">
+            <div className="mt-5 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 pb-2">
               {chatMessages.length ? chatMessages.map((message) => (
                 <div key={message.id} className={`flex gap-3 ${message.role === "USER" ? "justify-end" : "justify-start"}`}>
                   {message.role === "ASSISTANT" ? (
