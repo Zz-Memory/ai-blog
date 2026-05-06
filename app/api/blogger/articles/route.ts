@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+
 import { NextResponse } from "next/server";
 import { Prisma, PostStatus, UserRole } from "@prisma/client";
 
@@ -41,6 +43,32 @@ function buildWhere(params: { authorId: string; status: PostStatus | null; searc
   return where;
 }
 
+function makeDraftSlug() {
+  return `draft-${crypto.randomUUID().replace(/-/g, "")}`;
+}
+
+function mapArticle(post: {
+  id: string;
+  title: string;
+  summary: string | null;
+  contentMarkdown: string;
+  status: PostStatus;
+  updatedAt: Date;
+  category: { name: string } | null;
+  postTags: Array<{ tag: { name: string } }>;
+}) {
+  return {
+    id: post.id,
+    title: post.title,
+    contentMarkdown: post.contentMarkdown,
+    excerpt: post.summary ?? "暂无摘要",
+    tags: post.postTags.map((item) => item.tag.name),
+    updatedAt: formatUpdatedAt(post.updatedAt),
+    status: post.status === PostStatus.PUBLISHED ? "published" : "draft",
+    category: post.category?.name ?? "未分类",
+  };
+}
+
 export async function GET(request: Request) {
   const auth = await getAuthUser();
   if (!auth) {
@@ -52,6 +80,36 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
+  const id = url.searchParams.get("id");
+  if (id) {
+    const post = await prisma.post.findFirst({
+      where: { id, authorId: auth.user.id },
+      select: {
+        id: true,
+        title: true,
+        summary: true,
+        contentMarkdown: true,
+        contentHtml: true,
+        status: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!post) return NextResponse.json({ message: "文章不存在。" }, { status: 404 });
+
+    return NextResponse.json({
+      article: {
+        id: post.id,
+        title: post.title,
+        summary: post.summary ?? "",
+        contentMarkdown: post.contentMarkdown,
+        contentHtml: post.contentHtml ?? "",
+        status: post.status === PostStatus.PUBLISHED ? "published" : "draft",
+        updatedAt: formatUpdatedAt(post.updatedAt),
+      },
+    });
+  }
+
   const page = Math.max(1, Number(url.searchParams.get("page") ?? "1") || 1);
   const pageSize = Math.max(1, Math.min(20, Number(url.searchParams.get("pageSize") ?? "6") || 6));
   const search = normalizeSearch(url.searchParams.get("search"));
@@ -76,6 +134,7 @@ export async function GET(request: Request) {
         id: true,
         title: true,
         summary: true,
+        contentMarkdown: true,
         status: true,
         updatedAt: true,
         category: { select: { name: true } },
@@ -85,15 +144,7 @@ export async function GET(request: Request) {
   ]);
 
   return NextResponse.json({
-    articles: posts.map((post) => ({
-      id: post.id,
-      title: post.title,
-      excerpt: post.summary ?? "暂无摘要",
-      tags: post.postTags.map((item) => item.tag.name),
-      updatedAt: formatUpdatedAt(post.updatedAt),
-      status: post.status === PostStatus.PUBLISHED ? "published" : "draft",
-      category: post.category?.name ?? "未分类",
-    })),
+    articles: posts.map(mapArticle),
     page,
     pageSize,
     total,
@@ -103,6 +154,49 @@ export async function GET(request: Request) {
       draft: counts.find((item) => item.status === PostStatus.DRAFT)?._count._all ?? 0,
     },
   });
+}
+
+export async function POST(request: Request) {
+  const auth = await getAuthUser();
+  if (!auth) return NextResponse.json({ message: "请先登录。" }, { status: 401 });
+  if (!isBlogger(auth.user.role)) return NextResponse.json({ message: "无权限访问。" }, { status: 403 });
+
+  const body = (await request.json().catch(() => null)) as { id?: string; action?: string } | null;
+  if (body?.action !== "create-draft") return NextResponse.json({ message: "不支持的操作。" }, { status: 400 });
+
+  const existingDraft = await prisma.post.findFirst({
+    where: { authorId: auth.user.id, status: PostStatus.DRAFT, title: "" , contentMarkdown: "" },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true, title: true, contentMarkdown: true },
+  });
+
+  if (existingDraft) {
+    return NextResponse.json({ ok: true, article: mapArticle({ ...existingDraft, summary: null, status: PostStatus.DRAFT, updatedAt: new Date(), category: null, postTags: [] }) });
+  }
+
+  const created = await prisma.post.create({
+    data: {
+      authorId: auth.user.id,
+      title: "",
+      slug: makeDraftSlug(),
+      summary: null,
+      contentMarkdown: "",
+      contentHtml: "",
+      status: PostStatus.DRAFT,
+    },
+    select: {
+      id: true,
+      title: true,
+      summary: true,
+      contentMarkdown: true,
+      status: true,
+      updatedAt: true,
+      category: { select: { name: true } },
+      postTags: { select: { tag: { select: { name: true } } } },
+    },
+  });
+
+  return NextResponse.json({ ok: true, article: mapArticle(created) });
 }
 
 export async function PATCH(request: Request) {

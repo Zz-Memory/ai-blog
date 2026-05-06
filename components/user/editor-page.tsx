@@ -1,19 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toPreviewHtml } from "@/lib/markdown";
 
-const initialMarkdown = `# 品牌与风格
-本设计系统旨在定义一个以人工智能为核心的个人博客体验。品牌性格融合了人类创作的感性与 AI 处理的理性。
+type EditorArticle = {
+  id: string;
+  title: string;
+  summary: string;
+  contentMarkdown: string;
+  contentHtml: string;
+  status: "published" | "draft";
+  updatedAt: string;
+};
 
-**设计风格：AI 原生极简主义 (AI-Native Minimalism)**
-这种风格超越了传统扁平化设计，强调界面作为“智能容器”的角色。设计语言通过大量留白、精确的排版和流动的玻璃质感，营造出一种前卫且深邃的数字空间感。
-
-## 布局与间距
-本设计系统采用固定宽度网格与动态页边距相结合的模式，专注于阅读效率。
-
-- **阅读容器**: 核心内容区限制在 800px 宽度内，这是长文阅读的最佳视觉扫描宽度。
-- **8px 节奏**: 所有间距均基于 8px 步进系统。组件内部间距通常使用 12px 或 16px。`;
+const emptyMarkdown = "";
 
 function countWords(text: string) {
   const cleaned = text.trim();
@@ -22,13 +23,57 @@ function countWords(text: string) {
 }
 
 export function EditorPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const articleId = searchParams.get("id");
   const [title, setTitle] = useState("");
-  const [markdown, setMarkdown] = useState(initialMarkdown);
+  const [markdown, setMarkdown] = useState(emptyMarkdown);
   const [aiEnabled, setAiEnabled] = useState(true);
+  const [article, setArticle] = useState<EditorArticle | null>(null);
+  const [loading, setLoading] = useState(Boolean(articleId));
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadDraft = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        let targetId = articleId;
+        if (!targetId) {
+          const response = await fetch("/api/blogger/articles", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "create-draft" }),
+          });
+          if (!response.ok) throw new Error();
+          const data = (await response.json()) as { article: EditorArticle };
+          targetId = data.article.id;
+          router.replace(`/editor?id=${targetId}`);
+          setArticle(data.article);
+          setTitle(data.article.title);
+          setMarkdown(data.article.contentMarkdown);
+          return;
+        }
+
+        const response = await fetch(`/api/blogger/articles?id=${encodeURIComponent(targetId)}`, { cache: "no-store" });
+        if (!response.ok) throw new Error();
+        const data = (await response.json()) as { article: EditorArticle };
+        setArticle(data.article);
+        setTitle(data.article.title);
+        setMarkdown(data.article.contentMarkdown);
+      } catch {
+        setError("文章加载失败，请稍后重试。");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadDraft();
+  }, [articleId, router]);
 
   const stats = useMemo(() => {
     const words = countWords(markdown);
-    const lines = markdown.split("\n").length;
+    const lines = markdown ? markdown.split("\n").length : 0;
     const chars = markdown.length;
     return { words, lines, chars };
   }, [markdown]);
@@ -49,7 +94,7 @@ export function EditorPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-sm text-[#8b90a0]">保存成功</span>
+          <span className="text-sm text-[#8b90a0]">{loading ? "正在加载..." : error ? "加载失败" : article ? "已加载草稿" : "保存成功"}</span>
           <button
             type="button"
             onClick={() => setAiEnabled((current) => !current)}
@@ -89,13 +134,14 @@ export function EditorPage() {
               onChange={(event) => setMarkdown(event.target.value)}
               spellCheck={false}
               className="flex-1 resize-none bg-transparent p-6 font-mono text-[14px] leading-7 text-[#c1c6d7] outline-none placeholder:text-[#414755]"
+              placeholder={loading ? "正在加载草稿..." : "开始编写你的文章内容..."}
             />
           </div>
         </div>
 
         <div className="flex h-full w-1/2 flex-col bg-[#131315]">
           <div className="flex-1 overflow-auto p-6 text-[#e5e1e4]">
-            <div className="mx-auto max-w-[800px] prose prose-invert prose-p:mb-4 prose-h1:mb-4 prose-h2:mb-3 prose-ul:mb-4 prose-li:mb-1 prose-strong:text-white" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+            {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{error}</div> : <div className="mx-auto max-w-[800px] prose prose-invert prose-p:mb-4 prose-h1:mb-4 prose-h2:mb-3 prose-ul:mb-4 prose-li:mb-1 prose-strong:text-white" dangerouslySetInnerHTML={{ __html: previewHtml }} />}
           </div>
         </div>
       </main>
