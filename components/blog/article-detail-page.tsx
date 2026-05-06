@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AuthModal } from "@/components/auth/auth-modal";
+import { AiQuestionFloatingButton } from "@/components/blog/ai-question-floating-button";
 import { CategoryPill } from "@/components/common/category-pill";
 import { useAuth } from "@/components/common/auth-context";
 import { SiteFooter } from "@/components/common/site-footer";
@@ -76,6 +77,8 @@ type CurrentUserView = {
   avatarLabel: string;
 };
 
+type AiChatMessage = { id: string; role: "USER" | "ASSISTANT"; content: string; createdAt: string };
+
 export function ArticleDetailPage({ article, engagement, comments }: ArticleDetailPageProps) {
   const [searchInput, setSearchInput] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
@@ -84,6 +87,9 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   const [replyTo, setReplyTo] = useState<{ id: string; author: string } | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatQuestion, setChatQuestion] = useState("");
+  const [chatMessages, setChatMessages] = useState<AiChatMessage[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
   const [likesCount, setLikesCount] = useState(engagement.likes);
   const [bookmarksCount, setBookmarksCount] = useState(engagement.bookmarks);
   const [isLiked, setIsLiked] = useState(engagement.isLiked);
@@ -166,6 +172,27 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
 
   const articleCategory = article.category ?? "文章";
   const articleTags = article.tags.length ? article.tags : [{ id: "default-tag", label: "AI博客" }];
+
+  useEffect(() => {
+    if (!chatOpen) return;
+    let cancelled = false;
+
+    const loadChatSession = async () => {
+      try {
+        const response = await fetch(`/api/posts/ai-chat?postId=${article.id}`);
+        const data = (await response.json()) as { session: { messages: AiChatMessage[] } | null; message?: string };
+        if (!response.ok) throw new Error(data.message || "加载 AI 对话失败");
+        if (!cancelled && data.session) setChatMessages(data.session.messages);
+      } catch (error) {
+        if (!cancelled) setChatError(error instanceof Error ? error.message : "加载 AI 对话失败");
+      }
+    };
+
+    void loadChatSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [article.id, chatOpen]);
 
   const openLogin = () => {
     setAuthEntry("login");
@@ -311,6 +338,44 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
     }
   };
 
+  const submitChatQuestion = async () => {
+    if (!requireLogin()) return;
+    const question = chatQuestion.trim();
+    if (!question || chatLoading) return;
+
+    const userMessage: AiChatMessage = {
+      id: `local-${Date.now()}`,
+      role: "USER",
+      content: question,
+      createdAt: new Date().toISOString(),
+    };
+
+    setChatMessages((current) => [...current, userMessage]);
+    setChatQuestion("");
+    setChatLoading(true);
+    setChatError(null);
+
+    try {
+      const response = await fetch("/api/posts/ai-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: article.id, question }),
+      });
+      const data = (await response.json()) as { messages?: AiChatMessage[]; message?: string };
+      if (!response.ok) throw new Error(data.message || "发送失败");
+      if (data.messages?.length) {
+        const assistantMessage = data.messages.find((message) => message.role === "ASSISTANT");
+        if (assistantMessage) {
+          setChatMessages((current) => [...current, assistantMessage]);
+        }
+      }
+    } catch (error) {
+      setChatError(error instanceof Error ? error.message : "发送失败，请稍后重试。");
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#111215] text-zinc-200">
       <SiteHeader
@@ -349,8 +414,6 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
             className="article-content mt-8 max-w-[840px] space-y-8 text-[15px] leading-8 text-zinc-300"
             dangerouslySetInnerHTML={{ __html: article.contentHtml }}
           />
-
-
 
           {actionError ? <p className="mt-6 text-sm text-rose-400">{actionError}</p> : null}
 
@@ -502,18 +565,12 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
 
         <div className="hidden md:block">
           <div className="fixed bottom-24 right-6 z-50 xl:right-[max(24px,calc((100vw-1600px)/2+24px))]">
-            <button
-              type="button"
+            <AiQuestionFloatingButton
               onClick={() => {
                 if (!requireLogin()) return;
                 setChatOpen((value) => !value);
               }}
-              className="group relative flex h-14 w-14 items-center justify-center rounded-full border border-primary-container/50 bg-surface-container-high shadow-[0_0_20px_rgba(75,142,255,0.15)] transition hover:shadow-[0_0_30px_rgba(75,142,255,0.3)]"
-              aria-label="打开 AI 问答"
-            >
-              <div className="absolute inset-0 rounded-full bg-primary-container/20 opacity-20 animate-ping" />
-              <span className="material-symbols-outlined relative z-10 text-primary-container transition group-hover:scale-110 text-[20px]">smart_toy</span>
-            </button>
+            />
           </div>
         </div>
 
@@ -532,7 +589,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setChatQuestion("")}
+                  onClick={() => setChatMessages([])}
                   className="rounded-full p-2 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-200"
                   aria-label="清空对话"
                   title="清空对话"
@@ -551,23 +608,28 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               </div>
             </div>
 
-            <div className="mt-5 space-y-4">
-              <div className="flex justify-end gap-3">
-                <div className="rounded-2xl rounded-tr-sm border border-white/8 bg-white/5 px-4 py-3 text-sm text-zinc-200">
-                  帮我总结一下这篇文章的核心观点。
+            <div className="mt-5 space-y-4 max-h-[420px] overflow-y-auto pr-1">
+              {chatMessages.length ? chatMessages.map((message) => (
+                <div key={message.id} className={`flex gap-3 ${message.role === "USER" ? "justify-end" : "justify-start"}`}>
+                  {message.role === "ASSISTANT" ? (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-primary/20 text-primary">
+                      <span className="material-symbols-outlined text-[18px]">smart_toy</span>
+                    </div>
+                  ) : null}
+                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 ${message.role === "USER" ? "rounded-tr-sm border border-white/8 bg-white/5 text-zinc-200" : "rounded-tl-sm border border-white/8 bg-[#101215] text-zinc-300"}`}>
+                    {message.content}
+                  </div>
+                  {message.role === "USER" ? (
+                    <div className="h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                      <img src={currentUser?.avatarUrl ?? "/avatars/visitor-default.png"} alt={currentUser?.avatarLabel ?? "访客头像"} className="h-full w-full object-cover" />
+                    </div>
+                  ) : null}
                 </div>
-                <div className="h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
-                  <img src={currentUser?.avatarUrl ?? "/avatars/visitor-default.png"} alt={currentUser?.avatarLabel ?? "访客头像"} className="h-full w-full object-cover" />
-                </div>
-              </div>
-              <div className="flex justify-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-primary/20 text-primary">
-                  <span className="material-symbols-outlined text-[18px]">smart_toy</span>
-                </div>
-                <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-white/8 bg-[#101215] px-4 py-3 text-sm leading-7 text-zinc-300">
-                  <p>本文主要探讨了传统 RAG 架构的局限性，并介绍了微软提出的 GraphRAG 作为下一代上下文感知系统的构建范式。</p>
-                </div>
-              </div>
+              )) : (
+                <div className="text-sm text-zinc-500">开始向 AI 提问，它会把内容写入数据库会话中。</div>
+              )}
+              {chatLoading ? <div className="text-sm text-zinc-500">AI 正在回复中...</div> : null}
+              {chatError ? <div className="text-sm text-rose-400">{chatError}</div> : null}
             </div>
 
             <div className="mt-5 flex items-center gap-3 rounded-2xl border border-white/8 bg-surface-container px-4 py-3">
@@ -576,8 +638,11 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                 onChange={(event) => setChatQuestion(event.target.value)}
                 placeholder="向小智提问关于本文的任何问题..."
                 className="w-full bg-transparent text-sm text-zinc-200 outline-none placeholder:text-zinc-500"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void submitChatQuestion();
+                }}
               />
-              <button type="button" className="rounded-xl p-2 text-zinc-400 transition hover:bg-primary/10 hover:text-primary">
+              <button type="button" onClick={submitChatQuestion} className="rounded-xl p-2 text-zinc-400 transition hover:bg-primary/10 hover:text-primary" disabled={chatLoading}>
                 <span className="material-symbols-outlined text-[24px]">send</span>
               </button>
             </div>

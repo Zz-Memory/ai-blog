@@ -266,6 +266,7 @@ model AiChatSession {
   post      Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
   messages  AiChatMessage[]
 
+  @@unique([userId, postId])
   @@index([userId, createdAt])
   @@index([postId])
 }
