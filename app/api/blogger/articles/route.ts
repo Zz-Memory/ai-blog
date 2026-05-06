@@ -234,7 +234,7 @@ export async function PATCH(request: Request) {
   } | null;
   if (!body?.id || !body.action) return NextResponse.json({ message: "缺少必要参数。" }, { status: 400 });
 
-  const post = await prisma.post.findFirst({ where: { id: body.id, authorId: auth.user.id }, select: { id: true, status: true } });
+  const post = await prisma.post.findFirst({ where: { id: body.id, authorId: auth.user.id }, select: { id: true, status: true, slug: true } });
   if (!post) return NextResponse.json({ message: "文章不存在。" }, { status: 404 });
 
   if (body.action === "save") {
@@ -264,6 +264,14 @@ export async function PATCH(request: Request) {
   if (body.action === "publish") {
     const slug = body.slug?.trim();
     if (!slug) return NextResponse.json({ message: "Slug 为必填项。" }, { status: 400 });
+
+    const duplicate = await prisma.post.findFirst({
+      where: { slug, NOT: { id: post.id } },
+      select: { id: true },
+    });
+    if (duplicate) {
+      return NextResponse.json({ message: "Slug 已存在，请更换后再发布。" }, { status: 409 });
+    }
 
     const updated = await prisma.post.update({
       where: { id: post.id },

@@ -239,6 +239,11 @@ export function EditorPage() {
           tagIds: publishTagIds,
         }),
       });
+      if (response.status === 409) {
+        const data = (await response.json().catch(() => null)) as { message?: string } | null;
+        setPublishDialogError(data?.message ?? "Slug 已存在，请更换后再发布。");
+        return;
+      }
       if (!response.ok) throw new Error();
       setPublishDialogOpen(false);
       router.push("/blogger-center?section=articles&tab=published");
