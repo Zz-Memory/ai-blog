@@ -86,6 +86,17 @@ const buildChatGreeting = (username: string, articleTitle: string): AiChatMessag
   createdAt: new Date().toISOString(),
 });
 
+const createTypingMessage = (): AiChatMessage => ({
+  id: `typing-${Date.now()}`,
+  role: "ASSISTANT",
+  content: "",
+  createdAt: new Date().toISOString(),
+});
+
+function ThinkingDots() {
+  return <span className="inline-flex gap-1"><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.2s]" /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.1s]" /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400" /></span>;
+}
+
 export function ArticleDetailPage({ article, engagement, comments }: ArticleDetailPageProps) {
   const [searchInput, setSearchInput] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
@@ -360,8 +371,9 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
       content: question,
       createdAt: new Date().toISOString(),
     };
+    const typingMessage = createTypingMessage();
 
-    setChatMessages((current) => [...current, userMessage]);
+    setChatMessages((current) => [...current, userMessage, typingMessage]);
     setChatQuestion("");
     setChatLoading(true);
     setChatError(null);
@@ -372,15 +384,55 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postId: article.id, question }),
       });
-      const data = (await response.json()) as { messages?: AiChatMessage[]; message?: string };
-      if (!response.ok) throw new Error(data.message || "发送失败");
-      if (data.messages?.length) {
-        const assistantMessage = data.messages.find((message) => message.role === "ASSISTANT");
-        if (assistantMessage) {
-          setChatMessages((current) => [...current, assistantMessage]);
+
+      if (!response.ok || !response.body) {
+        const data = (await response.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(data?.message || "发送失败");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let assistantContent = "";
+
+      setChatMessages((current) => current.map((message) => (message.id === typingMessage.id ? { ...message, content: "思考中" } : message)));
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() ?? "";
+
+        for (const chunk of chunks) {
+          for (const line of chunk.split("\n")) {
+            if (!line.startsWith("data:")) continue;
+            const payload = line.slice(5).trim();
+            if (!payload) continue;
+            const parsed = JSON.parse(payload) as { delta?: string; done?: boolean; content?: string };
+            if (parsed.delta) {
+              assistantContent += parsed.delta;
+              setChatMessages((current) =>
+                current.map((message) => (message.id === typingMessage.id ? { ...message, content: assistantContent } : message))
+              );
+            }
+            if (parsed.done && parsed.content) {
+              assistantContent = parsed.content;
+            }
+          }
         }
       }
+
+      setChatMessages((current) =>
+        current.map((message) =>
+          message.id === typingMessage.id
+            ? { id: `assistant-${Date.now()}`, role: "ASSISTANT", content: assistantContent || "抱歉，我暂时无法生成回答。", createdAt: new Date().toISOString() }
+            : message
+        )
+      );
     } catch (error) {
+      setChatMessages((current) => current.filter((message) => message.id !== typingMessage.id));
       setChatError(error instanceof Error ? error.message : "发送失败，请稍后重试。");
     } finally {
       setChatLoading(false);
@@ -628,7 +680,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                     </div>
                   ) : null}
                   <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 ${message.role === "USER" ? "rounded-tr-sm border border-white/8 bg-white/5 text-zinc-200" : "rounded-tl-sm border border-white/8 bg-[#101215] text-zinc-300"}`}>
-                    {message.content}
+                    {message.content || (chatLoading && message.role === "ASSISTANT" ? <ThinkingDots /> : null)}
                   </div>
                   {message.role === "USER" ? (
                     <div className="h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
@@ -639,7 +691,6 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               )) : (
                 <div className="text-sm text-zinc-500">开始向 AI 提问，它会把内容写入数据库会话中。</div>
               )}
-              {chatLoading ? <div className="text-sm text-zinc-500">AI 正在回复中...</div> : null}
               {chatError ? <div className="text-sm text-rose-400">{chatError}</div> : null}
             </div>
 

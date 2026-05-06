@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
 import { AiChatRole } from "@prisma/client";
 
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+const MAX_CONTEXT_PAIRS = 10;
+const OPENAI_BASE_URL = "https://api.deepseek.com";
+const OPENAI_MODEL = "deepseek-v4-flash";
+
+const openai = new OpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: OPENAI_BASE_URL,
+});
+
+type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 function getStringField(body: unknown, key: string) {
   if (!body || typeof body !== "object") return null;
@@ -10,23 +22,56 @@ function getStringField(body: unknown, key: string) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function buildAssistantReply(articleTitle: string, articleSummary: string | null, articleContent: string, question: string) {
-  const normalizedQuestion = question.toLowerCase();
-  const summary = articleSummary?.trim() || articleContent.trim().slice(0, 180);
+function buildSystemPrompt(articleTitle: string, articleSummary: string | null, contentMarkdown: string) {
+  return [
+    "你是文章详情页内的 AI 助手，请围绕当前文章内容回答问题。",
+    "回答要简洁、准确、自然，优先基于文章本身内容，不要编造。",
+    `当前文章标题：${articleTitle}`,
+    articleSummary ? `当前文章摘要：${articleSummary}` : "",
+    "当前文章完整正文（Markdown）：",
+    contentMarkdown,
+    "如果用户的问题与文章无关，请礼貌提醒并尽量引导回文章内容。",
+  ].filter(Boolean).join("\n\n");
+}
 
-  if (/(总结|概括|核心|摘要|what.*about|overview|summary)/i.test(normalizedQuestion)) {
-    return `这篇文章《${articleTitle}》的核心内容可以概括为：${summary}`;
-  }
+function getRecentContext(messages: { role: AiChatRole; content: string }[]) {
+  const recent = messages.slice(-MAX_CONTEXT_PAIRS * 2);
+  return recent.map((message) => ({
+    role: message.role === AiChatRole.USER ? "user" : "assistant",
+    content: message.content,
+  })) as Array<{ role: "user" | "assistant"; content: string }>;
+}
 
-  if (/(局限|问题|challenge|problem|不足)/i.test(normalizedQuestion)) {
-    return `从文章内容来看，《${articleTitle}》主要讨论了现有方案在实际场景中的局限性，并尝试给出更适合上下文理解的改进方向。`;
-  }
+async function createAssistantStream(messages: ChatMessage[]) {
+  const completion = (await openai.chat.completions.create({
+    model: OPENAI_MODEL,
+    messages,
+    stream: true,
+    reasoning_effort: "high",
+  } as any)) as unknown as AsyncIterable<{ choices: Array<{ delta?: { content?: string } }> }>;
 
-  if (/(怎么|如何|why|why\s|how\s|实现|落地|实践)/i.test(normalizedQuestion)) {
-    return `如果结合文章思路来理解，《${articleTitle}》更强调的是先明确问题，再围绕上下文和知识组织方式去设计更稳妥的实现路径。`;
-  }
+  const encoder = new TextEncoder();
+  let fullText = "";
 
-  return `我已记录你的问题“${question}”。结合文章《${articleTitle}》来看，可以先从这段内容入手：${summary}`;
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for await (const chunk of completion) {
+          const delta = chunk.choices[0]?.delta?.content ?? "";
+          if (delta) {
+            fullText += delta;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
+          }
+        }
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, content: fullText })}\n\n`));
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+  });
+
+  return { stream, getContent: () => fullText };
 }
 
 export async function GET(request: Request) {
@@ -41,22 +86,22 @@ export async function GET(request: Request) {
     where: { postId, userId: auth.user.id },
     include: {
       messages: { orderBy: { createdAt: "asc" } },
-      post: { select: { title: true } },
+      post: { select: { title: true, summary: true } },
     },
   });
 
   return NextResponse.json({
     session: session
       ? {
-          id: session.id,
-          postTitle: session.post.title,
-          messages: session.messages.map((message) => ({
-            id: message.id,
-            role: message.role,
-            content: message.content,
-            createdAt: message.createdAt.toISOString(),
-          })),
-        }
+        id: session.id,
+        postTitle: session.post.title,
+        messages: session.messages.map((message) => ({
+          id: message.id,
+          role: message.role,
+          content: message.content,
+          createdAt: message.createdAt.toISOString(),
+        })),
+      }
       : null,
   });
 }
@@ -82,56 +127,62 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "文章不存在。" }, { status: 404 });
   }
 
-  const session = await prisma.aiChatSession.upsert({
-    where: {
-      userId_postId: {
-        userId: auth.user.id,
-        postId,
-      },
-    },
-    create: {
-      userId: auth.user.id,
-      postId,
-    },
-    update: {},
+  let session = await prisma.aiChatSession.findFirst({
+    where: { userId: auth.user.id, postId },
   });
 
-  const createdMessages = await prisma.$transaction(async (tx) => {
-    const userMessage = await tx.aiChatMessage.create({
-      data: {
-        sessionId: session.id,
-        role: AiChatRole.USER,
-        content: question,
-      },
+  if (!session) {
+    session = await prisma.aiChatSession.create({
+      data: { userId: auth.user.id, postId },
     });
+  }
 
-    const assistantReply = buildAssistantReply(post.title, post.summary, post.contentMarkdown, question);
-    const assistantMessage = await tx.aiChatMessage.create({
-      data: {
-        sessionId: session.id,
-        role: AiChatRole.ASSISTANT,
-        content: assistantReply,
-      },
-    });
-
-    return { userMessage, assistantMessage };
+  const history = await prisma.aiChatMessage.findMany({
+    where: { sessionId: session.id },
+    orderBy: { createdAt: "asc" },
   });
 
-  return NextResponse.json({
-    sessionId: session.id,
-    messages: [
-      {
-        id: createdMessages.userMessage.id,
-        role: createdMessages.userMessage.role,
-        content: createdMessages.userMessage.content,
-        createdAt: createdMessages.userMessage.createdAt.toISOString(),
-      },
-      {
-        id: createdMessages.assistantMessage.id,
-        role: createdMessages.assistantMessage.role,
-        content: createdMessages.assistantMessage.content,
-        createdAt: createdMessages.assistantMessage.createdAt.toISOString(),
-      },
-    ],
+  await prisma.aiChatMessage.create({
+    data: { sessionId: session.id, role: AiChatRole.USER, content: question },
+  });
+
+  const contextMessages: ChatMessage[] = [
+    { role: "system", content: buildSystemPrompt(post.title, post.summary, post.contentMarkdown) },
+    ...getRecentContext(history.map((message) => ({ role: message.role, content: message.content }))),
+    { role: "user", content: question },
+  ];
+
+  const completionStream = await createAssistantStream(contextMessages);
+
+  const responseStream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        const reader = completionStream.stream.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          controller.enqueue(value);
+        }
+        await prisma.aiChatMessage.create({
+          data: {
+            sessionId: session.id,
+            role: AiChatRole.ASSISTANT,
+            content: completionStream.getContent() || "抱歉，我暂时无法生成回答。",
+          },
+        });
+        controller.close();
+      } catch {
+        controller.error(new Error("DeepSeek 流式输出失败"));
+      }
+    },
+  });
+
+  return new Response(responseStream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    },
   });
 }
