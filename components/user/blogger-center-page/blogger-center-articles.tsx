@@ -117,8 +117,8 @@ export function BloggerCenterArticles({
                 visibleArticles.map((article) => (
                   <tr key={article.id} className="group h-[73px] transition hover:bg-white/[0.02]">
                     <td className="px-6 py-4">
-                      <div className="mb-0.5 truncate font-medium text-white">{article.title}</div>
-                      <div className="truncate text-xs text-zinc-500">{article.excerpt}</div>
+                      <div className="mb-0.5 truncate font-medium text-white">{article.title?.trim() ? article.title : "无标题"}</div>
+                      <div className="truncate text-xs text-zinc-500">{article.excerpt?.trim() ? article.excerpt : "无摘要"}</div>
                     </td>
                     <td className="px-6 py-4"><CategoryPill label={article.category} /></td>
                     <td className="px-6 py-4"><div className="flex flex-wrap gap-2">{article.tags.map((tag) => <TagPill key={tag} label={tag} />)}</div></td>
