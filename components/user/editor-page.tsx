@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toPreviewHtml } from "@/lib/markdown";
 
@@ -32,6 +32,11 @@ export function EditorPage() {
   const [article, setArticle] = useState<EditorArticle | null>(null);
   const [loading, setLoading] = useState(Boolean(articleId));
   const [error, setError] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const saveTimerRef = useRef<number | null>(null);
+  const lastSavedRef = useRef<{ title: string; markdown: string; html: string } | null>(null);
+  const saveRequestIdRef = useRef(0);
 
   useEffect(() => {
     const loadDraft = async () => {
@@ -52,6 +57,7 @@ export function EditorPage() {
           setArticle(data.article);
           setTitle(data.article.title);
           setMarkdown(data.article.contentMarkdown);
+          lastSavedRef.current = { title: data.article.title, markdown: data.article.contentMarkdown, html: data.article.contentHtml };
           return;
         }
 
@@ -61,6 +67,7 @@ export function EditorPage() {
         setArticle(data.article);
         setTitle(data.article.title);
         setMarkdown(data.article.contentMarkdown);
+        lastSavedRef.current = { title: data.article.title, markdown: data.article.contentMarkdown, html: data.article.contentHtml };
       } catch {
         setError("文章加载失败，请稍后重试。");
       } finally {
@@ -80,6 +87,72 @@ export function EditorPage() {
 
   const previewHtml = useMemo(() => toPreviewHtml(markdown), [markdown]);
 
+  useEffect(() => {
+    if (loading || error || !article?.id) return;
+
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(async () => {
+      const currentSnapshot = { title: title.trim(), markdown, html: previewHtml };
+      const lastSnapshot = lastSavedRef.current;
+      const changed = !lastSnapshot || lastSnapshot.title !== currentSnapshot.title || lastSnapshot.markdown !== currentSnapshot.markdown;
+      if (!changed) return;
+
+      const requestId = saveRequestIdRef.current + 1;
+      saveRequestIdRef.current = requestId;
+      setSaveStatus("正在保存...");
+      try {
+        const response = await fetch("/api/blogger/articles", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: article.id,
+            action: "save",
+            title: currentSnapshot.title,
+            contentMarkdown: currentSnapshot.markdown,
+            contentHtml: currentSnapshot.html,
+          }),
+        });
+        if (!response.ok) throw new Error();
+        if (saveRequestIdRef.current !== requestId) return;
+        lastSavedRef.current = currentSnapshot;
+        setSaveStatus("保存成功");
+      } catch {
+        if (saveRequestIdRef.current !== requestId) return;
+        setSaveStatus("保存失败");
+      }
+    }, 1000);
+
+    return () => {
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    };
+  }, [article?.id, error, loading, markdown, previewHtml, title]);
+
+  const handleMdUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const fileName = file.name.toLowerCase();
+    const isMdFile = file.type === "text/markdown" || file.type === "text/x-markdown" || fileName.endsWith(".md") || fileName.endsWith(".markdown");
+    if (!isMdFile) {
+      setError("只能上传 MD 文件，请重新选择。");
+      return;
+    }
+
+    try {
+      const content = await file.text();
+      setMarkdown(content);
+      setError(null);
+    } catch {
+      setError("MD 文件解析失败，请稍后重试。");
+    }
+  };
+
+  const handleDraftBoxClick = () => {
+    router.push("/blogger-center?section=articles&tab=draft");
+  };
+
+  const saveMessage = loading ? "正在加载..." : saveStatus || (error ? "加载失败" : article ? "已加载草稿" : "保存成功");
+
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#131315] text-[#e5e1e4] antialiased">
       <header className="fixed left-0 top-0 z-50 flex h-16 w-full items-center justify-between border-b border-white/10 bg-slate-950/80 px-6 shadow-2xl shadow-blue-500/10 backdrop-blur-xl">
@@ -94,7 +167,7 @@ export function EditorPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-sm text-[#8b90a0]">{loading ? "正在加载..." : error ? "加载失败" : article ? "已加载草稿" : "保存成功"}</span>
+          <span className="text-sm text-[#8b90a0]">{saveMessage}</span>
           <button
             type="button"
             onClick={() => setAiEnabled((current) => !current)}
@@ -106,10 +179,11 @@ export function EditorPage() {
               <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition ${aiEnabled ? "left-4" : "left-0.5"}`} />
             </span>
           </button>
-          <button type="button" className="rounded-full border border-[#414755] px-4 py-1.5 text-sm text-[#c1c6d7] transition hover:bg-white/5 hover:text-white">
-            上传MD
+          <input ref={fileInputRef} accept=".md,.markdown,text/markdown,text/x-markdown" className="hidden" type="file" onChange={handleMdUpload} />
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="rounded-full border border-[#414755] px-4 py-1.5 text-sm text-[#c1c6d7] transition hover:bg-white/5 hover:text-white">
+            上传MD文件
           </button>
-          <button type="button" className="rounded-full border border-[#414755] px-4 py-1.5 text-sm text-[#c1c6d7] transition hover:bg-white/5 hover:text-white">
+          <button type="button" onClick={handleDraftBoxClick} className="rounded-full border border-[#414755] px-4 py-1.5 text-sm text-[#c1c6d7] transition hover:bg-white/5 hover:text-white">
             草稿箱
           </button>
           <button type="button" className="rounded-full bg-[#adc6ff] px-4 py-2 text-sm font-semibold text-[#002e69] transition hover:shadow-[0_0_15px_rgba(75,142,255,0.4)]">

@@ -204,11 +204,31 @@ export async function PATCH(request: Request) {
   if (!auth) return NextResponse.json({ message: "请先登录。" }, { status: 401 });
   if (!isBlogger(auth.user.role)) return NextResponse.json({ message: "无权限访问。" }, { status: 403 });
 
-  const body = (await request.json().catch(() => null)) as { id?: string; action?: string } | null;
+  const body = (await request.json().catch(() => null)) as {
+    id?: string;
+    action?: string;
+    title?: string;
+    contentMarkdown?: string;
+    contentHtml?: string;
+  } | null;
   if (!body?.id || !body.action) return NextResponse.json({ message: "缺少必要参数。" }, { status: 400 });
 
   const post = await prisma.post.findFirst({ where: { id: body.id, authorId: auth.user.id }, select: { id: true, status: true } });
   if (!post) return NextResponse.json({ message: "文章不存在。" }, { status: 404 });
+
+  if (body.action === "save") {
+    const updated = await prisma.post.update({
+      where: { id: post.id },
+      data: {
+        title: body.title ?? "",
+        summary: body.contentMarkdown?.slice(0, 120) ?? null,
+        contentMarkdown: body.contentMarkdown ?? "",
+        contentHtml: body.contentHtml ?? "",
+      },
+      select: { updatedAt: true },
+    });
+    return NextResponse.json({ ok: true, updatedAt: updated.updatedAt.toISOString() });
+  }
 
   if (body.action !== "publish" && body.action !== "retract") {
     return NextResponse.json({ message: "不支持的操作。" }, { status: 400 });

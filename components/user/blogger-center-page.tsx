@@ -122,7 +122,13 @@ export function BloggerCenterPage() {
 
   useEffect(() => {
     const section = searchParams.get("section");
+    const tab = searchParams.get("tab");
     if (section === "notifications") setActiveSection("notifications");
+    if (section === "articles") {
+      setActiveSection("articles");
+      if (tab === "draft") setActiveArticleTab("draft");
+      if (tab === "published") setActiveArticleTab("published");
+    }
   }, [searchParams]);
 
   useEffect(() => { window.localStorage.setItem(BLOGGER_CENTER_STORAGE_KEY, activeSection); }, [activeSection]);
