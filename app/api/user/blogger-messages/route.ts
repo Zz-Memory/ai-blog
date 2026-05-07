@@ -5,7 +5,7 @@ import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 function shouldStoreLinkUrl(type: NotificationType) {
-  return type === "LIKE" || type === "BOOKMARK" || type === "COMMENT" || type === "REPLY";
+  return type === "COMMENT";
 }
 
 function isPublicRecipient(userRole: string, status: string) {
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "标题和内容不能为空。" }, { status: 400 });
   }
 
-  const targetType = body.type ?? "SYSTEM";
+  const targetType: NotificationType = body.type ?? NotificationType.SYSTEM;
 
   let recipientIds: string[] = [];
   if (body.recipientUsername) {
