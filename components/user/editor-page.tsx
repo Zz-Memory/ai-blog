@@ -368,6 +368,21 @@ export function EditorPage() {
     setGhostError(null);
   };
 
+  const handleAiToggle = () => {
+    setAiEnabled((current) => {
+      const next = !current;
+      if (!next) {
+        if (autocompleteTimerRef.current) window.clearTimeout(autocompleteTimerRef.current);
+        autocompleteAbortRef.current?.abort();
+        autocompleteRequestSeqRef.current += 1;
+        clearGhostSuggestion();
+        setGhostLoading(false);
+        lastInputSourceRef.current = "programmatic";
+      }
+      return next;
+    });
+  };
+
   const markPointerDrivenCursorMove = () => {
     lastInputSourceRef.current = "pointer";
     clearGhostSuggestion();
@@ -528,6 +543,7 @@ export function EditorPage() {
       setGhostText("");
       setGhostCaret(null);
       setGhostPosition(null);
+      setGhostLoading(false);
       return;
     }
 
@@ -618,7 +634,7 @@ export function EditorPage() {
           </button>
           <button
             type="button"
-            onClick={() => setAiEnabled((current) => !current)}
+            onClick={handleAiToggle}
             className="flex items-center gap-2 rounded-full border border-[#adc6ff]/30 bg-[#adc6ff]/10 px-3 py-1.5 transition hover:bg-[#adc6ff]/15"
           >
             <span className="material-symbols-outlined text-[18px] text-[#adc6ff]">smart_toy</span>
