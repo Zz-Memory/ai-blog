@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toPreviewHtml } from "@/lib/markdown";
 
@@ -26,6 +26,40 @@ function countWords(text: string) {
   const cleaned = text.trim();
   if (!cleaned) return 0;
   return cleaned.split(/\s+/).length + (cleaned.match(/[\u4e00-\u9fff]/g)?.length ?? 0);
+}
+
+function sliceAutocompleteContext(text: string, cursor: number) {
+  return {
+    prefix: text.slice(Math.max(0, cursor - 500), cursor),
+    suffix: text.slice(cursor, Math.min(text.length, cursor + 500)),
+  };
+}
+
+function normalizeCompletion(text: string) {
+  return text.replace(/^\s+/, "");
+}
+
+function getCurrentParagraphBounds(text: string, cursor: number) {
+  const before = text.slice(0, cursor);
+  const after = text.slice(cursor);
+  const paragraphStart = Math.max(before.lastIndexOf("\n\n"), before.lastIndexOf("\r\n\r\n"));
+  const normalizedStart = paragraphStart === -1 ? 0 : paragraphStart + (before.includes("\r\n\r\n") && before.lastIndexOf("\r\n\r\n") === paragraphStart ? 4 : 2);
+  const paragraphEndIndex = after.search(/\n\n|\r\n\r\n/);
+  const paragraphEnd = paragraphEndIndex === -1 ? text.length : cursor + paragraphEndIndex;
+  return { start: normalizedStart, end: paragraphEnd };
+}
+
+function isCursorAtParagraphEnd(text: string, cursor: number) {
+  const { end } = getCurrentParagraphBounds(text, cursor);
+  const tail = text.slice(cursor, end);
+  return /^[\s\u00a0]*$/.test(tail);
+}
+
+function isCursorAtLineEnd(text: string, cursor: number) {
+  const lineBreakIndex = text.indexOf("\n", cursor);
+  const lineEnd = lineBreakIndex === -1 ? text.length : lineBreakIndex;
+  const tail = text.slice(cursor, lineEnd);
+  return /^[\s\u00a0]*$/.test(tail);
 }
 
 export function EditorPage() {
@@ -54,9 +88,20 @@ export function EditorPage() {
   const [publishTags, setPublishTags] = useState<PublishTag[]>([]);
   const [publishDialogError, setPublishDialogError] = useState<string | null>(null);
   const [publishDialogSaving, setPublishDialogSaving] = useState(false);
+  const [ghostText, setGhostText] = useState("");
+  const [ghostLoading, setGhostLoading] = useState(false);
+  const [ghostError, setGhostError] = useState<string | null>(null);
+  const [ghostCaret, setGhostCaret] = useState<number | null>(null);
+  const [ghostPosition, setGhostPosition] = useState<{ top: number; left: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const ghostMarkerRef = useRef<HTMLSpanElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
+  const autocompleteTimerRef = useRef<number | null>(null);
+  const autocompleteAbortRef = useRef<AbortController | null>(null);
+  const autocompleteRequestSeqRef = useRef(0);
+  const lastAutocompleteKeyRef = useRef<string>("");
+  const lastInputSourceRef = useRef<"keyboard" | "pointer" | "programmatic">("programmatic");
   const lastSavedRef = useRef<{ title: string; markdown: string; html: string } | null>(null);
   const saveRequestIdRef = useRef(0);
 
@@ -108,7 +153,7 @@ export function EditorPage() {
   }, [markdown]);
 
   const previewHtml = useMemo(() => toPreviewHtml(markdown), [markdown]);
-
+  const ghostTextDisplay = ghostText;
 
   useEffect(() => {
     if (loading || error || !article?.id) return;
@@ -280,9 +325,148 @@ export function EditorPage() {
     setSelectionToolbarPosition({ top, left });
   };
 
-  const handleTextareaSelect = () => {
-    requestAnimationFrame(updateSelectionToolbarPosition);
+  const clearGhostSuggestion = () => {
+    setGhostText("");
+    setGhostCaret(null);
+    setGhostPosition(null);
+    setGhostError(null);
   };
+
+  const markPointerDrivenCursorMove = () => {
+    lastInputSourceRef.current = "pointer";
+    clearGhostSuggestion();
+  };
+
+  const markKeyboardDrivenInput = () => {
+    lastInputSourceRef.current = "keyboard";
+  };
+
+  const handleTextareaSelect = () => {
+    requestAnimationFrame(() => {
+      updateSelectionToolbarPosition();
+      updateGhostVisibility();
+    });
+  };
+
+  const handleTextareaPointerDown = () => {
+    markPointerDrivenCursorMove();
+  };
+
+  const handleTextareaScroll = () => {
+    requestAnimationFrame(() => {
+      if (!ghostCaret) return;
+      updateGhostPosition();
+      updateGhostVisibility();
+    });
+  };
+
+  const updateGhostPosition = () => {
+    const textarea = textareaRef.current;
+    const marker = ghostMarkerRef.current;
+    if (!textarea || !marker) return;
+    const textareaRect = textarea.getBoundingClientRect();
+    const markerRect = marker.getBoundingClientRect();
+    const top = markerRect.top - textareaRect.top + textarea.scrollTop;
+    const left = markerRect.left - textareaRect.left + textarea.scrollLeft;
+    setGhostPosition({ top, left });
+  };
+
+  const updateGhostVisibility = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const cursor = textarea.selectionStart ?? 0;
+    if (!isCursorAtParagraphEnd(markdown, cursor) || !isCursorAtLineEnd(markdown, cursor)) {
+      clearGhostSuggestion();
+      return;
+    }
+  };
+
+  const requestAutocomplete = useCallback(async () => {
+    if (!aiEnabled || loading || error) return;
+    if (lastInputSourceRef.current !== "keyboard") return;
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const cursor = textarea.selectionStart ?? 0;
+    const selectionEnd = textarea.selectionEnd ?? 0;
+    if (cursor !== selectionEnd) {
+      clearGhostSuggestion();
+      return;
+    }
+    if (!isCursorAtParagraphEnd(markdown, cursor) || !isCursorAtLineEnd(markdown, cursor)) {
+      clearGhostSuggestion();
+      return;
+    }
+
+    const { prefix, suffix } = sliceAutocompleteContext(markdown, cursor);
+    if (!prefix.trim() && !suffix.trim()) {
+      setGhostText("");
+      setGhostCaret(null);
+      setGhostPosition(null);
+      setGhostError(null);
+      return;
+    }
+
+    const cacheKey = `${cursor}:${prefix}:${suffix}`;
+    if (lastAutocompleteKeyRef.current === cacheKey) return;
+    lastAutocompleteKeyRef.current = cacheKey;
+
+    autocompleteAbortRef.current?.abort();
+    const controller = new AbortController();
+    autocompleteAbortRef.current = controller;
+    const requestSeq = ++autocompleteRequestSeqRef.current;
+    setGhostLoading(true);
+    setGhostError(null);
+
+    try {
+      const response = await fetch("/api/autocomplete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({ prefix, suffix }),
+      });
+
+      if (!response.ok || !response.body) throw new Error("autocomplete_failed");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let suggestion = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data: ")) continue;
+          const payload = JSON.parse(line.slice(6)) as { delta?: string; done?: boolean };
+          if (payload.delta) suggestion += payload.delta;
+          if (payload.done) break;
+        }
+      }
+
+      const normalized = normalizeCompletion(suggestion);
+      if (controller.signal.aborted) return;
+      if (requestSeq !== autocompleteRequestSeqRef.current) return;
+      setGhostText(normalized);
+      setGhostCaret(normalized ? cursor : null);
+      if (normalized) {
+        requestAnimationFrame(updateGhostPosition);
+      } else {
+        setGhostPosition(null);
+      }
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      if (requestSeq !== autocompleteRequestSeqRef.current) return;
+      setGhostText("");
+      setGhostCaret(null);
+      setGhostPosition(null);
+      setGhostError(err instanceof Error ? err.message : "补全失败");
+    } finally {
+      if (requestSeq === autocompleteRequestSeqRef.current && !controller.signal.aborted) setGhostLoading(false);
+    }
+  }, [aiEnabled, error, loading, markdown]);
 
   const handleSelectionToolbarAction = (mode: "style" | "custom") => {
     setSelectionToolbarMode(mode);
@@ -302,11 +486,69 @@ export function EditorPage() {
     };
   }, [markdown, selectionToolbarMode, selectionToolbarVisible]);
 
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!aiEnabled || loading || error || !textarea) {
+      setGhostText("");
+      setGhostCaret(null);
+      setGhostPosition(null);
+      return;
+    }
+
+    if (lastInputSourceRef.current !== "keyboard") {
+      if (autocompleteTimerRef.current) window.clearTimeout(autocompleteTimerRef.current);
+      clearGhostSuggestion();
+      return;
+    }
+
+    if (autocompleteTimerRef.current) window.clearTimeout(autocompleteTimerRef.current);
+    autocompleteRequestSeqRef.current += 1;
+    autocompleteAbortRef.current?.abort();
+    autocompleteTimerRef.current = window.setTimeout(() => {
+      void requestAutocomplete();
+    }, 500);
+
+    return () => {
+      if (autocompleteTimerRef.current) window.clearTimeout(autocompleteTimerRef.current);
+    };
+  }, [aiEnabled, error, loading, markdown, requestAutocomplete]);
+
   const handleStyleToggle = (style: "formal" | "casual" | "academic") => {
     setSelectionToolbarMode("style");
     setSelectionStyle((current) => (current === style ? null : style));
     setSelectionToolbarVisible(true);
     requestAnimationFrame(updateSelectionToolbarPosition);
+  };
+
+  const handleTextareaChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    markKeyboardDrivenInput();
+    setMarkdown(event.target.value);
+    const cursor = event.target.selectionStart ?? event.target.value.length;
+    setGhostCaret(cursor);
+    setGhostText("");
+    setGhostError(null);
+  };
+
+  const handleTextareaKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    markKeyboardDrivenInput();
+    if (event.key === "Tab" && ghostTextDisplay) {
+      event.preventDefault();
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      const start = textarea.selectionStart ?? 0;
+      const end = textarea.selectionEnd ?? 0;
+      const nextMarkdown = `${markdown.slice(0, start)}${ghostTextDisplay}${markdown.slice(end)}`;
+      const nextCursor = start + ghostTextDisplay.length;
+      setMarkdown(nextMarkdown);
+      setGhostText("");
+      setGhostCaret(null);
+      setGhostError(null);
+      requestAnimationFrame(() => {
+        textarea.selectionStart = nextCursor;
+        textarea.selectionEnd = nextCursor;
+        textarea.focus();
+      });
+    }
   };
 
   const saveMessage = loading ? "正在加载..." : saveStatus || (error ? "加载失败" : article ? "已加载草稿" : "保存成功");
@@ -364,17 +606,48 @@ export function EditorPage() {
                 <span key={index}>{index + 1}</span>
               ))}
             </div>
-            <textarea
-              ref={textareaRef}
-              value={markdown}
-              onChange={(event) => setMarkdown(event.target.value)}
-              onMouseUp={handleTextareaSelect}
-              onKeyUp={handleTextareaSelect}
-              onSelect={handleTextareaSelect}
-              spellCheck={false}
-              className="flex-1 resize-none bg-transparent p-6 font-mono text-[14px] leading-7 text-[#c1c6d7] outline-none placeholder:text-[#414755]"
-              placeholder={loading ? "正在加载草稿..." : "开始编写你的文章内容..."}
-            />
+            <div className="relative flex-1">
+              <textarea
+                ref={textareaRef}
+                value={markdown}
+                onChange={handleTextareaChange}
+                onKeyDown={handleTextareaKeyDown}
+                onMouseDown={handleTextareaPointerDown}
+                onMouseUp={handleTextareaSelect}
+                onKeyUp={handleTextareaSelect}
+                onSelect={handleTextareaSelect}
+                onScroll={handleTextareaScroll}
+                spellCheck={false}
+                className="h-full w-full resize-none bg-transparent p-6 font-mono text-[14px] leading-7 text-[#c1c6d7] outline-none placeholder:text-[#414755]"
+                placeholder={loading ? "正在加载草稿..." : "开始编写你的文章内容..."}
+              />
+              {ghostTextDisplay && ghostCaret !== null ? (
+                <div className="pointer-events-none absolute inset-0 overflow-hidden p-6 font-mono text-[14px] leading-7">
+                  <div className="relative whitespace-pre-wrap text-transparent">
+                    <span>{markdown.slice(0, ghostCaret)}</span>
+                    <span ref={ghostMarkerRef} className="inline-block whitespace-pre-wrap opacity-0">
+                      {ghostTextDisplay}
+                    </span>
+                  </div>
+                  {ghostPosition ? (
+                    <div
+                      className="absolute text-[#7c8598]"
+                      style={{
+                        top: ghostPosition.top,
+                        left: ghostPosition.left,
+                        whiteSpace: "pre-wrap",
+                        transform: "translateX(1px)",
+                        textShadow: "0 0 0 transparent",
+                      }}
+                    >
+                      {ghostTextDisplay}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+              {ghostLoading ? <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-[#8b90a0]">补全中...</div> : null}
+              {ghostError ? <div className="pointer-events-none absolute right-6 top-4 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-xs text-rose-200">补全失败</div> : null}
+            </div>
           </div>
         </div>
 
