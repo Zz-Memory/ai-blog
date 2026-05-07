@@ -55,8 +55,8 @@ function mapArticle(post: {
   slug?: string;
   status: PostStatus;
   updatedAt: Date;
-  category: { id: string; name: string } | null;
-  postTags: Array<{ tag: { id: string; name: string } }>;
+  category: { name: string } | null;
+  postTags: Array<{ tag: { name: string } }>;
 }) {
   return {
     id: post.id,
