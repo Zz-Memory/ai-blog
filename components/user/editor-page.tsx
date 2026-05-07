@@ -88,6 +88,8 @@ export function EditorPage() {
   const [publishTags, setPublishTags] = useState<PublishTag[]>([]);
   const [publishDialogError, setPublishDialogError] = useState<string | null>(null);
   const [publishDialogSaving, setPublishDialogSaving] = useState(false);
+  const [titleGenerating, setTitleGenerating] = useState(false);
+  const [titleGenerateError, setTitleGenerateError] = useState<string | null>(null);
   const [ghostText, setGhostText] = useState("");
   const [ghostLoading, setGhostLoading] = useState(false);
   const [ghostError, setGhostError] = useState<string | null>(null);
@@ -217,6 +219,40 @@ export function EditorPage() {
 
   const handleDraftBoxClick = () => {
     router.push("/blogger-center?section=articles&tab=draft");
+  };
+
+  const handleTitleGenerate = async () => {
+    if (!markdown.trim()) {
+      setTitleGenerateError("请先输入文章内容后再生成标题。");
+      return;
+    }
+
+    setTitleGenerating(true);
+    setTitleGenerateError(null);
+    try {
+      const response = await fetch("/api/title-generation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentTitle: title,
+          contentMarkdown: markdown,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(data?.message ?? "标题生成失败。");
+      }
+
+      const data = (await response.json()) as { title?: string };
+      const nextTitle = data.title?.trim();
+      if (!nextTitle) throw new Error("标题生成失败。");
+      setTitle(nextTitle);
+    } catch (error) {
+      setTitleGenerateError(error instanceof Error ? error.message : "标题生成失败。");
+    } finally {
+      setTitleGenerating(false);
+    }
   };
 
   const openPublishDialog = async () => {
@@ -570,7 +606,16 @@ export function EditorPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {titleGenerateError ? <span className="text-sm text-rose-300">{titleGenerateError}</span> : null}
           <span className="text-sm text-[#8b90a0]">{saveMessage}</span>
+          <button
+            type="button"
+            onClick={handleTitleGenerate}
+            disabled={titleGenerating || loading || !markdown.trim()}
+            className="rounded-full border border-[#adc6ff]/30 bg-[#adc6ff]/10 px-3 py-1.5 text-sm text-[#adc6ff] transition hover:bg-[#adc6ff]/15 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {titleGenerating ? "标题生成中..." : "标题生成"}
+          </button>
           <button
             type="button"
             onClick={() => setAiEnabled((current) => !current)}
