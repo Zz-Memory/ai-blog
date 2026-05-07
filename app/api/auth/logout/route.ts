@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { AUTH_JWT_COOKIE, AUTH_SESSION_COOKIE, hashSessionToken } from "@/lib/auth";
 import { cookies } from "next/headers";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function POST() {
   const cookieStore = await cookies();

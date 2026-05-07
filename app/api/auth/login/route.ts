@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { createJwtPayload, createSessionToken, hashSessionToken, setAuthCookies, signJwt } from "@/lib/auth";
 import { verifyPassword } from "@/lib/password";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);

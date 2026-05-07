@@ -1,13 +1,19 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
-import { PrismaClient, User } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+type AuthUser = {
+  id: string;
+  email: string;
+  username: string;
+  role: string;
+};
 
 export const AUTH_JWT_COOKIE = "auth_token";
 export const AUTH_SESSION_COOKIE = "session_token";
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-secret-change-me";
-const JWT_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 7;
+const JWT_EXPIRES_IN_SECONDS = 60 * 60 * 24;
+const SESSION_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 7;
 
 export type AuthPayload = {
   sid: string;
@@ -36,7 +42,7 @@ export function hashSessionToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-export function createJwtPayload(user: User, sid: string): AuthPayload {
+export function createJwtPayload(user: AuthUser, sid: string): AuthPayload {
   const iat = Math.floor(Date.now() / 1000);
   return {
     sid,
@@ -65,26 +71,26 @@ export function verifyJwt(token: string) {
   const [encodedHeader, encodedPayload, encodedSignature] = token.split(".");
   if (!encodedHeader || !encodedPayload || !encodedSignature) return null;
 
-  const expectedSignature = crypto.createHmac("sha256", JWT_SECRET).update(`${encodedHeader}.${encodedPayload}`).digest("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+  const expectedSignature = crypto
+    .createHmac("sha256", JWT_SECRET)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest("base64")
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
 
   if (expectedSignature.length !== encodedSignature.length) return null;
   if (!crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(encodedSignature))) return null;
 
   const payload = JSON.parse(base64UrlDecode(encodedPayload)) as AuthPayload;
-  if (payload.exp * 1000 < Date.now()) return null;
-  return payload;
+  return payload.exp * 1000 < Date.now() ? null : payload;
 }
 
 export function setAuthCookies(response: Response, jwt: string, sessionToken: string) {
-  const expires = new Date(Date.now() + JWT_EXPIRES_IN_SECONDS * 1000);
-  response.headers.append(
-    "Set-Cookie",
-    `${AUTH_JWT_COOKIE}=${jwt}; Path=/; HttpOnly; SameSite=Lax; Expires=${expires.toUTCString()}`,
-  );
-  response.headers.append(
-    "Set-Cookie",
-    `${AUTH_SESSION_COOKIE}=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Expires=${expires.toUTCString()}`,
-  );
+  const jwtExpires = new Date(Date.now() + JWT_EXPIRES_IN_SECONDS * 1000);
+  const sessionExpires = new Date(Date.now() + SESSION_EXPIRES_IN_SECONDS * 1000);
+  response.headers.append("Set-Cookie", `${AUTH_JWT_COOKIE}=${jwt}; Path=/; HttpOnly; SameSite=Lax; Expires=${jwtExpires.toUTCString()}`);
+  response.headers.append("Set-Cookie", `${AUTH_SESSION_COOKIE}=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Expires=${sessionExpires.toUTCString()}`);
 }
 
 export async function getAuthUser() {
