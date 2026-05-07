@@ -78,6 +78,8 @@ export function EditorPage() {
   const [selectionToolbarMode, setSelectionToolbarMode] = useState<"style" | "custom">("style");
   const [selectionStyle, setSelectionStyle] = useState<"formal" | "casual" | "academic" | null>(null);
   const [selectionCustomPrompt, setSelectionCustomPrompt] = useState("");
+  const [selectionPolishing, setSelectionPolishing] = useState(false);
+  const [selectionPolishError, setSelectionPolishError] = useState<string | null>(null);
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [publishDialogLoading, setPublishDialogLoading] = useState(false);
   const [publishCategoryId, setPublishCategoryId] = useState("");
@@ -219,6 +221,30 @@ export function EditorPage() {
 
   const handleDraftBoxClick = () => {
     router.push("/blogger-center?section=articles&tab=draft");
+  };
+
+  const getSelectedTextRange = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return null;
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    if (start === end) return null;
+    return { start, end };
+  };
+
+  const replaceSelectedRange = (replacement: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    const nextMarkdown = `${markdown.slice(0, start)}${replacement}${markdown.slice(end)}`;
+    const nextCursor = start + replacement.length;
+    setMarkdown(nextMarkdown);
+    requestAnimationFrame(() => {
+      textarea.selectionStart = nextCursor;
+      textarea.selectionEnd = nextCursor;
+      textarea.focus();
+    });
   };
 
   const handleTitleGenerate = async () => {
@@ -525,6 +551,92 @@ export function EditorPage() {
     requestAnimationFrame(updateSelectionToolbarPosition);
   };
 
+  const handleSelectionPolish = async () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    if (!aiEnabled) {
+      setSelectionPolishError("请先开启 AI 助手。");
+      return;
+    }
+
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    const hasSelection = start !== end;
+    const selectedText = hasSelection ? markdown.slice(start, end) : markdown;
+    if (!selectedText.trim()) {
+      setSelectionPolishError("请先选中文本，或直接润色全文。");
+      return;
+    }
+
+    setSelectionPolishing(true);
+    setSelectionPolishError(null);
+    try {
+      const response = await fetch("/api/text-polish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: hasSelection ? "selection" : "full",
+          sourceText: markdown,
+          selectedText,
+          title,
+          style: selectionStyle ?? "",
+          customPrompt: selectionCustomPrompt,
+        }),
+      });
+
+      if (!response.ok || !response.body) {
+        const data = (await response.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(data?.message ?? "润色失败。");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let polished = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data: ")) continue;
+          const payload = JSON.parse(line.slice(6)) as { delta?: string; error?: string; done?: boolean };
+          if (payload.error) throw new Error(payload.error);
+          if (payload.delta) polished += payload.delta;
+          if (payload.done) break;
+        }
+      }
+
+      const nextText = polished.trim();
+      if (!nextText) throw new Error("润色失败。");
+
+      if (hasSelection) {
+        const nextMarkdown = `${markdown.slice(0, start)}${nextText}${markdown.slice(end)}`;
+        setMarkdown(nextMarkdown);
+        requestAnimationFrame(() => {
+          const nextCursor = start + nextText.length;
+          textarea.selectionStart = nextCursor;
+          textarea.selectionEnd = nextCursor;
+          textarea.focus();
+        });
+      } else {
+        setMarkdown(nextText);
+      }
+
+      setSelectionToolbarVisible(false);
+      setSelectionToolbarPosition(null);
+      clearGhostSuggestion();
+    } catch (error) {
+      setSelectionPolishError(error instanceof Error ? error.message : "润色失败。");
+    } finally {
+      setSelectionPolishing(false);
+    }
+  };
+
   useEffect(() => {
     if (!selectionToolbarVisible) return;
     updateSelectionToolbarPosition();
@@ -801,8 +913,8 @@ export function EditorPage() {
             <div className="pointer-events-auto fixed z-40 w-[420px] rounded-2xl border border-white/10 bg-[#161922]/95 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl" style={selectionToolbarStyle}>
               <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-100">润色选中文本</div>
-                  <div className="text-xs text-zinc-500">先做 UI，后续可接入 AI 能力</div>
+                  <div className="text-sm font-semibold text-zinc-100">AI 润色</div>
+                  <div className="text-xs text-zinc-500">支持选中文本或全文润色</div>
                 </div>
                 <button
                   type="button"
@@ -851,11 +963,12 @@ export function EditorPage() {
                     <button type="button" onClick={() => setSelectionToolbarVisible(false)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/5">
                       取消
                     </button>
-                    <button type="button" disabled={!canApplySelectionChanges} onClick={() => handleSelectionToolbarAction("custom")} className="rounded-full bg-[#adc6ff] px-4 py-2 text-sm font-semibold text-[#001a41] transition hover:bg-[#c2d3ff] disabled:cursor-not-allowed disabled:bg-[#33415f] disabled:text-[#7e8aa5]">
-                      应用要求
+                    <button type="button" disabled={selectionPolishing} onClick={handleSelectionPolish} className="rounded-full bg-[#adc6ff] px-4 py-2 text-sm font-semibold text-[#001a41] transition hover:bg-[#c2d3ff] disabled:cursor-not-allowed disabled:bg-[#33415f] disabled:text-[#7e8aa5]">
+                      {selectionPolishing ? "润色中..." : "开始润色"}
                     </button>
                   </div>
                 </div>
+                {selectionPolishError ? <div className="mt-3 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">{selectionPolishError}</div> : null}
               </div>
             </div>
           ) : null}
