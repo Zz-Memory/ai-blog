@@ -46,7 +46,7 @@ function InputShell({
 
   return (
     <div className="group relative">
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary">
+      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-sky-700">
         <FieldIcon icon={icon} />
       </span>
       <input
@@ -55,14 +55,14 @@ function InputShell({
         placeholder={placeholder}
         value={value}
         onChange={(event) => onChange?.(event.target.value)}
-        className="w-full rounded-lg border border-white/10 bg-[#0f1012] py-3 pl-11 pr-12 text-[15px] text-on-surface placeholder:text-outline/70 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
+        className="w-full rounded-xl border border-sky-200 bg-white py-3 pl-11 pr-12 text-[15px] text-slate-700 placeholder:text-slate-400 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-200"
       />
       {canToggleVisibility && isPassword ? (
         <button
           type="button"
           aria-label={visible ? "隐藏密码" : "显示密码"}
           onClick={() => setVisible((current) => !current)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-outline transition-colors hover:text-on-surface"
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
         >
           <FieldIcon icon={visible ? "visibility" : "visibility_off"} />
         </button>
@@ -268,31 +268,31 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <button type="button" aria-label="关闭登录注册弹窗" className="absolute inset-0 bg-slate-950/55 backdrop-blur-md" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-[560px] overflow-hidden rounded-3xl border border-cyan-100/80 bg-white/90 p-6 shadow-[0_24px_80px_rgba(56,189,248,0.16)] backdrop-blur-xl sm:p-8">
-        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
-        <button type="button" aria-label="关闭" className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition hover:bg-cyan-50 hover:text-cyan-700" onClick={onClose}><FieldIcon icon="close" /></button>
+      <div className="relative z-10 w-full max-w-[560px] overflow-hidden rounded-3xl border border-sky-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:p-8">
+        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/80 to-transparent" />
+        <button type="button" aria-label="关闭" className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition hover:bg-sky-50 hover:text-sky-700" onClick={onClose}><FieldIcon icon="close" /></button>
         <div className="text-center"><h1 className="text-[40px] font-semibold tracking-tight text-slate-900">Memory的小破站</h1></div>
-        <div className="mt-8 flex rounded-xl bg-cyan-50/70 p-1">
-          <button type="button" onClick={() => { setMode("login"); setErrors({}); }} className={`flex-1 rounded-lg py-2.5 text-[15px] transition ${isLogin ? "border border-cyan-200 bg-white text-cyan-800 shadow-sm" : "text-slate-500 hover:text-cyan-800"}`}>登录</button>
-          <button type="button" onClick={() => { setMode("register"); setErrors({}); }} className={`flex-1 rounded-lg py-2.5 text-[15px] transition ${isRegister ? "border border-cyan-200 bg-white text-cyan-800 shadow-sm" : "text-slate-500 hover:text-cyan-800"}`}>注册</button>
+        <div className="mt-8 flex rounded-xl bg-sky-50 p-1">
+          <button type="button" onClick={() => { setMode("login"); setErrors({}); }} className={`flex-1 rounded-lg py-2.5 text-[15px] transition ${isLogin ? "border border-sky-200 bg-white text-sky-800 shadow-sm" : "text-slate-500 hover:text-sky-800"}`}>登录</button>
+          <button type="button" onClick={() => { setMode("register"); setErrors({}); }} className={`flex-1 rounded-lg py-2.5 text-[15px] transition ${isRegister ? "border border-sky-200 bg-white text-sky-800 shadow-sm" : "text-slate-500 hover:text-sky-800"}`}>注册</button>
         </div>
         <div className="mt-6 max-h-[60vh] overflow-y-auto pr-1">
-          {submitMessage ? <div className="mb-4 rounded-xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-[13px] leading-6 text-slate-700">{submitMessage}</div> : null}
+          {submitMessage ? <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-[13px] leading-6 text-slate-700">{submitMessage}</div> : null}
           {isLogin && (
             <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); void handleLoginSubmit(); }}>
               <div><label className="mb-2 block text-[13px] font-medium text-slate-700">账号/邮箱</label><InputShell icon="person" placeholder="输入您的账号或邮箱" value={loginAccount} onChange={setLoginAccount} /></div>
-              <div><div className="mb-2 flex items-center justify-between"><label className="block text-[13px] font-medium text-slate-700">密码</label><button type="button" className="text-[13px] text-cyan-700 transition hover:text-violet-700" onClick={() => setMode("reset")}>忘记密码？</button></div><InputShell icon="lock" placeholder="输入您的密码" type="password" canToggleVisibility value={loginPassword} onChange={setLoginPassword} /></div>
-              <button type="submit" disabled={isLoggingIn} className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 py-3.5 text-[15px] font-medium text-white shadow-[0_12px_30px_rgba(56,189,248,0.24)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"><span>{isLoggingIn ? "登录中..." : "登录"}</span><FieldIcon icon="arrow_forward" /></button>
+              <div><div className="mb-2 flex items-center justify-between"><label className="block text-[13px] font-medium text-slate-700">密码</label><button type="button" className="text-[13px] text-sky-700 transition hover:text-violet-700" onClick={() => setMode("reset")}>忘记密码？</button></div><InputShell icon="lock" placeholder="输入您的密码" type="password" canToggleVisibility value={loginPassword} onChange={setLoginPassword} /></div>
+              <button type="submit" disabled={isLoggingIn} className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-violet-600 py-3.5 text-[15px] font-medium text-white shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"><span>{isLoggingIn ? "登录中..." : "登录"}</span><FieldIcon icon="arrow_forward" /></button>
             </form>
           )}
           {isRegister && (
             <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void handleRegisterSubmit(); }}>
               <div><label className="mb-2 block text-[13px] font-medium text-slate-700">昵称</label><InputShell icon="badge" placeholder="设置您的昵称" value={registerNickname} onChange={setRegisterNickname} />{errors.nickname ? <p className="mt-2 text-[12px] text-rose-500">{errors.nickname}</p> : null}</div>
               <div><label className="mb-2 block text-[13px] font-medium text-slate-700">电子邮箱</label><InputShell icon="mail" placeholder="输入您的电子邮箱" type="email" value={registerEmail} onChange={setRegisterEmail} />{errors.email ? <p className="mt-2 text-[12px] text-rose-500">{errors.email}</p> : null}</div>
-              <div><label className="mb-2 block text-[13px] font-medium text-slate-700">验证码</label><div className="flex gap-3"><div className="flex-1"><InputShell icon="security" placeholder="输入验证码" value={registerVerification} onChange={setRegisterVerification} /></div><button type="button" disabled={isSendingCode || sendCodeCooldown > 0} className="whitespace-nowrap rounded-xl border border-cyan-100 bg-cyan-50 px-4 text-[13px] font-medium text-cyan-800 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-60" onClick={() => void handleSendVerificationCode(registerEmail.trim(), "register")}>{isSendingCode ? "发送中..." : sendCodeCooldown > 0 ? `${sendCodeCooldown}s 后重试` : "获取验证码"}</button></div>{errors.verification ? <p className="mt-2 text-[12px] text-rose-500">{errors.verification}</p> : null}</div>
+              <div><label className="mb-2 block text-[13px] font-medium text-slate-700">验证码</label><div className="flex gap-3"><div className="flex-1"><InputShell icon="security" placeholder="输入验证码" value={registerVerification} onChange={setRegisterVerification} /></div><button type="button" disabled={isSendingCode || sendCodeCooldown > 0} className="whitespace-nowrap rounded-xl border border-sky-200 bg-sky-50 px-4 text-[13px] font-medium text-sky-800 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60" onClick={() => void handleSendVerificationCode(registerEmail.trim(), "register")}>{isSendingCode ? "发送中..." : sendCodeCooldown > 0 ? `${sendCodeCooldown}s 后重试` : "获取验证码"}</button></div>{errors.verification ? <p className="mt-2 text-[12px] text-rose-500">{errors.verification}</p> : null}</div>
               <div><label className="mb-2 block text-[13px] font-medium text-slate-700">设置密码</label><InputShell icon="lock" placeholder="设置您的密码" type="password" canToggleVisibility value={registerPassword.value} onChange={(value) => setRegisterPassword({ value, touched: true })} /><p className="mt-2 text-[12px] leading-5 text-slate-500">{registerMessage}</p>{errors.password ? <p className="mt-2 text-[12px] text-rose-500">{errors.password}</p> : null}</div>
               <div><label className="mb-2 block text-[13px] font-medium text-slate-700">确认密码</label><InputShell icon="lock_reset" placeholder="再次输入密码" type="password" canToggleVisibility value={registerConfirmPassword} onChange={setRegisterConfirmPassword} />{errors.confirmPassword ? <p className="mt-2 text-[12px] text-rose-500">{errors.confirmPassword}</p> : null}</div>
-              <button type="submit" disabled={isRegistering} className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 py-3.5 text-[15px] font-medium text-white shadow-[0_12px_30px_rgba(56,189,248,0.24)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"><span>{isRegistering ? "注册中..." : "注册"}</span><FieldIcon icon="arrow_forward" /></button>
+              <button type="submit" disabled={isRegistering} className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-violet-600 py-3.5 text-[15px] font-medium text-white shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"><span>{isRegistering ? "注册中..." : "注册"}</span><FieldIcon icon="arrow_forward" /></button>
             </form>
           )}
           {isReset && (
@@ -306,7 +306,7 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
                 <label className="mb-2 block text-[13px] font-medium text-slate-700">验证码</label>
                 <div className="flex gap-3">
                   <div className="flex-1"><InputShell icon="security" placeholder="输入验证码" value={resetVerification} onChange={setResetVerification} /></div>
-                  <button type="button" disabled={isSendingCode || sendCodeCooldown > 0} className="whitespace-nowrap rounded-xl border border-cyan-100 bg-cyan-50 px-4 text-[13px] font-medium text-cyan-800 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-60" onClick={() => void handleSendVerificationCode(resetEmail.trim(), "reset")}>{isSendingCode ? "发送中..." : sendCodeCooldown > 0 ? `${sendCodeCooldown}s 后重试` : "获取验证码"}</button>
+                  <button type="button" disabled={isSendingCode || sendCodeCooldown > 0} className="whitespace-nowrap rounded-xl border border-sky-200 bg-sky-50 px-4 text-[13px] font-medium text-sky-800 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60" onClick={() => void handleSendVerificationCode(resetEmail.trim(), "reset")}>{isSendingCode ? "发送中..." : sendCodeCooldown > 0 ? `${sendCodeCooldown}s 后重试` : "获取验证码"}</button>
                 </div>
                 {errors.verification ? <p className="mt-2 text-[12px] text-rose-500">{errors.verification}</p> : null}
               </div>
@@ -321,7 +321,7 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
                 <InputShell icon="lock_reset" placeholder="再次输入新密码" type="password" canToggleVisibility value={resetConfirmPassword} onChange={setResetConfirmPassword} />
                 {errors.confirmPassword ? <p className="mt-2 text-[12px] text-rose-500">{errors.confirmPassword}</p> : null}
               </div>
-              <div className="flex gap-3 pt-1"><button type="button" className="flex-1 rounded-xl border border-cyan-100 bg-cyan-50 py-3.5 text-[15px] font-medium text-cyan-800 transition hover:bg-cyan-100" onClick={() => setMode("login")}>返回登录</button><button type="submit" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 py-3.5 text-[15px] font-medium text-white shadow-[0_12px_30px_rgba(56,189,248,0.24)] transition hover:brightness-105"><span>重置密码</span><FieldIcon icon="arrow_forward" /></button></div>
+              <div className="flex gap-3 pt-1"><button type="button" className="flex-1 rounded-xl border border-sky-200 bg-sky-50 py-3.5 text-[15px] font-medium text-sky-800 transition hover:bg-sky-100" onClick={() => setMode("login")}>返回登录</button><button type="submit" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-violet-600 py-3.5 text-[15px] font-medium text-white shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:brightness-105"><span>重置密码</span><FieldIcon icon="arrow_forward" /></button></div>
             </form>
           )}
         </div>
