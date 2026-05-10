@@ -97,7 +97,7 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
   };
 
   return (
-    <div className="space-y-8 rounded-[28px] border border-cyan-100/80 bg-white/90 p-6 shadow-[0_20px_60px_rgba(56,189,248,0.12)] sm:p-8">
+    <div className="space-y-8 rounded-[28px] border border-sky-200 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
       <div className="space-y-3">
         <h2 className="text-[48px] font-bold tracking-[-0.02em] text-slate-900">消息通知</h2>
         <p className="max-w-2xl text-[17px] leading-8 text-slate-600">管理您收到的消息。</p>
@@ -107,14 +107,14 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
         <button
           type="button"
           onClick={() => setClearConfirmOpen(true)}
-          className="rounded-full border border-cyan-100 bg-white px-4 py-2 text-sm font-medium text-cyan-800 transition hover:border-cyan-300 hover:bg-cyan-50"
+          className="rounded-full border border-sky-200 bg-white px-4 py-2 text-sm font-medium text-sky-700 transition hover:border-sky-300 hover:bg-sky-50"
         >
           清空
         </button>
         <button
           type="button"
           onClick={markAllRead}
-          className="rounded-full border border-cyan-100 bg-white px-4 py-2 text-sm font-medium text-cyan-800 transition hover:border-cyan-300 hover:bg-cyan-50"
+          className="rounded-full border border-sky-200 bg-white px-4 py-2 text-sm font-medium text-sky-700 transition hover:border-sky-300 hover:bg-sky-50"
         >
           全部标为已读
         </button>
@@ -125,7 +125,7 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
           visibleItems.map((item) => (
             <article
               key={item.id}
-              className={`group rounded-2xl border px-5 py-4 shadow-[0_0_0_1px_rgba(56,189,248,0.06)] transition ${item.unread ? "border-cyan-200 bg-cyan-50/70" : "border-cyan-100 bg-white"}`}
+              className={`group rounded-2xl border px-5 py-4 shadow-[0_0_0_1px_rgba(15,23,42,0.06)] transition ${item.unread ? "border-sky-300 bg-sky-50" : "border-sky-200 bg-white"}`}
               onMouseEnter={() => {
                 void markNotificationRead(item.id);
               }}
@@ -137,24 +137,24 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-900">
                         <span>{item.userName}</span>
-                        <span className="text-slate-500">{item.title}</span>
-                        {item.unread ? <span className="h-2 w-2 rounded-full bg-cyan-500" /> : null}
+                        <span className="text-slate-600">{item.title}</span>
+                        {item.unread ? <span className="h-2 w-2 rounded-full bg-sky-600" /> : null}
                       </div>
                       <p className="mt-2 text-sm leading-7 text-slate-600">{item.message}</p>
                     </div>
-                    <time className="shrink-0 text-xs text-slate-500">{item.time}</time>
+                    <time className="shrink-0 text-xs text-slate-600">{item.time}</time>
                   </div>
 
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     {item.type === "system" || !item.linkUrl ? null : (
-                      <a href={item.linkUrl} className="text-sm font-medium text-cyan-700 transition hover:text-violet-700">
+                      <a href={item.linkUrl} className="text-sm font-medium text-sky-700 transition hover:text-violet-700">
                         查看相关内容
                       </a>
                     )}
                     <button
                       type="button"
                       onClick={() => openDeleteConfirm(item)}
-                      className="rounded-full border border-cyan-100 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-cyan-300 hover:bg-cyan-50"
+                      className="rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-300 hover:bg-sky-50"
                     >
                       删除通知
                     </button>
@@ -164,7 +164,7 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
             </article>
           ))
         ) : (
-          <div className="rounded-[24px] border border-dashed border-cyan-100 bg-cyan-50/50 px-6 py-12 text-center text-sm text-slate-500">
+          <div className="rounded-[24px] border border-dashed border-sky-200 bg-sky-50/60 px-6 py-12 text-center text-sm text-slate-600">
             当前没有消息通知。
           </div>
         )}
@@ -175,13 +175,13 @@ export function VisitorCenterNotifications({ items = notificationItems, onUnread
           <button
             type="button"
             onClick={() => setVisibleCount((current) => current + 6)}
-            className="rounded-full border border-cyan-100 bg-white px-6 py-3 text-sm font-medium text-cyan-800 transition hover:border-cyan-300 hover:bg-cyan-50"
+            className="rounded-full border border-sky-200 bg-white px-6 py-3 text-sm font-medium text-sky-700 transition hover:border-sky-300 hover:bg-sky-50"
           >
             加载更多通知
           </button>
         </div>
       ) : (
-        <div className="py-8 text-center text-sm text-zinc-600">没有更多消息了</div>
+        <div className="py-8 text-center text-sm text-slate-600">没有更多消息了</div>
       )}
 
       <VisitorCenterConfirmModal

@@ -29,15 +29,15 @@ export function VisitorCenterHistory({ articles, visibleCount }: VisitorCenterHi
   const displayedArticles = typeof visibleCount === "number" ? sortedArticles.slice(0, visibleCount) : sortedArticles;
 
   return (
-    <div className="space-y-5 rounded-[28px] border border-cyan-100/80 bg-white/90 p-6 shadow-[0_20px_60px_rgba(56,189,248,0.12)] sm:p-8">
+    <div className="space-y-5 rounded-[28px] border border-sky-200 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
       <div className="relative pl-6">
-        <div className="absolute left-0 top-3 h-3 w-3 rounded-full border border-cyan-300 bg-cyan-500 shadow-[0_0_0_4px_rgba(34,211,238,0.18)]" />
+        <div className="absolute left-0 top-3 h-3 w-3 rounded-full border border-sky-300 bg-sky-600 shadow-[0_0_0_4px_rgba(96,165,250,0.18)]" />
         <div className="mb-4 flex items-center gap-3">
           <h2 className="text-2xl font-semibold text-slate-900">浏览历史</h2>
-          <span className="rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-xs text-slate-500">{sortedArticles.length} 条记录</span>
+          <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs text-slate-600">{sortedArticles.length} 条记录</span>
         </div>
 
-        <div className="relative border-l border-cyan-100 pl-6">
+        <div className="relative border-l border-sky-200 pl-6">
           {displayedArticles.length ? (
             <div className="space-y-4 pb-4">
               {displayedArticles.map((article) => (

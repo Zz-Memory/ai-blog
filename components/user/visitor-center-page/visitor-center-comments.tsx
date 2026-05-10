@@ -31,7 +31,7 @@ function CommentContent({ content, expanded, onToggle }: { content: string; expa
     <>
       <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-zinc-300">{displayContent}</p>
       {isLong ? (
-        <button type="button" className="mt-2 text-xs font-medium text-[#adc6ff] transition hover:text-[#c3d2ff]" onClick={onToggle}>
+        <button type="button" className="mt-2 text-xs font-medium text-sky-700 transition hover:text-violet-700" onClick={onToggle}>
           {expanded ? "收起" : "展开全文"}
         </button>
       ) : null}
@@ -82,13 +82,13 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
   };
 
   return (
-    <div className="space-y-8 rounded-[28px] border border-cyan-100/80 bg-white/90 p-6 shadow-[0_20px_60px_rgba(56,189,248,0.12)] sm:p-8">
+    <div className="space-y-8 rounded-[28px] border border-sky-200 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold text-slate-900">我的评论</h2>
           <p className="mt-2 text-sm leading-7 text-slate-600">这里展示你曾经发表过评论的文章，以及你的评论内容与互动反馈。</p>
         </div>
-        <span className="rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-xs text-slate-500">{comments.length} 条</span>
+        <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs text-slate-600">{comments.length} 条</span>
       </div>
 
       <div className="space-y-5">
@@ -97,7 +97,7 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
             const expanded = expandedMap[article.comment.id] ?? false;
 
             return (
-              <div key={article.id} className="rounded-[24px] border border-cyan-100 bg-cyan-50/50 p-0">
+              <div key={article.id} className="rounded-[24px] border border-sky-200 bg-sky-50/60 p-0">
                 <ArticleCard
                   postId={article.postId}
                   href={article.href}
@@ -112,15 +112,15 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
                   isBookmarked={article.isBookmarked}
                 />
 
-                <div className="border-t border-cyan-100 px-6 py-5 sm:px-8">
+                <div className="border-t border-sky-200 px-6 py-5 sm:px-8">
                   <div className="flex items-start gap-4">
-                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-cyan-100 bg-white">
+                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-sky-200 bg-white">
                       <Image src={getAvatarSrc(article.authorRole)} alt="用户头像" fill className="object-cover" sizes="44px" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                         <span>评论于 {formatChinaDateTime(article.comment.time)}</span>
-                        <span className="h-1 w-1 rounded-full bg-cyan-200" />
+                        <span className="h-1 w-1 rounded-full bg-sky-300" />
                         <span>{article.comment.replies} 条回复</span>
                       </div>
                       <CommentContent content={article.comment.content} expanded={expanded} onToggle={() => toggleExpanded(article.comment.id)} />
@@ -141,7 +141,7 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
             );
           })
         ) : (
-          <div className="rounded-[24px] border border-dashed border-cyan-100 bg-cyan-50/50 px-6 py-12 text-center text-sm text-slate-500">你还没有发表过评论。</div>
+          <div className="rounded-[24px] border border-dashed border-sky-200 bg-sky-50/60 px-6 py-12 text-center text-sm text-slate-600">你还没有发表过评论。</div>
         )}
       </div>
 
@@ -150,7 +150,7 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
           <button
             type="button"
             onClick={handleLoadMore}
-            className="rounded-full border border-cyan-100 bg-white px-6 py-3 text-sm font-medium text-cyan-800 transition hover:border-cyan-300 hover:bg-cyan-50"
+            className="rounded-full border border-sky-200 bg-white px-6 py-3 text-sm font-medium text-sky-700 transition hover:border-sky-300 hover:bg-sky-50"
           >
             加载更多评论
           </button>

@@ -10,9 +10,9 @@ export function SidebarCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-cyan-100/80 bg-white/82 p-6 shadow-[0_18px_45px_rgba(56,189,248,0.12)] backdrop-blur-sm">
+    <section className="rounded-2xl border border-sky-200 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur-sm">
       <h3 className="mb-5 flex items-center gap-2 text-[18px] font-medium text-slate-900">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-cyan-400/20 to-violet-400/20 text-cyan-700">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-sky-100 to-violet-100 text-sky-700">
           <span className="material-symbols-outlined text-[16px] leading-none">{icon}</span>
         </span>
         {title}
