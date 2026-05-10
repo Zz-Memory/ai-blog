@@ -82,13 +82,13 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
   };
 
   return (
-    <div className="space-y-8 rounded-[28px] border border-white/8 bg-[#14161b] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.22)] sm:p-8">
+    <div className="space-y-8 rounded-[28px] border border-cyan-100/80 bg-white/90 p-6 shadow-[0_20px_60px_rgba(56,189,248,0.12)] sm:p-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-zinc-100">我的评论</h2>
-          <p className="mt-2 text-sm leading-7 text-zinc-400">这里展示你曾经发表过评论的文章，以及你的评论内容与互动反馈。</p>
+          <h2 className="text-2xl font-semibold text-slate-900">我的评论</h2>
+          <p className="mt-2 text-sm leading-7 text-slate-600">这里展示你曾经发表过评论的文章，以及你的评论内容与互动反馈。</p>
         </div>
-        <span className="rounded-full border border-white/8 bg-white/5 px-3 py-1 text-xs text-zinc-500">{comments.length} 条</span>
+        <span className="rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-xs text-slate-500">{comments.length} 条</span>
       </div>
 
       <div className="space-y-5">
@@ -97,7 +97,7 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
             const expanded = expandedMap[article.comment.id] ?? false;
 
             return (
-              <div key={article.id} className="rounded-[24px] border border-white/8 bg-[#17181d] p-0">
+              <div key={article.id} className="rounded-[24px] border border-cyan-100 bg-cyan-50/50 p-0">
                 <ArticleCard
                   postId={article.postId}
                   href={article.href}
@@ -112,15 +112,15 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
                   isBookmarked={article.isBookmarked}
                 />
 
-                <div className="border-t border-white/8 px-6 py-5 sm:px-8">
+                <div className="border-t border-cyan-100 px-6 py-5 sm:px-8">
                   <div className="flex items-start gap-4">
-                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/5">
+                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-cyan-100 bg-white">
                       <Image src={getAvatarSrc(article.authorRole)} alt="用户头像" fill className="object-cover" sizes="44px" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                         <span>评论于 {formatChinaDateTime(article.comment.time)}</span>
-                        <span className="h-1 w-1 rounded-full bg-zinc-700" />
+                        <span className="h-1 w-1 rounded-full bg-cyan-200" />
                         <span>{article.comment.replies} 条回复</span>
                       </div>
                       <CommentContent content={article.comment.content} expanded={expanded} onToggle={() => toggleExpanded(article.comment.id)} />
@@ -130,7 +130,7 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
                   <div className="mt-4 flex justify-end">
                     <button
                       type="button"
-                      className="rounded-full border border-rose-400/20 bg-rose-500/10 px-4 py-2 text-xs font-medium text-rose-200 transition hover:border-rose-300/30 hover:bg-rose-500/15 hover:text-rose-100"
+                      className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-medium text-rose-600 transition hover:border-rose-300 hover:bg-rose-100 hover:text-rose-700"
                       onClick={() => openDeleteConfirm(article)}
                     >
                       删除评论
@@ -141,7 +141,7 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
             );
           })
         ) : (
-          <div className="rounded-[24px] border border-dashed border-white/10 bg-white/3 px-6 py-12 text-center text-sm text-zinc-500">你还没有发表过评论。</div>
+          <div className="rounded-[24px] border border-dashed border-cyan-100 bg-cyan-50/50 px-6 py-12 text-center text-sm text-slate-500">你还没有发表过评论。</div>
         )}
       </div>
 
@@ -150,7 +150,7 @@ export function VisitorCenterComments({ articles }: VisitorCenterCommentsProps) 
           <button
             type="button"
             onClick={handleLoadMore}
-            className="rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
+            className="rounded-full border border-cyan-100 bg-white px-6 py-3 text-sm font-medium text-cyan-800 transition hover:border-cyan-300 hover:bg-cyan-50"
           >
             加载更多评论
           </button>
