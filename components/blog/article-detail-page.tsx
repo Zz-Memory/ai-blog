@@ -685,22 +685,22 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
         </div>
 
         {chatOpen ? (
-          <section className="fixed bottom-40 right-6 z-40 flex h-[min(57vh,600px)] w-[760px] max-w-[92vw] flex-col rounded-2xl border border-white/8 bg-[#181a20] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.35)] xl:right-[max(24px,calc((100vw-1600px)/2+24px))]">
-            <div className="flex items-center justify-between border-b border-white/8 pb-4">
+          <section className="fixed bottom-40 right-6 z-40 flex h-[min(57vh,600px)] w-[760px] max-w-[92vw] flex-col rounded-3xl border border-cyan-100/80 bg-white/92 p-5 shadow-[0_24px_80px_rgba(56,189,248,0.16)] backdrop-blur-xl xl:right-[max(24px,calc((100vw-1600px)/2+24px))]">
+            <div className="flex items-center justify-between border-b border-cyan-100/80 pb-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-primary/20 text-primary">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-cyan-100 bg-cyan-50 text-cyan-700">
                   <span className="material-symbols-outlined text-[20px]">smart_toy</span>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-zinc-100">小智 AI 助手</h4>
-                  <p className="text-xs text-zinc-500">全栈开发与AI研究导师</p>
+                  <h4 className="text-sm font-semibold text-slate-900">小智 AI 助手</h4>
+                  <p className="text-xs text-slate-500">全栈开发与AI研究导师</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setClearConfirmOpen(true)}
-                  className="rounded-full p-2 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-200"
+                  className="rounded-full p-2 text-slate-400 transition hover:bg-cyan-50 hover:text-cyan-700"
                   aria-label="清空会话"
                   title="清空会话"
                 >
@@ -709,7 +709,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                 <button
                   type="button"
                   onClick={() => void refreshChatSession()}
-                  className="rounded-full p-2 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-200"
+                  className="rounded-full p-2 text-slate-400 transition hover:bg-cyan-50 hover:text-cyan-700"
                   aria-label="刷新会话"
                   title="刷新会话"
                 >
@@ -722,39 +722,39 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               {chatMessages.length ? chatMessages.map((message) => (
                 <div key={message.id} className={`flex gap-3 ${message.role === "USER" ? "justify-end" : "justify-start"}`}>
                   {message.role === "ASSISTANT" ? (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-primary/20 text-primary">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-cyan-100 bg-cyan-50 text-cyan-700">
                       <span className="material-symbols-outlined text-[18px]">smart_toy</span>
                     </div>
                   ) : null}
                   <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 ${message.role === "USER" ? "rounded-tr-sm border border-white/8 bg-white/5 text-zinc-200" : "rounded-tl-sm border border-white/8 bg-[#101215] text-zinc-300"}`}
+                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 ${message.role === "USER" ? "rounded-tr-sm border border-cyan-100 bg-cyan-50/70 text-slate-700" : "rounded-tl-sm border border-cyan-100 bg-white text-slate-700"}`}
                     dangerouslySetInnerHTML={{
-                      __html: message.content ? renderMarkdownPreview(message.content) : chatLoading && message.role === "ASSISTANT" ? "<span class='inline-flex gap-1'><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.2s]'></span><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.1s]'></span><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400'></span></span>" : "",
+                      __html: message.content ? renderMarkdownPreview(message.content) : chatLoading && message.role === "ASSISTANT" ? "<span class='inline-flex gap-1'><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-cyan-400 [animation-delay:-0.2s]'></span><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-cyan-400 [animation-delay:-0.1s]'></span><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-cyan-400'></span></span>" : "",
                     }}
                   />
                   {message.role === "USER" ? (
-                    <div className="h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                    <div className="h-10 w-10 overflow-hidden rounded-full border border-cyan-100 bg-white">
                       <img src={currentUser?.avatarUrl ?? "/avatars/visitor-default.png"} alt={currentUser?.avatarLabel ?? "访客头像"} className="h-full w-full object-cover" />
                     </div>
                   ) : null}
                 </div>
               )) : (
-                <div className="text-sm text-zinc-500">开始向 AI 提问，它会把内容写入数据库会话中。</div>
+                <div className="text-sm text-slate-500">开始向 AI 提问，它会把内容写入数据库会话中。</div>
               )}
-              {chatError ? <div className="text-sm text-rose-400">{chatError}</div> : null}
+              {chatError ? <div className="text-sm text-rose-600">{chatError}</div> : null}
             </div>
 
-            <div className="mt-5 flex items-center gap-3 rounded-2xl border border-white/8 bg-surface-container px-4 py-3">
+            <div className="mt-5 flex items-center gap-3 rounded-2xl border border-cyan-100 bg-cyan-50/70 px-4 py-3">
               <input
                 value={chatQuestion}
                 onChange={(event) => setChatQuestion(event.target.value)}
                 placeholder="向小智提问关于本文的任何问题..."
-                className="w-full bg-transparent text-sm text-zinc-200 outline-none placeholder:text-zinc-500"
+                className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
                 onKeyDown={(event) => {
                   if (event.key === "Enter") void submitChatQuestion();
                 }}
               />
-              <button type="button" onClick={submitChatQuestion} className="rounded-xl p-2 text-zinc-400 transition hover:bg-primary/10 hover:text-primary" disabled={chatLoading}>
+              <button type="button" onClick={submitChatQuestion} className="rounded-xl p-2 text-cyan-700 transition hover:bg-cyan-100 hover:text-violet-700" disabled={chatLoading}>
                 <span className="material-symbols-outlined text-[24px]">send</span>
               </button>
             </div>
@@ -762,22 +762,22 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
         ) : null}
 
         {clearConfirmOpen ? (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 px-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#181a20] p-6 shadow-2xl">
-              <h5 className="text-lg font-semibold text-zinc-100">确认清空会话？</h5>
-              <p className="mt-3 text-sm leading-7 text-zinc-400">清空后，这篇文章下的 AI 对话记录会被删除，且无法恢复。是否继续？</p>
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-3xl border border-cyan-100/80 bg-white/95 p-6 shadow-[0_24px_80px_rgba(56,189,248,0.16)]">
+              <h5 className="text-lg font-semibold text-slate-900">确认清空会话？</h5>
+              <p className="mt-3 text-sm leading-7 text-slate-600">清空后，这篇文章下的 AI 对话记录会被删除，且无法恢复。是否继续？</p>
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setClearConfirmOpen(false)}
-                  className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/10"
+                  className="rounded-lg border border-cyan-100 bg-white px-4 py-2 text-sm text-slate-600 transition hover:bg-cyan-50"
                 >
                   取消
                 </button>
                 <button
                   type="button"
                   onClick={() => void clearChatSession()}
-                  className="rounded-lg bg-rose-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-400"
+                  className="rounded-lg bg-gradient-to-r from-rose-500 to-rose-600 px-4 py-2 text-sm font-medium text-white transition hover:brightness-105"
                 >
                   确认清空
                 </button>
