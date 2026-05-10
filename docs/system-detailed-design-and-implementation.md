@@ -277,13 +277,19 @@ return NextResponse.json({
 function buildWhere(params: { authorId: string; status: PostStatus | null; search: string }) {
   const where: Prisma.PostWhereInput = {
     authorId: params.authorId,
+    // 按状态过滤文章，避免与搜索条件互相干扰
     ...(params.status ? { status: params.status } : {}),
+    // 关键词为空时不追加 OR 条件，避免生成多余的查询分支
     ...(params.search
       ? {
           OR: [
+            // 标题模糊匹配
             { title: { contains: params.search, mode: "insensitive" as const } },
+            // 摘要模糊匹配
             { summary: { contains: params.search, mode: "insensitive" as const } },
+            // 分类名称模糊匹配
             { category: { name: { contains: params.search, mode: "insensitive" as const } } },
+            // 标签名称模糊匹配
             { postTags: { some: { tag: { name: { contains: params.search, mode: "insensitive" as const } } } } },
           ],
         }
@@ -535,7 +541,9 @@ await prisma.$transaction(async (tx) => {
 
 ```typescript
 const auth = await getAuthUser();
+// 未登录时直接拒绝访问
 if (!auth) return NextResponse.json({ message: "请先登录。" }, { status: 401 });
+// 非博主角色禁止访问该接口
 if (!isBlogger(auth.user.role)) return NextResponse.json({ message: "无权限访问。" }, { status: 403 });
 ```
 

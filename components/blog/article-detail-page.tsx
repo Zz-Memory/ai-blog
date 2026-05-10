@@ -167,17 +167,17 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
 
   const renderCommentReplies = (replies: CommentReply[] | undefined) => (
     replies?.length ? (
-      <div className="ml-14 space-y-4 border-l border-white/8 pl-4">
+      <div className="ml-14 space-y-4 border-l border-slate-200 pl-4">
         {sortByTimeAsc(replies).map((reply) => (
-          <div key={reply.id} className="flex gap-4 rounded-xl bg-white/3 p-4">
-            <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+          <div key={reply.id} className="flex gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-300 bg-white">
               <img src={reply.avatarUrl} alt={reply.author} className="h-full w-full object-cover" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{reply.author}</span><span className="text-xs text-zinc-500">回复 {reply.replyTo}</span><span className="text-xs text-zinc-500">{formatChinaDateTime(reply.time)}</span></div>
-              <p className="mt-2 text-sm leading-7 text-zinc-400">{reply.content}</p>
-              <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
-                <button type="button" onClick={() => handleReplyClick(reply.id, reply.author)} className="flex items-center gap-1 transition hover:text-zinc-300" aria-label="回复回复"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
+              <div className="flex flex-wrap items-center gap-2 text-sm"><span className="font-semibold text-slate-950">{reply.author}</span><span className="text-xs text-slate-600">回复 {reply.replyTo}</span><span className="text-xs text-slate-600">{formatChinaDateTime(reply.time)}</span></div>
+              <p className="mt-2 text-sm leading-7 text-slate-800">{reply.content}</p>
+              <div className="mt-3 flex items-center gap-4 text-xs text-slate-600">
+                <button type="button" onClick={() => handleReplyClick(reply.id, reply.author)} className="flex items-center gap-1 transition hover:text-slate-950" aria-label="回复回复"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
               </div>
             </div>
           </div>
@@ -600,7 +600,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                         {replyTo ? "回复评论" : "发布评论"}
                       </button>
                     </div>
-                    {commentNotice ? <p className="mt-3 text-sm text-zinc-400">{commentNotice}</p> : null}
+                    {commentNotice ? <p className="mt-3 text-sm text-slate-600">{commentNotice}</p> : null}
                   </div>
                 </div>
               ) : (
@@ -624,7 +624,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                       <img src={comment.avatarUrl} alt={comment.author} className="h-full w-full object-cover" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 text-sm"><span className="font-medium text-slate-950">{comment.author}</span><span className="text-xs text-slate-600">{formatChinaDateTime(comment.time)}</span></div>
+                      <div className="flex items-center gap-2 text-sm"><span className="font-semibold text-slate-950">{comment.author}</span><span className="text-xs text-slate-600">{formatChinaDateTime(comment.time)}</span></div>
                       <p className="mt-2 text-sm leading-7 text-slate-800">{comment.content}</p>
                       <div className="mt-3 flex items-center gap-4 text-xs text-slate-600">
                         <button type="button" onClick={() => handleReplyClick(comment.id, comment.author)} className="flex items-center gap-1 transition hover:text-slate-950" aria-label="回复评论"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
