@@ -40,15 +40,15 @@ export function BloggerCenterUsers({
   onPageChange,
 }: Props) {
   return (
-    <div className="space-y-6 rounded-[28px] border border-cyan-100/80 bg-white/90 p-6 shadow-[0_20px_60px_rgba(56,189,248,0.12)]">
-      <div className="flex flex-col gap-4 border-b border-cyan-100/80 pb-4 md:flex-row md:items-end md:justify-between">
+    <div className="space-y-6 rounded-[28px] border border-slate-300 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+      <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-[-0.03em] text-slate-900 md:text-4xl">用户管理</h1>
+          <h1 className="text-3xl font-bold tracking-[-0.03em] text-slate-950 md:text-4xl">用户管理</h1>
           <p className="mt-2 text-sm text-slate-600">管理站点用户的活跃状态与账号记录。</p>
         </div>
 
         <div className="relative w-full max-w-[320px]">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-slate-400">search</span>
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-slate-500">search</span>
           <input
             value={searchValue}
             onChange={(event) => onSearchChange(event.target.value)}
@@ -58,48 +58,48 @@ export function BloggerCenterUsers({
                 onSearchSubmit();
               }
             }}
-            className="w-full rounded-xl border border-cyan-100 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-cyan-300"
+            className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus:border-slate-500 focus:ring-1 focus:ring-slate-200"
             placeholder="搜索昵称或邮箱..."
             type="text"
           />
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[24px] border border-cyan-100 bg-cyan-50/50 shadow-[0_20px_60px_rgba(56,189,248,0.08)]">
+      <div className="overflow-hidden rounded-[24px] border border-slate-300 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[840px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-cyan-100 bg-white/80">
-                <th className="px-6 py-4 text-sm font-medium text-slate-600">用户昵称</th>
-                <th className="px-6 py-4 text-sm font-medium text-slate-600">邮箱</th>
-                <th className="px-6 py-4 text-sm font-medium text-slate-600">加入日期</th>
-                <th className="px-6 py-4 text-sm font-medium text-slate-600">状态</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-600">操作</th>
+              <tr className="border-b border-slate-300 bg-slate-100">
+                <th className="border-r border-slate-300 px-6 py-4 text-sm font-semibold text-slate-700">用户昵称</th>
+                <th className="border-r border-slate-300 px-6 py-4 text-sm font-semibold text-slate-700">邮箱</th>
+                <th className="border-r border-slate-300 px-6 py-4 text-sm font-semibold text-slate-700">加入日期</th>
+                <th className="border-r border-slate-300 px-6 py-4 text-sm font-semibold text-slate-700">状态</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-slate-700">操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-cyan-100">
+            <tbody className="divide-y divide-slate-200">
               {users.length ? (
-                users.map((user) => (
-                  <tr key={user.id} className="transition hover:bg-white/70">
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{user.nickname}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{user.email}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{user.joinedAt}</td>
-                    <td className="px-6 py-4">
+                users.map((user, index) => (
+                  <tr key={user.id} className={`${index % 2 === 0 ? "bg-white" : "bg-slate-50"} transition hover:bg-slate-100`}>
+                    <td className="border-r border-slate-200 px-6 py-4 text-sm font-medium text-slate-950">{user.nickname}</td>
+                    <td className="border-r border-slate-200 px-6 py-4 text-sm text-slate-700">{user.email}</td>
+                    <td className="border-r border-slate-200 px-6 py-4 text-sm text-slate-700">{user.joinedAt}</td>
+                    <td className="border-r border-slate-200 px-6 py-4">
                       <button
                         type="button"
                         onClick={() => onToggleStatus(user.id)}
-                        className={`inline-flex h-7 w-16 items-center rounded-full p-1 transition ${user.status === "active" ? "bg-emerald-500/20" : "bg-slate-200"}`}
+                        className={`inline-flex h-7 w-16 items-center rounded-full border p-1 transition ${user.status === "active" ? "border-emerald-500/40 bg-emerald-100" : "border-slate-300 bg-slate-200"}`}
                         aria-label={`切换 ${user.nickname} 状态`}
                       >
                         <span className={`h-5 w-5 rounded-full bg-white shadow-sm transition ${user.status === "active" ? "translate-x-8" : "translate-x-0"}`} />
                       </button>
-                      <span className="ml-3 text-xs font-medium text-slate-500">{user.status === "active" ? "活跃" : "禁言"}</span>
+                      <span className="ml-3 text-xs font-medium text-slate-700">{user.status === "active" ? "活跃" : "禁言"}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
                         type="button"
                         onClick={() => onRequestDelete(user.id)}
-                        className="rounded-lg px-3 py-1.5 text-sm text-rose-600 transition hover:bg-rose-50"
+                        className="rounded-lg border border-rose-200 px-3 py-1.5 text-sm text-rose-700 transition hover:bg-rose-50"
                       >
                         删除
                       </button>
@@ -117,7 +117,7 @@ export function BloggerCenterUsers({
           </table>
         </div>
 
-        <div className="flex flex-col items-start justify-between gap-4 border-t border-cyan-100 px-6 py-5 sm:flex-row sm:items-center">
+        <div className="flex flex-col items-start justify-between gap-4 border-t border-slate-200 px-6 py-5 sm:flex-row sm:items-center">
           <div className="text-sm text-slate-500">
             显示 {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, users.length)}，共 {users.length} 位用户
           </div>

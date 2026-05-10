@@ -535,25 +535,25 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
 
           <section ref={commentsRef} id="comments" className="mt-12 max-w-[840px] scroll-mt-24">
             <div className="flex items-center justify-between gap-4">
-              <h3 className="text-2xl font-semibold text-zinc-50">评论 ({readingStats.comments})</h3>
+              <h3 className="text-2xl font-semibold text-slate-950">评论 ({readingStats.comments})</h3>
               <button
                 type="button"
                 onClick={() => setCommentSortOrder((value) => (value === "asc" ? "desc" : "asc"))}
-                className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-[#7aa2ff]/40 hover:bg-[#7aa2ff]/10 hover:text-[#b8c9ff]"
+                className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-800 transition hover:border-slate-400 hover:bg-slate-200 hover:text-slate-950"
               >
                 {commentSortOrder === "asc" ? "最早优先" : "最新优先"}
               </button>
             </div>
-            {commentNotice ? <div className="mt-4 rounded-xl border border-white/8 bg-white/5 px-4 py-3 text-sm text-zinc-300">{commentNotice}</div> : null}
-            <div className="mt-6 rounded-2xl border border-white/8 bg-white/3 p-5 backdrop-blur-xl">
+            {commentNotice ? <div className="mt-4 rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm text-slate-800">{commentNotice}</div> : null}
+            <div className="mt-6 rounded-2xl border border-slate-300 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
               {currentUser ? (
                 <div className="flex gap-4">
-                  <div className="h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                  <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-300 bg-white">
                     <img src={currentUser.avatarUrl} alt={currentUser.avatarLabel} className="h-full w-full object-cover" />
                   </div>
                   <div className="flex-1">
-                    <div className="mb-3 flex items-center gap-2 text-sm text-zinc-400">
-                      <span className="font-medium text-zinc-200">{currentUser.name}</span>
+                    <div className="mb-3 flex items-center gap-2 text-sm text-slate-700">
+                      <span className="font-medium text-slate-950">{currentUser.name}</span>
                       <span>以{currentUser.role === "blogger" ? "博主" : "访客"}身份发表评论</span>
                     </div>
                     <textarea
@@ -571,7 +571,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                       }}
                       rows={4}
                       placeholder={replyTo ? `回复 @${replyTo.author}...` : "分享你的想法..."}
-                      className="w-full resize-none rounded-xl border border-white/8 bg-[#181a20] px-4 py-3 text-sm text-zinc-200 outline-none placeholder:text-zinc-500 focus:border-[#7aa2ff]/50 focus:ring-1 focus:ring-[#7aa2ff]/20"
+                      className="w-full resize-none rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus:border-slate-500 focus:ring-1 focus:ring-slate-300"
                     />
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <div className="text-xs text-zinc-500">
@@ -583,19 +583,19 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                               setCommentDraft((value) => value.startsWith(prefix) ? value.slice(prefix.length) : stripReplyPrefix(value));
                               setReplyTo(null);
                             }}
-                            className="text-[#8db1ff] hover:text-[#b8c9ff]"
+                            className="text-slate-800 hover:text-slate-950"
                           >
                             回复到：@{replyTo.author}
                           </button>
                         ) : (
-                          <span>访客评论将进入待审核，博主评论将直接发布。</span>
+                          <span className="text-slate-600">访客评论将进入待审核，博主评论将直接发布。</span>
                         )}
                       </div>
                       <button
                         type="button"
                         onClick={submitComment}
                         disabled={!commentDraft.trim()}
-                        className="rounded-lg bg-[#7aa2ff] px-4 py-2 text-sm font-medium text-[#10131a] transition hover:bg-[#8db1ff] disabled:cursor-not-allowed disabled:bg-zinc-600 disabled:text-zinc-400"
+                        className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                       >
                         {replyTo ? "回复评论" : "发布评论"}
                       </button>
@@ -604,13 +604,13 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-4 rounded-xl border border-dashed border-white/10 bg-[#181a20] px-5 py-6 text-sm text-zinc-400">
-                  <div className="h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                <div className="flex items-center gap-4 rounded-xl border border-dashed border-slate-300 bg-slate-100 px-5 py-6 text-sm text-slate-700">
+                  <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-300 bg-white">
                     <img src="/avatars/visitor-default.png" alt="访客头像" className="h-full w-full object-cover" />
                   </div>
                   <div>
-                    <p className="text-zinc-300">登录后可发表评论</p>
-                    <p className="mt-1 text-xs text-zinc-500">登录后即可使用评论发送功能，与作者和其他读者交流。</p>
+                    <p className="text-slate-900">登录后可发表评论</p>
+                    <p className="mt-1 text-xs text-slate-600">登录后即可使用评论发送功能，与作者和其他读者交流。</p>
                   </div>
                 </div>
               )}
@@ -620,14 +620,14 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               {sortComments(commentItems).map((comment) => (
                 <div key={comment.id} className="space-y-4">
                   <div className="flex gap-4">
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-zinc-800">
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-300 bg-white">
                       <img src={comment.avatarUrl} alt={comment.author} className="h-full w-full object-cover" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 text-sm"><span className="font-medium text-zinc-100">{comment.author}</span><span className="text-xs text-zinc-500">{formatChinaDateTime(comment.time)}</span></div>
-                      <p className="mt-2 text-sm leading-7 text-zinc-400">{comment.content}</p>
-                      <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
-                        <button type="button" onClick={() => handleReplyClick(comment.id, comment.author)} className="flex items-center gap-1 transition hover:text-zinc-300" aria-label="回复评论"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
+                      <div className="flex items-center gap-2 text-sm"><span className="font-medium text-slate-950">{comment.author}</span><span className="text-xs text-slate-600">{formatChinaDateTime(comment.time)}</span></div>
+                      <p className="mt-2 text-sm leading-7 text-slate-800">{comment.content}</p>
+                      <div className="mt-3 flex items-center gap-4 text-xs text-slate-600">
+                        <button type="button" onClick={() => handleReplyClick(comment.id, comment.author)} className="flex items-center gap-1 transition hover:text-slate-950" aria-label="回复评论"><span className="material-symbols-outlined text-[16px]">reply</span>回复</button>
                       </div>
                     </div>
                   </div>
@@ -639,36 +639,36 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
         </article>
 
         <aside className="pointer-events-none fixed left-6 top-1/2 z-20 hidden -translate-y-1/2 lg:block xl:left-[max(24px,calc((100vw-1600px)/2+24px))]">
-          <div className="pointer-events-auto flex flex-col items-center gap-4 rounded-2xl border border-white/5 bg-white/3 px-3 py-4 backdrop-blur-xl">
+          <div className="pointer-events-auto flex flex-col items-center gap-4 rounded-2xl border border-slate-300 bg-white px-3 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl">
             <button
               type="button"
               onClick={toggleLike}
-              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${isLiked ? "text-[#b8c9ff]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"}`}
+              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${isLiked ? "text-slate-950" : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"}`}
               aria-label={isLiked ? "取消点赞" : "点赞文章"}
             >
               <span className="material-symbols-outlined text-[24px]">{isLiked ? "favorite" : "favorite_border"}</span>
-              <span className={`absolute right-0 top-0 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${isLiked ? "border-[#7aa2ff]/30 bg-[#7aa2ff] text-[#10131a]" : "border-white/10 bg-[#1e2026] text-zinc-100"}`}>
+              <span className={`absolute right-0 top-0 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${isLiked ? "border-slate-400 bg-slate-950 text-white" : "border-slate-300 bg-slate-100 text-slate-800"}`}>
                 {readingStats.likes}
               </span>
             </button>
             <button
               type="button"
               onClick={toggleBookmark}
-              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${isBookmarked ? "text-[#b8c9ff]" : "text-zinc-400 hover:bg-white/5 hover:text-[#b8c9ff]"}`}
+              className={`relative flex h-12 w-12 items-center justify-center rounded-full transition ${isBookmarked ? "text-slate-950" : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"}`}
               aria-label={isBookmarked ? "取消收藏" : "收藏文章"}
             >
               <span className="material-symbols-outlined text-[24px]">{isBookmarked ? "bookmark" : "bookmark_border"}</span>
-              <span className={`absolute right-0 top-0 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${isBookmarked ? "border-[#7aa2ff]/30 bg-[#7aa2ff] text-[#10131a]" : "border-white/10 bg-[#1e2026] text-zinc-100"}`}>
+              <span className={`absolute right-0 top-0 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${isBookmarked ? "border-slate-400 bg-slate-950 text-white" : "border-slate-300 bg-slate-100 text-slate-800"}`}>
                 {readingStats.bookmarks}
               </span>
             </button>
-            <button type="button" onClick={scrollToComments} className="relative flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="定位到评论区">
+            <button type="button" onClick={scrollToComments} className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-950" aria-label="定位到评论区">
               <span className="material-symbols-outlined text-[24px]">chat_bubble</span>
-              <span className="absolute right-0 top-0 rounded-full border border-white/10 bg-[#1e2026] px-1.5 py-0.5 text-[10px] font-semibold text-zinc-100">{readingStats.comments}</span>
+              <span className="absolute right-0 top-0 rounded-full border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-800">{readingStats.comments}</span>
             </button>
-            <button type="button" onClick={shareArticle} className="relative flex h-12 w-12 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/5 hover:text-[#b8c9ff]" aria-label="分享文章">
+            <button type="button" onClick={shareArticle} className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-950" aria-label="分享文章">
               <span className="material-symbols-outlined text-[24px]">share</span>
-              {copiedUrl ? <span className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#10131a] px-3 py-1 text-xs text-zinc-100 shadow-lg">已复制网址</span> : null}
+              {copiedUrl ? <span className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-slate-950 px-3 py-1 text-xs text-white shadow-lg">已复制网址</span> : null}
             </button>
           </div>
         </aside>
@@ -685,22 +685,22 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
         </div>
 
         {chatOpen ? (
-          <section className="fixed bottom-40 right-6 z-40 flex h-[min(57vh,600px)] w-[760px] max-w-[92vw] flex-col rounded-3xl border border-cyan-100/80 bg-white/92 p-5 shadow-[0_24px_80px_rgba(56,189,248,0.16)] backdrop-blur-xl xl:right-[max(24px,calc((100vw-1600px)/2+24px))]">
-            <div className="flex items-center justify-between border-b border-cyan-100/80 pb-4">
+          <section className="fixed bottom-40 right-6 z-40 flex h-[min(57vh,600px)] w-[760px] max-w-[92vw] flex-col rounded-3xl border border-slate-400 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl xl:right-[max(24px,calc((100vw-1600px)/2+24px))]">
+            <div className="flex items-center justify-between border-b border-slate-300 pb-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-cyan-100 bg-cyan-50 text-cyan-700">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-slate-100 text-slate-900">
                   <span className="material-symbols-outlined text-[20px]">smart_toy</span>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-900">小智 AI 助手</h4>
-                  <p className="text-xs text-slate-500">全栈开发与AI研究导师</p>
+                  <h4 className="text-sm font-semibold text-slate-950">小智 AI 助手</h4>
+                  <p className="text-xs text-slate-600">全栈开发与AI研究导师</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setClearConfirmOpen(true)}
-                  className="rounded-full p-2 text-slate-400 transition hover:bg-cyan-50 hover:text-cyan-700"
+                  className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-950"
                   aria-label="清空会话"
                   title="清空会话"
                 >
@@ -709,7 +709,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
                 <button
                   type="button"
                   onClick={() => void refreshChatSession()}
-                  className="rounded-full p-2 text-slate-400 transition hover:bg-cyan-50 hover:text-cyan-700"
+                  className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-950"
                   aria-label="刷新会话"
                   title="刷新会话"
                 >
@@ -722,39 +722,39 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
               {chatMessages.length ? chatMessages.map((message) => (
                 <div key={message.id} className={`flex gap-3 ${message.role === "USER" ? "justify-end" : "justify-start"}`}>
                   {message.role === "ASSISTANT" ? (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-cyan-100 bg-cyan-50 text-cyan-700">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-slate-100 text-slate-900">
                       <span className="material-symbols-outlined text-[18px]">smart_toy</span>
                     </div>
                   ) : null}
                   <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 ${message.role === "USER" ? "rounded-tr-sm border border-cyan-100 bg-cyan-50/70 text-slate-700" : "rounded-tl-sm border border-cyan-100 bg-white text-slate-700"}`}
+                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 shadow-sm ${message.role === "USER" ? "rounded-tr-sm border border-slate-400 bg-slate-100 text-slate-950" : "rounded-tl-sm border border-slate-300 bg-white text-slate-900"}`}
                     dangerouslySetInnerHTML={{
-                      __html: message.content ? renderMarkdownPreview(message.content) : chatLoading && message.role === "ASSISTANT" ? "<span class='inline-flex gap-1'><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-cyan-400 [animation-delay:-0.2s]'></span><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-cyan-400 [animation-delay:-0.1s]'></span><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-cyan-400'></span></span>" : "",
+                      __html: message.content ? renderMarkdownPreview(message.content) : chatLoading && message.role === "ASSISTANT" ? "<span class='inline-flex gap-1'><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-slate-500 [animation-delay:-0.2s]'></span><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-slate-500 [animation-delay:-0.1s]'></span><span class='h-1.5 w-1.5 animate-bounce rounded-full bg-slate-500'></span></span>" : "",
                     }}
                   />
                   {message.role === "USER" ? (
-                    <div className="h-10 w-10 overflow-hidden rounded-full border border-cyan-100 bg-white">
+                    <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-300 bg-white">
                       <img src={currentUser?.avatarUrl ?? "/avatars/visitor-default.png"} alt={currentUser?.avatarLabel ?? "访客头像"} className="h-full w-full object-cover" />
                     </div>
                   ) : null}
                 </div>
               )) : (
-                <div className="text-sm text-slate-500">开始向 AI 提问，它会把内容写入数据库会话中。</div>
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700">开始向 AI 提问，它会把内容写入数据库会话中。</div>
               )}
-              {chatError ? <div className="text-sm text-rose-600">{chatError}</div> : null}
+              {chatError ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{chatError}</div> : null}
             </div>
 
-            <div className="mt-5 flex items-center gap-3 rounded-2xl border border-cyan-100 bg-cyan-50/70 px-4 py-3">
+            <div className="mt-5 flex items-center gap-3 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3">
               <input
                 value={chatQuestion}
                 onChange={(event) => setChatQuestion(event.target.value)}
                 placeholder="向小智提问关于本文的任何问题..."
-                className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-500"
                 onKeyDown={(event) => {
                   if (event.key === "Enter") void submitChatQuestion();
                 }}
               />
-              <button type="button" onClick={submitChatQuestion} className="rounded-xl p-2 text-cyan-700 transition hover:bg-cyan-100 hover:text-violet-700" disabled={chatLoading}>
+              <button type="button" onClick={submitChatQuestion} className="rounded-xl border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100 hover:text-slate-950" disabled={chatLoading}>
                 <span className="material-symbols-outlined text-[24px]">send</span>
               </button>
             </div>
