@@ -157,7 +157,7 @@ export async function HomePage({ searchParams }: HomePageProps) {
   const paginationItems: PaginationItem[] = pages.map((page) => ({ page, href: buildQueryHref({ q, category, tag, page }), isCurrent: page === currentPage }));
 
   return (
-    <div className="min-h-screen bg-[#111215] text-zinc-200">
+    <div className="min-h-screen bg-transparent text-slate-900">
       <SiteHeader searchValue={q} />
 
       <main className="mx-auto grid max-w-[1440px] gap-8 px-6 py-10 lg:grid-cols-[340px_minmax(0,1fr)] lg:px-10">

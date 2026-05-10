@@ -69,16 +69,16 @@ export function BloggerCenterArticles({
   error,
 }: Props) {
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between gap-4 border-b border-white/5 pb-4">
+    <div className="space-y-6 rounded-[28px] border border-cyan-100/80 bg-white/90 p-6 shadow-[0_20px_60px_rgba(56,189,248,0.12)]">
+      <div className="flex items-end justify-between gap-4 border-b border-cyan-100/80 pb-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-[-0.03em] text-zinc-100 md:text-4xl">文章管理</h1>
-          <p className="mt-2 flex items-center gap-2 text-sm text-zinc-400">知识的结晶就在这里</p>
+          <h1 className="text-3xl font-bold tracking-[-0.03em] text-slate-900 md:text-4xl">文章管理</h1>
+          <p className="mt-2 flex items-center gap-2 text-sm text-slate-600">知识的结晶就在这里</p>
         </div>
         <div className="relative w-full max-w-[320px]">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-zinc-500">search</span>
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-slate-400">search</span>
           <input
-            className="w-full rounded-xl border border-white/10 bg-[#101215] py-2.5 pl-10 pr-4 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-[#adc6ff]/50"
+            className="w-full rounded-xl border border-cyan-100 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-cyan-300"
             placeholder="搜索标题、分类或标签..."
             type="text"
             value={searchValue}
@@ -88,13 +88,13 @@ export function BloggerCenterArticles({
         </div>
       </div>
 
-      {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{error}</div> : null}
+      {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">{error}</div> : null}
 
-      <div className="overflow-hidden rounded-[24px] border border-white/8 bg-[#14161b] shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
-        <div className="border-b border-white/8 bg-white/[0.03] px-6">
+      <div className="overflow-hidden rounded-[24px] border border-cyan-100 bg-cyan-50/50 shadow-[0_20px_60px_rgba(56,189,248,0.08)]">
+        <div className="border-b border-cyan-100 bg-white/80 px-6">
           <div className="flex gap-8">
             {articleTabs.map((tab) => (
-              <button key={tab.id} type="button" onClick={() => onTabChange(tab.id)} className={`py-4 text-sm font-medium transition ${activeTab === tab.id ? "border-b-2 border-[#adc6ff] text-[#adc6ff]" : "text-zinc-500 hover:text-zinc-300"}`}>
+              <button key={tab.id} type="button" onClick={() => onTabChange(tab.id)} className={`py-4 text-sm font-medium transition ${activeTab === tab.id ? "border-b-2 border-cyan-500 text-cyan-700" : "text-slate-500 hover:text-cyan-700"}`}>
                 {tab.label} ({tab.count})
               </button>
             ))}
@@ -104,7 +104,7 @@ export function BloggerCenterArticles({
         <div className="overflow-x-auto">
           <table className="w-full table-fixed border-collapse text-left">
             <thead>
-              <tr className="border-b border-white/8 text-sm text-zinc-500">
+              <tr className="border-b border-cyan-100 text-sm text-slate-500">
                 <th className="w-[35%] px-6 py-4 font-medium">文章标题</th>
                 <th className="w-[18%] px-6 py-4 font-medium">分类</th>
                 <th className="w-[22%] px-6 py-4 font-medium">标签</th>
@@ -112,42 +112,42 @@ export function BloggerCenterArticles({
                 <th className="w-[10%] px-6 py-4 font-medium text-right">操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 text-sm">
+            <tbody className="divide-y divide-cyan-100 text-sm">
               {loading ? (
-                <tr className="h-[438px]"><td colSpan={5} className="px-6 py-10 text-center text-sm text-zinc-500">正在加载文章...</td></tr>
+                <tr className="h-[438px]"><td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-500">正在加载文章...</td></tr>
               ) : visibleArticles.length > 0 ? (
                 visibleArticles.map((article) => (
-                  <tr key={article.id} className="group h-[73px] transition hover:bg-white/[0.02]">
+                  <tr key={article.id} className="group h-[73px] transition hover:bg-white/70">
                     <td className="px-6 py-4">
-                      <div className="mb-0.5 truncate font-medium text-white">{article.title?.trim() ? article.title : "无标题"}</div>
-                      <div className="truncate text-xs text-zinc-500">{article.excerpt?.trim() ? article.excerpt : "无摘要"}</div>
+                      <div className="mb-0.5 truncate font-medium text-slate-900">{article.title?.trim() ? article.title : "无标题"}</div>
+                      <div className="truncate text-xs text-slate-500">{article.excerpt?.trim() ? article.excerpt : "无摘要"}</div>
                     </td>
                     <td className="px-6 py-4"><CategoryPill label={article.category} /></td>
                     <td className="px-6 py-4"><div className="flex flex-wrap gap-2">{article.tags.map((tag) => <TagPill key={tag} label={tag} />)}</div></td>
-                    <td className="px-6 py-4 text-xs text-zinc-500">{article.updatedAt}</td>
+                    <td className="px-6 py-4 text-xs text-slate-500">{article.updatedAt}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="relative inline-flex">
-                        <button type="button" onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const menuHeight = 132; const menuWidth = 160; const gap = 8; const pad = 12; const openUp = window.innerHeight - rect.bottom < menuHeight + gap; const top = openUp ? Math.max(pad, rect.top - menuHeight - gap) : Math.min(window.innerHeight - menuHeight - pad, rect.bottom + gap); const left = Math.min(window.innerWidth - menuWidth - pad, Math.max(pad, rect.right - menuWidth)); onMenuToggle(article.id, top, left); }} className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/8 hover:text-zinc-100"><span className="material-symbols-outlined text-[20px]">more_vert</span></button>
-                        {activeArticleMenu === article.id && activeArticleMenuPosition ? (<div data-article-menu className="fixed z-50 w-40 overflow-hidden rounded-xl border border-white/10 bg-[#161922] shadow-2xl" style={{ top: activeArticleMenuPosition.top, left: activeArticleMenuPosition.left }}>{(article.status === "published" ? ["撤回", "编辑", "删除"] : ["发布", "编辑", "删除"]).map((label) => (<button key={label} type="button" onClick={() => { if (label === "编辑") onRequestEdit(article); if (label === "删除") onRequestDelete(article); if (label === "发布" || label === "撤回") onRequestToggleStatus(article); onMenuClose(); }} className={`block w-full px-4 py-2 text-left text-sm transition ${label === "删除" ? "text-rose-300 hover:bg-rose-500/10" : label === "发布" ? "text-[#adc6ff] hover:bg-[#adc6ff]/10" : label === "撤回" ? "text-amber-300 hover:bg-amber-500/10" : "text-zinc-100 hover:bg-white/8"}`}>{label}</button>))}</div>) : null}
+                        <button type="button" onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const menuHeight = 132; const menuWidth = 160; const gap = 8; const pad = 12; const openUp = window.innerHeight - rect.bottom < menuHeight + gap; const top = openUp ? Math.max(pad, rect.top - menuHeight - gap) : Math.min(window.innerHeight - menuHeight - pad, rect.bottom + gap); const left = Math.min(window.innerWidth - menuWidth - pad, Math.max(pad, rect.right - menuWidth)); onMenuToggle(article.id, top, left); }} className="rounded-lg p-2 text-slate-400 transition hover:bg-cyan-50 hover:text-cyan-700"><span className="material-symbols-outlined text-[20px]">more_vert</span></button>
+                        {activeArticleMenu === article.id && activeArticleMenuPosition ? (<div data-article-menu className="fixed z-50 w-40 overflow-hidden rounded-xl border border-cyan-100 bg-white shadow-2xl" style={{ top: activeArticleMenuPosition.top, left: activeArticleMenuPosition.left }}>{(article.status === "published" ? ["撤回", "编辑", "删除"] : ["发布", "编辑", "删除"]).map((label) => (<button key={label} type="button" onClick={() => { if (label === "编辑") onRequestEdit(article); if (label === "删除") onRequestDelete(article); if (label === "发布" || label === "撤回") onRequestToggleStatus(article); onMenuClose(); }} className={`block w-full px-4 py-2 text-left text-sm transition ${label === "删除" ? "text-rose-600 hover:bg-rose-50" : label === "发布" ? "text-cyan-700 hover:bg-cyan-50" : label === "撤回" ? "text-amber-600 hover:bg-amber-50" : "text-slate-700 hover:bg-cyan-50"}`}>{label}</button>))}</div>) : null}
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
-                <tr className="h-[438px]"><td colSpan={5} className="px-6 py-10 text-center text-sm text-zinc-500">无文章</td></tr>
+                <tr className="h-[438px]"><td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-500">无文章</td></tr>
               )}
             </tbody>
           </table>
         </div>
 
-        <div className="flex flex-col items-start justify-between gap-4 border-t border-white/8 px-6 py-4 text-xs text-zinc-500 sm:flex-row sm:items-center">
+        <div className="flex flex-col items-start justify-between gap-4 border-t border-cyan-100 px-6 py-4 text-xs text-slate-500 sm:flex-row sm:items-center">
           <div>{activeTab === "published" ? `显示 ${(articlePage - 1) * articlesPerPage + 1} - ${Math.min(articlePage * articlesPerPage, publishedArticlesLength)}，共 ${publishedArticlesLength} 篇已发布文章` : `显示 ${(articlePage - 1) * articlesPerPage + 1} - ${Math.min(articlePage * articlesPerPage, draftArticlesLength)}，共 ${draftArticlesLength} 篇草稿文章`}</div>
           <div className="flex items-center gap-1">
-            <button type="button" onClick={onPrevPage} className="flex h-8 w-8 items-center justify-center rounded hover:bg-white/5 disabled:opacity-30" disabled={articlePage === 1}><span className="material-symbols-outlined text-[18px]">chevron_left</span></button>
-            {Array.from({ length: Math.min(totalArticlePages, 5) }, (_, index) => { const page = index + 1; return (<button key={page} type="button" onClick={() => onPageChange(page)} className={`flex h-8 w-8 items-center justify-center rounded ${articlePage === page ? "border border-[#adc6ff]/20 bg-[#182033] font-medium text-[#adc6ff]" : "hover:bg-white/5"}`}>{page}</button>); })}
+            <button type="button" onClick={onPrevPage} className="flex h-8 w-8 items-center justify-center rounded hover:bg-cyan-50 disabled:opacity-30" disabled={articlePage === 1}><span className="material-symbols-outlined text-[18px]">chevron_left</span></button>
+            {Array.from({ length: Math.min(totalArticlePages, 5) }, (_, index) => { const page = index + 1; return (<button key={page} type="button" onClick={() => onPageChange(page)} className={`flex h-8 w-8 items-center justify-center rounded ${articlePage === page ? "border border-cyan-200 bg-cyan-50 font-medium text-cyan-700" : "hover:bg-cyan-50"}`}>{page}</button>); })}
             {totalArticlePages > 5 ? <span className="px-1">...</span> : null}
-            {totalArticlePages > 5 ? (<button type="button" onClick={() => onPageChange(totalArticlePages)} className={`flex h-8 w-8 items-center justify-center rounded ${articlePage === totalArticlePages ? "border border-[#adc6ff]/20 bg-[#182033] font-medium text-[#adc6ff]" : "hover:bg-white/5"}`}>{totalArticlePages}</button>) : null}
-            <button type="button" onClick={onNextPage} className="flex h-8 w-8 items-center justify-center rounded hover:bg-white/5 disabled:opacity-30" disabled={articlePage === totalArticlePages}><span className="material-symbols-outlined text-[18px]">chevron_right</span></button>
+            {totalArticlePages > 5 ? (<button type="button" onClick={() => onPageChange(totalArticlePages)} className={`flex h-8 w-8 items-center justify-center rounded ${articlePage === totalArticlePages ? "border border-cyan-200 bg-cyan-50 font-medium text-cyan-700" : "hover:bg-cyan-50"}`}>{totalArticlePages}</button>) : null}
+            <button type="button" onClick={onNextPage} className="flex h-8 w-8 items-center justify-center rounded hover:bg-cyan-50 disabled:opacity-30" disabled={articlePage === totalArticlePages}><span className="material-symbols-outlined text-[18px]">chevron_right</span></button>
           </div>
         </div>
       </div>

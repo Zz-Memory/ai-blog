@@ -487,7 +487,7 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
   };
 
   return (
-    <div className="min-h-screen bg-[#111215] text-zinc-200">
+    <div className="min-h-screen bg-[#f6fffd] text-slate-800">
       <SiteHeader
         searchValue={searchInput}
         onSearchChange={setSearchInput}
@@ -498,30 +498,30 @@ export function ArticleDetailPage({ article, engagement, comments }: ArticleDeta
       />
 
       <main className="relative mx-auto min-h-[calc(100vh-64px)] max-w-[1600px] px-6 py-10 lg:px-10">
-        <article className="mx-auto w-full max-w-[840px]">
+        <article className="mx-auto w-full max-w-[840px] rounded-[32px] border border-cyan-100/80 bg-white/84 p-8 shadow-[0_18px_45px_rgba(56,189,248,0.12)] backdrop-blur-sm lg:p-10">
           <header className="max-w-[840px]">
-            <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
               <CategoryPill label={articleCategory} />
               <span>发布于 {publishedLabel}</span>
             </div>
-            <h1 className="mt-5 text-3xl font-semibold leading-tight text-zinc-50 sm:text-4xl lg:text-[52px]">{article.title}</h1>
-            <div className="mt-6 border-t border-white/8 pt-6">
+            <h1 className="mt-5 text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl lg:text-[52px]">{article.title}</h1>
+            <div className="mt-6 border-t border-cyan-100/80 pt-6">
               <div className="flex items-center gap-4">
-                <div className="h-11 w-11 overflow-hidden rounded-full border border-amber-400/20 shadow-[0_0_0_4px_rgba(255,255,255,0.02)]">
+                <div className="h-11 w-11 overflow-hidden rounded-full border border-cyan-100 shadow-[0_0_0_4px_rgba(255,255,255,0.5)]">
                   <img src={article.author.avatarUrl} alt="作者头像" className="h-full w-full object-cover" />
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-zinc-100">{article.author.username}</div>
-                  <div className="text-sm text-zinc-500">{article.author.intro ?? "独立开发者 & AI 探索者"}</div>
+                  <div className="text-sm font-medium text-slate-900">{article.author.username}</div>
+                  <div className="text-sm text-slate-500">{article.author.intro ?? "独立开发者 & AI 探索者"}</div>
                 </div>
               </div>
             </div>
           </header>
 
-          {article.summary ? <p className="mt-8 max-w-[840px] text-[15px] leading-8 text-zinc-400">{article.summary}</p> : null}
+          {article.summary ? <p className="mt-8 max-w-[840px] text-[15px] leading-8 text-slate-600">{article.summary}</p> : null}
 
           <div
-            className="article-content mt-8 max-w-[840px] space-y-8 text-[15px] leading-8 text-zinc-300"
+            className="article-content mt-8 max-w-[840px] space-y-8 text-[15px] leading-8 text-slate-700"
             dangerouslySetInnerHTML={{ __html: article.contentHtml }}
           />
 

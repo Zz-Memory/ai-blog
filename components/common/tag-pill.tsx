@@ -1,6 +1,6 @@
 export function TagPill({ label, active = false, count }: { label: string; active?: boolean; count?: number }) {
   return (
-    <span className={`rounded-md border px-3 py-1 text-[12px] transition ${active ? "border-blue-400/50 bg-blue-500/10 text-blue-100" : "border-white/8 bg-white/5 text-zinc-300 hover:border-blue-400/50 hover:bg-blue-500/10 hover:text-blue-100"}`}>
+    <span className={`rounded-md border px-3 py-1 text-[12px] transition ${active ? "border-cyan-300/70 bg-gradient-to-r from-cyan-400/15 to-violet-400/15 text-cyan-800" : "border-cyan-200/50 bg-white/75 text-slate-600 hover:border-cyan-300/70 hover:bg-cyan-50 hover:text-cyan-900"}`}>
       # {label}{typeof count === "number" ? ` (${count})` : ""}
     </span>
   );

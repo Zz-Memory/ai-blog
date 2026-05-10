@@ -241,7 +241,7 @@ export function VisitorCenterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#111215] text-zinc-200">
+    <div className="min-h-screen bg-[#f6fffd] text-slate-800">
       <SiteHeader searchValue={siteSearchValue} onSearchChange={setSiteSearchValue} />
 
       <main className="mx-auto grid min-h-[calc(100vh-64px)] max-w-[1440px] grid-cols-1 gap-8 px-4 py-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6 xl:px-8">
@@ -265,9 +265,9 @@ export function VisitorCenterPage() {
                 onClearHistoryClick={() => setShowClearConfirm(true)}
               />
 
-              {historyError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{historyError}</div> : null}
+              {historyError ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">{historyError}</div> : null}
               {historyLoading ? (
-                <div className="rounded-2xl border border-white/8 bg-white/5 px-5 py-12 text-center text-sm text-zinc-400">
+                <div className="rounded-2xl border border-cyan-100/80 bg-white/84 px-5 py-12 text-center text-sm text-slate-500 shadow-[0_18px_45px_rgba(56,189,248,0.08)]">
                   正在加载浏览记录...
                 </div>
               ) : (

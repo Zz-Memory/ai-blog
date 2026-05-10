@@ -34,8 +34,8 @@ export function VisitorCenterSidebar({ activeId, onSelect, onLogoutClick, onSett
   return (
     <aside className="hidden lg:flex lg:flex-col">
       {/* 使用 sticky 是为了让侧边栏在滚动内容较长时保持可见。 */}
-      <div className="sticky top-24 rounded-3xl border border-white/8 bg-[#14161b] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
-        <div className="text-xs tracking-[0.28em] text-zinc-500">访客专栏</div>
+      <div className="sticky top-24 rounded-3xl border border-cyan-100/80 bg-white/84 p-5 shadow-[0_18px_45px_rgba(56,189,248,0.12)] backdrop-blur-sm">
+        <div className="text-xs tracking-[0.28em] text-cyan-700">访客专栏</div>
         <nav className="mt-6 space-y-2">
           {sidebarItems.map((item) => {
             const isActive = item.id === activeId;
@@ -58,8 +58,8 @@ export function VisitorCenterSidebar({ activeId, onSelect, onLogoutClick, onSett
                   onSelect(item.id);
                 }}
                 className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${isActive
-                  ? "border-[#6e8cff]/40 bg-[#182033] text-blue-100 shadow-[inset_0_0_0_1px_rgba(110,140,255,0.12)]"
-                  : "border-transparent bg-transparent text-zinc-500 hover:border-white/8 hover:bg-white/5 hover:text-zinc-200"
+                  ? "border-cyan-300/70 bg-gradient-to-r from-cyan-400/15 to-violet-400/15 text-cyan-900 shadow-[0_12px_30px_rgba(56,189,248,0.12)]"
+                  : "border-transparent bg-transparent text-slate-500 hover:border-cyan-100 hover:bg-cyan-50/70 hover:text-cyan-900"
                   }`}
               >
                 {/* 左侧图标 + 文案，形成统一的菜单入口视觉。 */}
@@ -70,7 +70,7 @@ export function VisitorCenterSidebar({ activeId, onSelect, onLogoutClick, onSett
 
                 {/* 仅在未读消息数大于 0 时展示角标。 */}
                 {item.id === "notifications" && notificationBadgeCount > 0 ? (
-                  <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#9db2ff] px-2 text-xs font-semibold text-[#10131a]">
+                  <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-2 text-xs font-semibold text-white">
                     {notificationBadgeCount}
                   </span>
                 ) : null}

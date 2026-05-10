@@ -61,9 +61,9 @@ export function SiteHeader({
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/5 bg-[#111215]/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-cyan-100/70 bg-white/82 shadow-[0_12px_35px_rgba(56,189,248,0.1)] backdrop-blur-xl">
       <div className="mx-auto grid h-16 max-w-[1200px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-6 px-6 lg:px-8">
-        <Link href="/" className="flex items-center text-zinc-100 transition hover:text-white">
+        <Link href="/" className="flex items-center text-cyan-950 transition hover:text-cyan-700">
           <span className="text-[22px] font-semibold tracking-wide">Memory的小破站</span>
         </Link>
 
@@ -74,8 +74,8 @@ export function SiteHeader({
             commitSearch(inputValue);
           }}
         >
-          <label htmlFor="site-search" className="flex items-center rounded-full border border-outline-variant/50 bg-surface-container/50 px-3 py-1.5 text-sm text-zinc-500 transition focus-within:border-blue-400/30 focus-within:bg-[#1b1d24]">
-            <span className="material-symbols-outlined mr-2 text-[18px] leading-none text-zinc-600">search</span>
+          <label htmlFor="site-search" className="flex items-center rounded-full border border-cyan-100 bg-cyan-50/80 px-3 py-1.5 text-sm text-slate-600 transition focus-within:border-cyan-300/70 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(34,211,238,0.12)]">
+            <span className="material-symbols-outlined mr-2 text-[18px] leading-none text-cyan-600">search</span>
             <input
               id="site-search"
               value={inputValue}
@@ -84,14 +84,14 @@ export function SiteHeader({
                 onSearchChange?.(event.target.value);
               }}
               placeholder="搜索标题/摘要/分类/标签"
-              className="w-64 bg-transparent text-sm text-zinc-200 outline-none placeholder:text-zinc-500"
+              className="w-64 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
             />
             {inputValue ? (
               <button
                 type="button"
                 aria-label="清空搜索内容"
                 onClick={() => commitSearch("")}
-                className="ml-2 rounded-full px-1.5 py-1 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-200"
+                className="ml-2 rounded-full px-1.5 py-1 text-slate-400 transition hover:bg-cyan-100 hover:text-cyan-800"
               >
                 <span className="material-symbols-outlined text-[16px] leading-none">close</span>
               </button>
@@ -102,20 +102,20 @@ export function SiteHeader({
         <div className="flex items-center gap-5">
           {isAuthenticated ? (
             <>
-              <Link href={notificationHref} aria-label="消息通知" className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-zinc-200 transition hover:border-white/20 hover:bg-white/10 hover:text-white">
+              <Link href={notificationHref} aria-label="消息通知" className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-100 bg-white text-cyan-600 shadow-[0_10px_28px_rgba(56,189,248,0.12)] transition hover:border-cyan-300/70 hover:bg-cyan-50 hover:text-violet-600">
                 <span className="material-symbols-outlined text-[20px] leading-none">notifications</span>
-                {unreadCount > 0 ? <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#adc6ff] px-1.5 text-[10px] font-semibold text-[#10131a]">{unreadCount}</span> : null}
+                {unreadCount > 0 ? <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-1.5 text-[10px] font-semibold text-white">{unreadCount}</span> : null}
               </Link>
-              <Link href={profileHref} aria-label="用户中心" className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-blue-400/20 bg-[#b8c9ff] transition hover:scale-[1.02]">
+              <Link href={profileHref} aria-label="用户中心" className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-cyan-100 bg-gradient-to-br from-cyan-50 to-violet-50 transition hover:scale-[1.02]">
                 <Image src={avatarSrc} alt="用户头像" width={44} height={44} className="h-full w-full object-cover" />
               </Link>
             </>
           ) : (
             <>
-              <button type="button" onClick={() => openAuth("login")} className="rounded-xl border border-white/10 px-5 py-2.5 text-sm text-zinc-200 transition hover:border-white/20 hover:bg-white/5">
+              <button type="button" onClick={() => openAuth("login")} className="rounded-xl border border-cyan-100 px-5 py-2.5 text-sm text-cyan-950 transition hover:bg-cyan-50 hover:shadow-[0_10px_24px_rgba(34,211,238,0.12)]">
                 登录
               </button>
-              <button type="button" onClick={() => openAuth("register")} className="rounded-xl bg-[#b8c9ff] px-5 py-2.5 text-sm font-medium text-[#14161b] shadow-[0_12px_30px_rgba(112,143,255,0.25)] transition hover:bg-[#c3d2ff]">
+              <button type="button" onClick={() => openAuth("register")} className="rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-medium text-white shadow-[0_12px_30px_rgba(34,211,238,0.26)] transition hover:brightness-105">
                 注册
               </button>
             </>

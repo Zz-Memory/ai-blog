@@ -35,7 +35,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
         />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-transparent text-[#12304b]">
         <AuthProvider>
           <NotificationProvider>{children}</NotificationProvider>
         </AuthProvider>

@@ -30,13 +30,13 @@ export function VisitorCenterConfirmModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       {/* 遮罩层本身也是可点击区域，点击后关闭弹窗，提升交互效率。 */}
-      <button type="button" aria-label={`关闭${title}`} className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-3xl border border-white/10 bg-[#18191d] p-6 shadow-[0_0_30px_rgba(0,0,0,0.45)]">
-        <h2 className="text-xl font-semibold text-zinc-100">{title}</h2>
-        <p className="mt-3 text-sm leading-6 text-zinc-400">{description}</p>
+      <button type="button" aria-label={`关闭${title}`} className="absolute inset-0 bg-cyan-950/35 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-3xl border border-cyan-100/80 bg-white/90 p-6 shadow-[0_18px_45px_rgba(56,189,248,0.16)] backdrop-blur-sm">
+        <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+        <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
         <div className={`mt-6 flex gap-3 ${hideCancelButton ? "justify-end" : ""}`}>
           {hideCancelButton ? null : (
-            <button type="button" className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-zinc-100 transition hover:bg-white/10" onClick={onClose}>
+            <button type="button" className="flex-1 rounded-xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-cyan-100" onClick={onClose}>
               {cancelLabel}
             </button>
           )}

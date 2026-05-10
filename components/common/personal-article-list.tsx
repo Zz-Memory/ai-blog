@@ -44,19 +44,19 @@ export function PersonalArticleList({
   const hasMore = visibleCount < items.length;
 
   return (
-    <div className="space-y-5 rounded-[28px] border border-white/8 bg-[#14161b] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.22)] sm:p-8">
+    <div className="space-y-5 rounded-[28px] border border-cyan-100/80 bg-white/90 p-6 shadow-[0_20px_60px_rgba(56,189,248,0.12)] sm:p-8">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-zinc-100">{title}</h2>
-          <p className="mt-2 text-sm leading-7 text-zinc-400">{description}</p>
+          <h2 className="text-2xl font-semibold text-slate-900">{title}</h2>
+          <p className="mt-2 text-sm leading-7 text-slate-600">{description}</p>
         </div>
-        <span className="rounded-full border border-white/8 bg-white/5 px-3 py-1 text-xs text-zinc-500">{items.length} 篇</span>
+        <span className="rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-xs text-slate-600">{items.length} 篇</span>
       </div>
 
       <div className="space-y-4">
         {visibleItems.length ? (
           visibleItems.map((item) => (
-            <div key={item.postId} className="rounded-[24px] border border-white/8 bg-[#17181d] p-0">
+            <div key={item.postId} className="rounded-[24px] border border-cyan-100 bg-cyan-50/50 p-0">
               <ArticleCard
                 href={item.href}
                 compact
@@ -73,7 +73,7 @@ export function PersonalArticleList({
             </div>
           ))
         ) : (
-          <div className="rounded-[24px] border border-dashed border-white/10 bg-white/3 px-6 py-12 text-center text-sm text-zinc-500">{emptyText}</div>
+          <div className="rounded-[24px] border border-dashed border-cyan-100 bg-cyan-50/50 px-6 py-12 text-center text-sm text-slate-500">{emptyText}</div>
         )}
       </div>
 
@@ -82,7 +82,7 @@ export function PersonalArticleList({
           <button
             type="button"
             onClick={() => setVisibleCount((count) => Math.min(count + initialVisibleCount, items.length))}
-            className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
+            className="rounded-full border border-cyan-100 bg-white px-5 py-2.5 text-sm font-medium text-cyan-800 transition hover:border-cyan-300 hover:bg-cyan-50"
           >
             {loadMoreLabel}
           </button>

@@ -721,13 +721,13 @@ export function EditorPage() {
   const selectionToolbarStyle = selectionToolbarPosition ? { top: selectionToolbarPosition.top, left: selectionToolbarPosition.left } : undefined;
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#131315] text-[#e5e1e4] antialiased">
-      <header className="fixed left-0 top-0 z-50 flex h-16 w-full items-center justify-between border-b border-white/10 bg-slate-950/80 px-6 shadow-2xl shadow-blue-500/10 backdrop-blur-xl">
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#f6fffd] text-slate-800 antialiased">
+      <header className="fixed left-0 top-0 z-50 flex h-16 w-full items-center justify-between border-b border-cyan-100/80 bg-white/88 px-6 shadow-[0_10px_30px_rgba(56,189,248,0.1)] backdrop-blur-xl">
         <div className="mr-6 flex-1 max-w-2xl">
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            className="w-full border-none bg-transparent px-0 text-2xl font-semibold tracking-[-0.02em] text-[#e5e1e4] outline-none placeholder:text-[#414755] focus:ring-0"
+            className="w-full border-none bg-transparent px-0 text-2xl font-semibold tracking-[-0.02em] text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
             placeholder="请输入文章标题..."
             type="text"
           />
@@ -740,41 +740,41 @@ export function EditorPage() {
             type="button"
             onClick={handleTitleGenerate}
             disabled={titleGenerating || loading || !markdown.trim()}
-            className="rounded-full border border-[#adc6ff]/30 bg-[#adc6ff]/10 px-3 py-1.5 text-sm text-[#adc6ff] transition hover:bg-[#adc6ff]/15 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1.5 text-sm text-cyan-700 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {titleGenerating ? "标题生成中..." : "标题生成"}
           </button>
           <button
             type="button"
             onClick={handleAiToggle}
-            className="flex items-center gap-2 rounded-full border border-[#adc6ff]/30 bg-[#adc6ff]/10 px-3 py-1.5 transition hover:bg-[#adc6ff]/15"
+            className="flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1.5 transition hover:bg-cyan-100"
           >
-            <span className="material-symbols-outlined text-[18px] text-[#adc6ff]">smart_toy</span>
-            <span className="text-sm text-[#adc6ff]">AI助手</span>
-            <span className={`relative inline-flex h-4 w-8 rounded-full ${aiEnabled ? "bg-[#adc6ff]" : "bg-[#414755]"}`}>
+            <span className="material-symbols-outlined text-[18px] text-cyan-700">smart_toy</span>
+            <span className="text-sm text-cyan-700">AI助手</span>
+            <span className={`relative inline-flex h-4 w-8 rounded-full ${aiEnabled ? "bg-cyan-500" : "bg-slate-300"}`}>
               <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition ${aiEnabled ? "left-4" : "left-0.5"}`} />
             </span>
           </button>
           <input ref={fileInputRef} accept=".md,.markdown,text/markdown,text/x-markdown" className="hidden" type="file" onChange={handleMdUpload} />
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="rounded-full border border-[#414755] px-4 py-1.5 text-sm text-[#c1c6d7] transition hover:bg-white/5 hover:text-white">
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="rounded-full border border-cyan-100 px-4 py-1.5 text-sm text-slate-700 transition hover:bg-cyan-50 hover:text-cyan-800">
             上传MD文件
           </button>
-          <button type="button" onClick={handleDraftBoxClick} className="rounded-full border border-[#414755] px-4 py-1.5 text-sm text-[#c1c6d7] transition hover:bg-white/5 hover:text-white">
+          <button type="button" onClick={handleDraftBoxClick} className="rounded-full border border-cyan-100 px-4 py-1.5 text-sm text-slate-700 transition hover:bg-cyan-50 hover:text-cyan-800">
             草稿箱
           </button>
-          <button type="button" onClick={openPublishDialog} className="rounded-full bg-[#adc6ff] px-4 py-2 text-sm font-semibold text-[#002e69] transition hover:shadow-[0_0_15px_rgba(75,142,255,0.4)]">
+          <button type="button" onClick={openPublishDialog} className="rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105">
             发布文章
           </button>
-          <button type="button" onClick={() => router.push("/blogger-center")} className="h-10 w-10 overflow-hidden rounded-full border border-[#414755] transition hover:border-[#adc6ff]/50 hover:shadow-[0_0_0_3px_rgba(173,198,255,0.12)]">
+          <button type="button" onClick={() => router.push("/blogger-center")} className="h-10 w-10 overflow-hidden rounded-full border border-cyan-100 transition hover:border-cyan-300/70 hover:shadow-[0_0_0_3px_rgba(34,211,238,0.12)]">
             <img alt="博主头像" className="h-full w-full object-cover" src="/avatars/blogger-default.png" />
           </button>
         </div>
       </header>
 
       <main className="relative mt-16 flex flex-1 overflow-hidden">
-        <div className="flex h-full w-1/2 flex-col border-r border-[#414755]/30 bg-[#0e0e10]">
+        <div className="flex h-full w-1/2 flex-col border-r border-cyan-100/80 bg-white/70">
           <div className="flex flex-1 overflow-hidden">
-            <div className="flex w-12 shrink-0 flex-col items-end border-r border-white/5 bg-[#0e0e10] py-6 pr-3 font-mono text-[13px] leading-7 text-[#414755] select-none">
+            <div className="flex w-12 shrink-0 flex-col items-end border-r border-cyan-100/80 bg-cyan-50/60 py-6 pr-3 font-mono text-[13px] leading-7 text-slate-400 select-none">
               {markdown.split("\n").map((_, index) => (
                 <span key={index}>{index + 1}</span>
               ))}
@@ -791,7 +791,7 @@ export function EditorPage() {
                 onSelect={handleTextareaSelect}
                 onScroll={handleTextareaScroll}
                 spellCheck={false}
-                className="h-full w-full resize-none bg-transparent p-6 font-mono text-[14px] leading-7 text-[#c1c6d7] outline-none placeholder:text-[#414755]"
+                className="h-full w-full resize-none bg-transparent p-6 font-mono text-[14px] leading-7 text-slate-700 outline-none placeholder:text-slate-400"
                 placeholder={loading ? "正在加载草稿..." : "开始编写你的文章内容..."}
               />
               {ghostTextDisplay && ghostCaret !== null ? (
@@ -824,84 +824,84 @@ export function EditorPage() {
           </div>
         </div>
 
-        <div className="relative flex h-full w-1/2 flex-col bg-[#131315]">
-          <div className="flex-1 overflow-auto p-6 text-[#e5e1e4]">
-            {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-sm text-rose-200">{error}</div> : <div className="mx-auto max-w-[800px] prose prose-invert prose-p:mb-4 prose-h1:mb-4 prose-h2:mb-3 prose-ul:mb-4 prose-li:mb-1 prose-strong:text-white" dangerouslySetInnerHTML={{ __html: previewHtml }} />}
+        <div className="relative flex h-full w-1/2 flex-col bg-[#f6fffd]">
+          <div className="flex-1 overflow-auto p-6 text-slate-700">
+            {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">{error}</div> : <div className="mx-auto max-w-[800px] prose prose-sky prose-p:mb-4 prose-h1:mb-4 prose-h2:mb-3 prose-ul:mb-4 prose-li:mb-1 prose-strong:text-slate-900" dangerouslySetInnerHTML={{ __html: previewHtml }} />}
           </div>
           {publishDialogOpen ? (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-sm">
-              <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-3xl border border-white/10 bg-[#14161b] shadow-2xl shadow-black/40">
-                <div className="flex items-center justify-between border-b border-white/8 px-6 py-4">
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-sm">
+              <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-3xl border border-cyan-100/80 bg-white/92 shadow-[0_24px_80px_rgba(56,189,248,0.16)]">
+                <div className="flex items-center justify-between border-b border-cyan-100/80 px-6 py-4">
                   <div>
-                    <div className="text-lg font-semibold text-zinc-100">发布文章</div>
-                    <div className="mt-1 text-sm text-zinc-500">分类与标签来自数据库，Slug 与摘要可编辑</div>
+                    <div className="text-lg font-semibold text-slate-900">发布文章</div>
+                    <div className="mt-1 text-sm text-slate-500">分类与标签来自数据库，Slug 与摘要可编辑</div>
                   </div>
-                  <button type="button" onClick={() => setPublishDialogOpen(false)} className="rounded-full p-2 text-zinc-400 transition hover:bg-white/5 hover:text-zinc-100">
+                  <button type="button" onClick={() => setPublishDialogOpen(false)} className="rounded-full p-2 text-slate-400 transition hover:bg-cyan-50 hover:text-cyan-700">
                     <span className="material-symbols-outlined text-[18px]">close</span>
                   </button>
                 </div>
 
                 <div className="max-h-[calc(90vh-72px)] overflow-y-auto px-6 py-5">
-                  {publishDialogLoading ? <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-10 text-center text-sm text-zinc-500">正在加载发布配置...</div> : null}
-                  {!publishDialogLoading && publishDialogError ? <div className="mb-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{publishDialogError}</div> : null}
+                  {publishDialogLoading ? <div className="rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-10 text-center text-sm text-slate-500">正在加载发布配置...</div> : null}
+                  {!publishDialogLoading && publishDialogError ? <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{publishDialogError}</div> : null}
 
                   {!publishDialogLoading ? (
                     <>
                       <div className="grid gap-5 lg:grid-cols-2">
-                        <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                          <h3 className="text-sm font-semibold text-zinc-100">分类（单选）</h3>
+                        <section className="rounded-2xl border border-cyan-100 bg-cyan-50/60 p-4">
+                          <h3 className="text-sm font-semibold text-slate-900">分类（单选）</h3>
                           <div className="mt-3 flex flex-wrap gap-2">
                             {publishCategories.length > 0 ? publishCategories.map((category) => {
                               const active = publishCategoryId === category.id;
                               return (
-                                <button key={category.id} type="button" onClick={() => setPublishCategoryId((current) => (current === category.id ? "" : category.id))} className={`rounded-full border px-4 py-2 text-sm transition ${active ? "border-[#adc6ff]/40 bg-[#adc6ff]/15 text-[#adc6ff]" : "border-white/10 bg-white/5 text-zinc-200 hover:border-[#adc6ff]/30 hover:bg-[#adc6ff]/10 hover:text-[#adc6ff]"}`}>
+                                <button key={category.id} type="button" onClick={() => setPublishCategoryId((current) => (current === category.id ? "" : category.id))} className={`rounded-full border px-4 py-2 text-sm transition ${active ? "border-cyan-300 bg-gradient-to-r from-cyan-500 to-violet-500 text-white" : "border-cyan-100 bg-white text-slate-600 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"}`}>
                                   {category.name}
                                 </button>
                               );
-                            }) : <div className="text-sm text-zinc-500">暂无分类数据</div>}
+                            }) : <div className="text-sm text-slate-500">暂无分类数据</div>}
                           </div>
                         </section>
 
-                        <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                          <h3 className="text-sm font-semibold text-zinc-100">标签（最多 3 个）</h3>
+                        <section className="rounded-2xl border border-cyan-100 bg-cyan-50/60 p-4">
+                          <h3 className="text-sm font-semibold text-slate-900">标签（最多 3 个）</h3>
                           <div className="mt-3 flex flex-wrap gap-2">
                             {publishTags.length > 0 ? publishTags.map((tag) => {
                               const active = publishTagIds.includes(tag.id);
                               const disabled = !active && publishTagIds.length >= 3;
                               return (
-                                <button key={tag.id} type="button" disabled={disabled} onClick={() => togglePublishTag(tag.id)} className={`rounded-full border px-4 py-2 text-sm transition ${active ? "border-[#adc6ff]/40 bg-[#adc6ff]/15 text-[#adc6ff]" : disabled ? "cursor-not-allowed border-white/8 bg-white/[0.02] text-zinc-500" : "border-white/10 bg-white/5 text-zinc-200 hover:border-[#adc6ff]/30 hover:bg-[#adc6ff]/10 hover:text-[#adc6ff]"}`}>
+                                <button key={tag.id} type="button" disabled={disabled} onClick={() => togglePublishTag(tag.id)} className={`rounded-full border px-4 py-2 text-sm transition ${active ? "border-cyan-300 bg-gradient-to-r from-cyan-500 to-violet-500 text-white" : disabled ? "cursor-not-allowed border-cyan-100 bg-white text-slate-300" : "border-cyan-100 bg-white text-slate-600 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"}`}>
                                   {tag.name}
                                 </button>
                               );
-                            }) : <div className="text-sm text-zinc-500">暂无标签数据</div>}
+                            }) : <div className="text-sm text-slate-500">暂无标签数据</div>}
                           </div>
-                          <div className="mt-3 text-xs text-zinc-500">已选 {publishTagIds.length} / 3</div>
+                          <div className="mt-3 text-xs text-slate-500">已选 {publishTagIds.length} / 3</div>
                         </section>
                       </div>
 
                       <div className="mt-5 grid gap-5">
-                        <label className="block rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                          <div className="text-sm font-semibold text-zinc-100">Slug（必填）</div>
-                          <input value={publishSlug} onChange={(event) => setPublishSlug(event.target.value)} placeholder="例如：my-first-post" className="mt-3 w-full rounded-2xl border border-white/10 bg-[#0f1116] px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-[#adc6ff]/40" />
+                        <label className="block rounded-2xl border border-cyan-100 bg-cyan-50/60 p-4">
+                          <div className="text-sm font-semibold text-slate-900">Slug（必填）</div>
+                          <input value={publishSlug} onChange={(event) => setPublishSlug(event.target.value)} placeholder="例如：my-first-post" className="mt-3 w-full rounded-2xl border border-cyan-100 bg-white px-4 py-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-cyan-300" />
                         </label>
 
-                        <label className="block rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                        <label className="block rounded-2xl border border-cyan-100 bg-cyan-50/60 p-4">
                           <div className="flex items-center justify-between gap-3">
-                            <div className="text-sm font-semibold text-zinc-100">摘要</div>
-                            <div className="text-xs text-zinc-500">默认取文章前 100 字符，可手动编辑</div>
+                            <div className="text-sm font-semibold text-slate-900">摘要</div>
+                            <div className="text-xs text-slate-500">默认取文章前 100 字符，可手动编辑</div>
                           </div>
-                          <textarea value={publishSummary} onChange={(event) => setPublishSummary(event.target.value)} rows={5} className="mt-3 w-full resize-none rounded-2xl border border-white/10 bg-[#0f1116] px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-[#adc6ff]/40" />
+                          <textarea value={publishSummary} onChange={(event) => setPublishSummary(event.target.value)} rows={5} className="mt-3 w-full resize-none rounded-2xl border border-cyan-100 bg-white px-4 py-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-cyan-300" />
                         </label>
                       </div>
                     </>
                   ) : null}
                 </div>
 
-                <div className="flex items-center justify-between gap-3 border-t border-white/8 px-6 py-4">
-                  <div className="text-xs text-zinc-500">分类只能选一个，标签最多三个</div>
+                <div className="flex items-center justify-between gap-3 border-t border-cyan-100/80 px-6 py-4">
+                  <div className="text-xs text-slate-500">分类只能选一个，标签最多三个</div>
                   <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => setPublishDialogOpen(false)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/5">取消</button>
-                    <button type="button" onClick={handlePublishArticle} disabled={publishDialogSaving || publishDialogLoading} className="rounded-full bg-[#adc6ff] px-5 py-2 text-sm font-semibold text-[#001a41] transition hover:bg-[#c2d3ff] disabled:cursor-not-allowed disabled:bg-[#33415f] disabled:text-[#7e8aa5]">
+                    <button type="button" onClick={() => setPublishDialogOpen(false)} className="rounded-full border border-cyan-100 px-4 py-2 text-sm text-slate-700 transition hover:bg-cyan-50">取消</button>
+                    <button type="button" onClick={handlePublishArticle} disabled={publishDialogSaving || publishDialogLoading} className="rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500">
                       {publishDialogSaving ? "发布中..." : "确认发布"}
                     </button>
                   </div>
@@ -910,11 +910,11 @@ export function EditorPage() {
             </div>
           ) : null}
           {selectionToolbarVisible && selectionToolbarPosition ? (
-            <div className="pointer-events-auto fixed z-40 w-[420px] rounded-2xl border border-white/10 bg-[#161922]/95 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl" style={selectionToolbarStyle}>
-              <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-3">
+            <div className="pointer-events-auto fixed z-40 w-[420px] rounded-2xl border border-cyan-100/80 bg-white/95 p-3 shadow-[0_20px_60px_rgba(56,189,248,0.16)] backdrop-blur-xl" style={selectionToolbarStyle}>
+              <div className="flex items-center justify-between gap-3 border-b border-cyan-100/80 pb-3">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-100">AI 润色</div>
-                  <div className="text-xs text-zinc-500">支持选中文本或全文润色</div>
+                  <div className="text-sm font-semibold text-slate-900">AI 润色</div>
+                  <div className="text-xs text-slate-500">支持选中文本或全文润色</div>
                 </div>
                 <button
                   type="button"
@@ -922,7 +922,7 @@ export function EditorPage() {
                     setSelectionToolbarVisible(false);
                     setSelectionToolbarPosition(null);
                   }}
-                  className="rounded-full p-2 text-zinc-400 transition hover:bg-white/8 hover:text-zinc-100"
+                  className="rounded-full p-2 text-slate-400 transition hover:bg-cyan-50 hover:text-cyan-700"
                 >
                   <span className="material-symbols-outlined text-[18px]">close</span>
                 </button>
@@ -941,7 +941,7 @@ export function EditorPage() {
                       key={item.id}
                       type="button"
                       onClick={() => handleStyleToggle(styleId)}
-                      className={`rounded-xl border px-3 py-2 text-sm transition ${isActive ? "border-[#adc6ff]/40 bg-[#adc6ff]/15 text-[#adc6ff]" : "border-white/10 bg-white/5 text-zinc-100 hover:border-[#adc6ff]/30 hover:bg-[#adc6ff]/10 hover:text-[#adc6ff]"}`}
+                      className={`rounded-xl border px-3 py-2 text-sm transition ${isActive ? "border-cyan-300 bg-gradient-to-r from-cyan-500 to-violet-500 text-white" : "border-cyan-100 bg-white text-slate-600 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"}`}
                     >
                       {item.label}
                     </button>
@@ -949,15 +949,15 @@ export function EditorPage() {
                 })}
               </div>
 
-              <div className="mt-3 rounded-2xl border border-white/8 bg-white/[0.03] p-3">
-                <div className="mb-2 text-xs font-medium tracking-[0.18em] text-zinc-500">自定义要求</div>
+              <div className="mt-3 rounded-2xl border border-cyan-100 bg-cyan-50/60 p-3">
+                <div className="mb-2 text-xs font-medium tracking-[0.18em] text-slate-500">自定义要求</div>
                 <textarea
                   value={selectionCustomPrompt}
                   onChange={(event) => setSelectionCustomPrompt(event.target.value)}
                   placeholder="例如：请将选中文本修改得更简洁、有说服力，并保持原意。"
-                  className="min-h-[96px] w-full resize-none rounded-xl border border-white/8 bg-[#0f1116] px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-[#adc6ff]/40"
+                  className="min-h-[96px] w-full resize-none rounded-xl border border-cyan-100 bg-white px-3 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-cyan-300"
                 />
-                <div className="mt-3 flex items-center justify-between gap-2 text-xs text-zinc-500">
+                <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-500">
                   <span>{selectedStyleLabel ? `当前风格：${selectedStyleLabel}` : "当前风格：未选择"}</span>
                   <div className="flex items-center gap-2">
                     <button type="button" onClick={() => setSelectionToolbarVisible(false)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/5">
@@ -975,7 +975,7 @@ export function EditorPage() {
         </div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 z-50 flex h-10 w-full items-center justify-between border-t border-white/10 bg-[#0e0e10] px-4 text-sm text-[#8b90a0]">
+      <footer className="fixed bottom-0 left-0 z-50 flex h-10 w-full items-center justify-between border-t border-cyan-100/80 bg-white/90 px-4 text-sm text-slate-500 backdrop-blur-xl">
         <div className="flex items-center gap-4">
           <span>字数: {stats.words}</span>
           <span>行数: {stats.lines}</span>

@@ -35,8 +35,8 @@ const visitorItems: BloggerCenterSidebarItem[] = [
 export function BloggerCenterSidebar({ activeId, onSelect, onNewArticleClick, onLogoutClick, onSettingsClick, notificationBadgeCount = 0 }: BloggerCenterSidebarProps) {
   return (
     <aside className="hidden lg:flex lg:flex-col">
-      <div className="sticky top-24 rounded-3xl border border-white/8 bg-[#14161b] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
-        <div className="text-xs tracking-[0.28em] text-zinc-500">博主专栏</div>
+      <div className="sticky top-24 rounded-3xl border border-cyan-100/80 bg-white/84 p-5 shadow-[0_18px_45px_rgba(56,189,248,0.12)] backdrop-blur-sm">
+        <div className="text-xs tracking-[0.28em] text-cyan-700">博主专栏</div>
         <nav className="mt-6 space-y-2">
           {bloggerItems.map((item) => {
             const isNewArticle = item.id === "new-article";
@@ -53,23 +53,23 @@ export function BloggerCenterSidebar({ activeId, onSelect, onNewArticleClick, on
                   }
                   onSelect(item.id);
                 }}
-                className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${isNewArticle ? "border-[#8ea2ff]/25 bg-gradient-to-r from-[#1a2340] to-[#17202f] text-blue-50 shadow-[0_16px_30px_rgba(17,24,39,0.35)] hover:border-[#8ea2ff]/45 hover:from-[#1d2948] hover:to-[#1a2435] hover:text-white" : isActive ? "border-[#6e8cff]/40 bg-[#182033] text-blue-100 shadow-[inset_0_0_0_1px_rgba(110,140,255,0.12)]" : "border-transparent bg-transparent text-zinc-500 hover:border-white/8 hover:bg-white/5 hover:text-zinc-200"}`}
+                className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${isNewArticle ? "border-cyan-300/70 bg-gradient-to-r from-cyan-400/15 to-violet-400/15 text-cyan-900 shadow-[0_12px_30px_rgba(56,189,248,0.12)] hover:border-cyan-400 hover:from-cyan-400/20 hover:to-violet-400/20 hover:text-cyan-950" : isActive ? "border-cyan-300/70 bg-gradient-to-r from-cyan-400/15 to-violet-400/15 text-cyan-900 shadow-[0_12px_30px_rgba(56,189,248,0.12)]" : "border-transparent bg-transparent text-slate-500 hover:border-cyan-100 hover:bg-cyan-50/70 hover:text-cyan-900"}`}
               >
                 <span className="flex items-center gap-3 text-sm font-medium"><span className="material-symbols-outlined text-[18px] leading-none">{item.icon}</span>{item.label}</span>
-                {isNewArticle ? <span className="material-symbols-outlined text-[18px] leading-none text-blue-200/80">arrow_forward</span> : null}
+                {isNewArticle ? <span className="material-symbols-outlined text-[18px] leading-none text-cyan-600/80">arrow_forward</span> : null}
               </button>
             );
           })}
         </nav>
-        <div className="mt-6 border-t border-white/8 pt-4">
-          <div className="pb-2 text-xs tracking-[0.28em] text-zinc-500">访客工具</div>
+        <div className="mt-6 border-t border-cyan-100/80 pt-4">
+          <div className="pb-2 text-xs tracking-[0.28em] text-cyan-700">访客工具</div>
           <nav className="space-y-2">
             {visitorItems.map((item) => {
               const isActive = item.id === activeId;
               return (
-                <button key={item.id} type="button" onClick={() => { if (item.id === "logout") return onLogoutClick(); if (item.id === "settings") return onSettingsClick(); onSelect(item.id); }} className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${isActive ? "border-[#6e8cff]/40 bg-[#182033] text-blue-100 shadow-[inset_0_0_0_1px_rgba(110,140,255,0.12)]" : "border-transparent bg-transparent text-zinc-500 hover:border-white/8 hover:bg-white/5 hover:text-zinc-200"}`}>
+                <button key={item.id} type="button" onClick={() => { if (item.id === "logout") return onLogoutClick(); if (item.id === "settings") return onSettingsClick(); onSelect(item.id); }} className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${isActive ? "border-cyan-300/70 bg-gradient-to-r from-cyan-400/15 to-violet-400/15 text-cyan-900 shadow-[0_12px_30px_rgba(56,189,248,0.12)]" : "border-transparent bg-transparent text-slate-500 hover:border-cyan-100 hover:bg-cyan-50/70 hover:text-cyan-900"}`}>
                   <span className="flex items-center gap-3 text-sm font-medium"><span className="material-symbols-outlined text-[18px] leading-none">{item.icon}</span>{item.label}</span>
-                  {item.id === "notifications" && notificationBadgeCount > 0 ? <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#9db2ff] px-2 text-xs font-semibold text-[#10131a]">{notificationBadgeCount}</span> : null}
+                  {item.id === "notifications" && notificationBadgeCount > 0 ? <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-2 text-xs font-semibold text-white">{notificationBadgeCount}</span> : null}
                 </button>
               );
             })}

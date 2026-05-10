@@ -11,27 +11,27 @@ type VisitorCenterToolbarProps = {
 // 它负责承载页面标题、搜索输入和清空按钮，是用户操作历史列表的主要入口。
 export function VisitorCenterToolbar({ searchValue, onSearchChange, onSearchSubmit, onClearHistoryClick }: VisitorCenterToolbarProps) {
   return (
-    <div className="rounded-[28px] border border-white/8 bg-[#14161b] px-6 py-7 shadow-[0_20px_60px_rgba(0,0,0,0.22)] sm:px-8 lg:px-10 lg:py-10">
+    <div className="rounded-[28px] border border-cyan-100/80 bg-white/84 px-6 py-7 shadow-[0_18px_45px_rgba(56,189,248,0.12)] backdrop-blur-sm sm:px-8 lg:px-10 lg:py-10">
       <div className="flex flex-wrap items-start justify-between gap-6">
         <div>
-          <div className="text-sm tracking-[0.32em] text-zinc-500">个人中心</div>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-zinc-50 sm:text-5xl">浏览记录</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400">你在 Memory 数字空间的近期足迹。</p>
+          <div className="text-sm tracking-[0.32em] text-cyan-700">个人中心</div>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">浏览记录</h1>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">你在 Memory 数字空间的近期足迹。</p>
         </div>
 
         {/* 清空记录是高风险操作，因此通过按钮触发确认弹窗，而不是直接执行。 */}
         <button
           type="button"
           onClick={onClearHistoryClick}
-          className="rounded-full border border-rose-400/20 bg-rose-500/10 px-5 py-2.5 text-sm font-medium text-rose-200 transition hover:border-rose-300/30 hover:bg-rose-500/15 hover:text-rose-100"
+          className="rounded-full border border-rose-200 bg-rose-50 px-5 py-2.5 text-sm font-medium text-rose-600 transition hover:border-rose-300 hover:bg-rose-100 hover:text-rose-700"
         >
           清空记录
         </button>
       </div>
 
       {/* 搜索框只负责输入和提交，不直接操纵列表数据。 */}
-      <div className="mt-6 flex items-center gap-3 rounded-2xl border border-white/8 bg-[#101215] px-4 py-3 text-sm text-zinc-500">
-        <span className="material-symbols-outlined text-[20px] text-zinc-600">search</span>
+      <div className="mt-6 flex items-center gap-3 rounded-2xl border border-cyan-100 bg-cyan-50/70 px-4 py-3 text-sm text-slate-500">
+        <span className="material-symbols-outlined text-[20px] text-cyan-600">search</span>
         <input
           value={searchValue}
           onChange={(event) => onSearchChange(event.target.value)}
@@ -42,7 +42,7 @@ export function VisitorCenterToolbar({ searchValue, onSearchChange, onSearchSubm
             }
           }}
           placeholder="在浏览记录中搜索..."
-          className="w-full bg-transparent text-sm text-zinc-200 outline-none placeholder:text-zinc-500"
+          className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
         />
       </div>
     </div>

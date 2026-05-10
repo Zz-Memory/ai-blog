@@ -146,21 +146,21 @@ export function ArticleCard({
 
   return (
     <>
-      <article className="group rounded-2xl border border-white/8 bg-[#17181d] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition duration-300 hover:border-blue-400/20 hover:bg-[#1a1b21]">
+      <article className="group rounded-2xl border border-cyan-100/80 bg-white/82 p-6 shadow-[0_18px_45px_rgba(56,189,248,0.12)] backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:bg-white">
         <div className={`flex items-start justify-between gap-6 ${compact ? "gap-4" : ""}`}>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               {category ? <CategoryPill label={category} /> : null}
               {categorySuffix}
             </div>
-            <Link href={href} aria-label={`查看文章：${title}`} className={`${compact ? "mt-2 text-2xl" : "mt-3 text-[28px]"} block font-medium tracking-tight text-zinc-100 transition-colors duration-300 group-hover:text-blue-100`}>
+            <Link href={href} aria-label={`查看文章：${title}`} className={`${compact ? "mt-2 text-2xl" : "mt-3 text-[28px]"} block font-medium tracking-tight text-slate-900 transition-colors duration-300 group-hover:text-cyan-700`}>
               {title}
             </Link>
-            <p className={`${compact ? "mt-3 max-w-2xl text-sm leading-6" : "mt-4 max-w-3xl text-[15px] leading-7"} text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300`}>
+            <p className={`${compact ? "mt-3 max-w-2xl text-sm leading-6" : "mt-4 max-w-3xl text-[15px] leading-7"} text-slate-600 transition-colors duration-300 group-hover:text-slate-700`}>
               {excerpt}
             </p>
           </div>
-          <time className="shrink-0 pt-1 text-sm text-zinc-500 transition-colors duration-300 group-hover:text-zinc-400">
+          <time className="shrink-0 pt-1 text-sm text-slate-500 transition-colors duration-300 group-hover:text-cyan-700">
             {formatChinaDate(date)}
           </time>
         </div>
@@ -172,7 +172,7 @@ export function ArticleCard({
             ))}
           </div>
 
-          <div className="flex items-center gap-6 text-sm">
+          <div className="flex items-center gap-6 text-sm text-slate-600">
             <Stat icon="favorite" value={likesCount} active={isLiked} onClick={toggleLike} ariaLabel={isLiked ? "取消点赞" : "点赞文章"} />
             <Stat icon="bookmark" value={bookmarksCount} active={isBookmarked} onClick={toggleBookmark} ariaLabel={isBookmarked ? "取消收藏" : "收藏文章"} />
             <Stat icon="chat_bubble" value={commentsCount} onClick={goToComments} ariaLabel="查看文章评论" />
