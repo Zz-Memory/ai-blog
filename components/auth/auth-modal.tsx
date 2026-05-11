@@ -81,6 +81,10 @@ function isStrongPassword(value: string) {
   return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(value);
 }
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 async function readApiMessage(response: Response) {
   const data = (await response.json().catch(() => null)) as { message?: string } | null;
   return data?.message || (response.ok ? "操作成功。" : "操作失败，请重试。");
@@ -160,7 +164,9 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
 
   const handleLoginSubmit = async () => {
     const nextErrors: ValidationState = {};
-    if (!loginAccount.trim()) nextErrors.account = "请输入账号或邮箱。";
+    const trimmedAccount = loginAccount.trim();
+    if (!trimmedAccount) nextErrors.account = "请输入电子邮箱。";
+    else if (!isValidEmail(trimmedAccount)) nextErrors.account = "请输入正确的邮箱格式。";
     if (!loginPassword.trim()) nextErrors.password = "请输入密码。";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
@@ -280,8 +286,8 @@ export function AuthModal({ isOpen, initialMode, onClose }: { isOpen: boolean; i
           {submitMessage ? <div className="mb-4 rounded-xl border border-slate-400 bg-slate-100 px-4 py-3 text-[13px] leading-6 text-slate-900">{submitMessage}</div> : null}
           {isLogin && (
             <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); void handleLoginSubmit(); }}>
-              <div><label className="mb-2 block text-[13px] font-medium text-slate-800">账号/邮箱</label><InputShell icon="person" placeholder="输入您的账号或邮箱" value={loginAccount} onChange={setLoginAccount} /></div>
-              <div><div className="mb-2 flex items-center justify-between"><label className="block text-[13px] font-medium text-slate-800">密码</label><button type="button" className="text-[13px] text-slate-800 transition hover:text-slate-950" onClick={() => setMode("reset")}>忘记密码？</button></div><InputShell icon="lock" placeholder="输入您的密码" type="password" canToggleVisibility value={loginPassword} onChange={setLoginPassword} /></div>
+              <div><label className="mb-2 block text-[13px] font-medium text-slate-800">电子邮箱</label><InputShell icon="mail" placeholder="输入您的电子邮箱" type="email" value={loginAccount} onChange={(value) => { setLoginAccount(value); if (errors.account) setErrors((current) => ({ ...current, account: undefined })); }} />{errors.account ? <p className="mt-2 text-[12px] text-rose-600">{errors.account}</p> : null}</div>
+              <div><div className="mb-2 flex items-center justify-between"><label className="block text-[13px] font-medium text-slate-800">密码</label><button type="button" className="text-[13px] text-slate-800 transition hover:text-slate-950" onClick={() => setMode("reset")}>忘记密码？</button></div><InputShell icon="lock" placeholder="输入您的密码" type="password" canToggleVisibility value={loginPassword} onChange={(value) => { setLoginPassword(value); if (errors.password) setErrors((current) => ({ ...current, password: undefined })); }} />{errors.password ? <p className="mt-2 text-[12px] text-rose-600">{errors.password}</p> : null}</div>
               <button type="submit" disabled={isLoggingIn} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 py-3.5 text-[15px] font-medium text-white shadow-[0_12px_30px_rgba(15,23,42,0.2)] transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-70"><span>{isLoggingIn ? "登录中..." : "登录"}</span><FieldIcon icon="arrow_forward" /></button>
             </form>
           )}
